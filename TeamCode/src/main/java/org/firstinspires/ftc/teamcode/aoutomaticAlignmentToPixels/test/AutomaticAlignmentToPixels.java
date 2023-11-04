@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.aoutomaticAlignmentToPixels.test;
 
+import androidx.annotation.NonNull;
+
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
@@ -40,7 +42,6 @@ import java.util.stream.Collectors;
  *     <li>See if the current code rotates the robot towards the april tag instead of towards the wall, and if so find a better way to move the robot</li>
  *     <li>Find a better way to decide which april tag to use if there are more than one onscreen. </li>
  *     <li>Find a way to make the robot go to the right pixel stack regardless of whether it's pointing at the left or right april tags. </li>
- *     <li>Maybe covert the opmode to a linear opmode, as I think it would be neater. </li>
  *     <li>Find out and fill in the component names. </li>
  *     <li>Test and fine tune the DESIRED_DISTANCE, SPEED/STRAFE/TURN_GAIN and MAX_AUTO_SPEED/STRAFE/TURN constants. </li>
  *     <li>Make the telemetry data clearer. </li>
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
 
 @Disabled
 @TeleOp(name = "Automatic Alignment To Pixels", group = "operation-valour-test")
-public class AutomaticAlignmentToPixels extends OpMode {
+public class AutomaticAlignmentToPixels extends LinearOpMode {
     // TODO: fine tune these by testing
     private final double DESIRED_DISTANCE = 24; // in inches
 
@@ -78,7 +79,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
     private boolean isLookingForAprilTags = false;
 
     @Override
-    public void init() {
+    public void runOpMode() {
         // TODO: fill in component names
 
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -102,31 +103,29 @@ public class AutomaticAlignmentToPixels extends OpMode {
         gamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(() -> selectedPixelStack = selectedPixelStack - 1 % N_PIXEL_STACKS);
 
         gamepad.getGamepadButton(GamepadKeys.Button.X).whenPressed(() -> isLookingForAprilTags = !isLookingForAprilTags);
-    }
 
-    @Override
-    public void loop() {
-        telemetry.addData("Pixel stack selected", selectedPixelStack);
+        waitForStart();
 
-        if (isLookingForAprilTags) {
-            telemetry.addLine("== Robot is detecting april tags ==");
+        while (opModeIsActive()) {
+            telemetry.addData("Pixel stack selected", selectedPixelStack);
 
-            AprilTagDetection aprilTagDetection = getAprilTag();
+            if (isLookingForAprilTags) {
+                telemetry.addLine("== Robot is detecting april tags ==");
 
-            if (aprilTagDetection != null) {
-                boolean hasStopped = moveToPosition(aprilTagDetection.ftcPose, xOffsetFromAprilTags[selectedPixelStack]);
+                AprilTagDetection aprilTagDetection = getAprilTag();
 
-                if (hasStopped) {
+                if (aprilTagDetection != null) {
+                    boolean hasStopped = moveToPosition(aprilTagDetection.ftcPose, xOffsetFromAprilTags[selectedPixelStack]);
+
+                    if (hasStopped) {
+                        isLookingForAprilTags = false;
+                    }
+                } else {
                     isLookingForAprilTags = false;
                 }
-            } else {
-                isLookingForAprilTags = false;
             }
         }
-    }
 
-    @Override
-    public void stop() {
         visionPortal.close();
     }
 
@@ -149,7 +148,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
     }
 
     // attempts to move robot to april tag, and returns if the robot has stopped
-    private boolean moveToPosition(AprilTagPoseFtc anchor, double xOffset) {
+    private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         telemetry.addLine("== Robot is moving to april tag ==");
 
         // calculate how far the robot has to go to be in the desired position
