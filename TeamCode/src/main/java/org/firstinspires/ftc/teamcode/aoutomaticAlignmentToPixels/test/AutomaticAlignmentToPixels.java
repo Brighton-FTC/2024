@@ -38,10 +38,11 @@ import java.util.stream.Collectors;
  *
  * Stuff to do:
  * <ul>
+ *     <li>Find a better way of knowing when the robot has arrived in front of the desired pixel stack. </li>
  *     <li>Implement a better way to input the desired stack of pixels to go to. </li>
- *     <li>See if the current code rotates the robot towards the april tag instead of towards the wall, and if so find a better way to move the robot</li>
  *     <li>Find a better way to decide which april tag to use if there are more than one onscreen. </li>
  *     <li>Find a way to make the robot go to the right pixel stack regardless of whether it's pointing at the left or right april tags. </li>
+ *     <li>Clear neaten up the linear opmode. </li>
  *     <li>Find out and fill in the component names. </li>
  *     <li>Test and fine tune the DESIRED_DISTANCE, SPEED/STRAFE/TURN_GAIN and MAX_AUTO_SPEED/STRAFE/TURN constants. </li>
  *     <li>Make the telemetry data clearer. </li>
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
 @TeleOp(name = "Automatic Alignment To Pixels", group = "operation-valour-test")
 public class AutomaticAlignmentToPixels extends LinearOpMode {
     // TODO: fine tune these by testing
-    private final double DESIRED_DISTANCE = 24; // in inches
+    private final double DESIRED_DISTANCE = 60; // in inches
 
     private final double SPEED_GAIN = 0.02;
     private final double STRAFE_GAIN = 0.015;
@@ -115,6 +116,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                 AprilTagDetection aprilTagDetection = getAprilTag();
 
                 if (aprilTagDetection != null) {
+
                     boolean hasStopped = moveToPosition(aprilTagDetection.ftcPose, xOffsetFromAprilTags[selectedPixelStack]);
 
                     if (hasStopped) {
@@ -124,6 +126,8 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                     isLookingForAprilTags = false;
                 }
             }
+
+            sleep(10);
         }
 
         visionPortal.close();
@@ -153,7 +157,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
 
         // calculate how far the robot has to go to be in the desired position
         double  rangeError = anchor.range - DESIRED_DISTANCE;
-        double  headingError = anchor.bearing;
+        double  headingError = Math.atan2(anchor.y, anchor.x + xOffset);
         double  yawError = anchor.yaw + xOffset;
 
         // calculate how the robot should move
