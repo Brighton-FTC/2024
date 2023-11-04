@@ -19,6 +19,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Prototype for aligning robot to a stack of pixels (<b>untested and in developement</b>). <br />
@@ -149,7 +150,11 @@ public class AutomaticAlignmentToPixels extends OpMode {
     // gets the april tag that the robot should use for its pathfinding
     // if there are more than one april tags on the screen, then it will detect the leftmost one if isStrafeDirectionRight is true, otherwise the rightmost one
     private AprilTagDetection getAprilTag(boolean isStrafeDirectionRight) {
-        List<AprilTagDetection> aprilTagDetections = aprilTag.getDetections();
+        // get the detections and filter out the ones without metadata
+        List<AprilTagDetection> aprilTagDetections = aprilTag.getDetections()
+                .stream()
+                .filter(detection -> detection.metadata != null)
+                .collect(Collectors.toList());
 
         if (aprilTagDetections.size() == 0) {
             telemetry.addLine("\tNo april tags detected");
