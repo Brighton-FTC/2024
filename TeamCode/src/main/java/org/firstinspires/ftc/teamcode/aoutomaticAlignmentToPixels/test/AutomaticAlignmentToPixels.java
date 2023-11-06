@@ -10,7 +10,10 @@ import com.arcrobotics.ftclib.hardware.GyroEx;
 import com.arcrobotics.ftclib.hardware.RevIMU;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
 import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
+import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -40,23 +43,6 @@ import java.util.stream.Collectors;
  *     <li>X - Start going to a cone stack (press again to cancel). </li>
  *     <li>DPAD LEFT and DPAD RIGHT - change the pixel stack that the robot is meant to be going to. </li>
  * </ul>
- *
- * <hr />
- *
- * Stuff to do:
- * <ul>
- *     <li>Implement the code for picking up a pixel. </li>
- *     <li>Find a better way of knowing when the robot has arrived in front of the desired pixel stack. </li>
- *     <li>Implement a better way to input the desired stack of pixels to go to. </li>
- *     <li>Clear up magic numbers. </li>
- *     <li>Clear up states. </li>
- *     <li>Find a better way to decide which april tag to use if there are more than one onscreen. </li>
- *     <li>Find a way to make the robot go to the right pixel stack regardless of whether it's pointing at the left or right april tags. </li>
- *     <li>Neaten up the linear opmode. </li>
- *     <li>Find out and fill in the component names. </li>
- *     <li>Test and fine tune the DISTANCE_ERROR, ANGLE_ERROR, DESIRED_DISTANCE, MAX_AUTO_SPEED and MAX_AUTO_TURN constants. </li>
- *     <li>Make the telemetry data clearer. </li>
- * </ul>
  */
 
 @Disabled
@@ -65,16 +51,34 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
     // TODO: fine tune these by testing
     private final double DISTANCE_ERROR = 6; // in inches
     private final double ANGLE_ERROR = 20; // in degrees
+    private final double LINEAR_SLIDE_ERROR = 15;
 
-    private final double DESIRED_DISTANCE = 60; // in inches
+    private final double MOVING_DESIRED_DISTANCE = 18; // in inches
+    private final double SHIFTING_DESIRED_DISTANCE = 6; // in inches
 
     private final double MAX_AUTO_SPEED = 0.5;
     private final double MAX_AUTO_TURN = 0.3;
+    private final double MAX_LINEAR_SLIDE_SPEED = 0.5;
+
+    private final int LINEAR_SLIDE_DOWN_POS = 0;
+    private final int LINEAR_SLIDE_UP_POS = 2000;
+
+    private final double GRABBER_CLOSED_POS = 0;
+    private final double GRABBER_OPEN_POS = 90;
+
+    private final double GRABBER_TILTED_DOWN_POS = 0;
+    private final double GRABBER_TILTED_UP_POS = 90;
+
+    private final double kP = 0.05;
 
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
     private MecanumDrive mecanum;
+
+    private MotorEx linearSlideMotor;
+    private ServoEx grabberServo;
+    private ServoEx grabberTiltServo;
 
     private SensorDistanceEx distanceSensor;
     private GyroEx gyro;
@@ -108,6 +112,15 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                 new Motor(hardwareMap, "back_right")
         );
 
+        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_name", LINEAR_SLIDE_DOWN_POS, LINEAR_SLIDE_UP_POS);
+        linearSlideMotor.setRunMode(Motor.RunMode.PositionControl);
+        linearSlideMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        linearSlideMotor.setPositionTolerance(LINEAR_SLIDE_ERROR);
+        linearSlideMotor.setPositionCoefficient(kP);
+
+        grabberServo = new SimpleServo(hardwareMap, "grabber_servo_name", GRABBER_CLOSED_POS, GRABBER_OPEN_POS);
+        grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo_name", GRABBER_TILTED_DOWN_POS, GRABBER_TILTED_UP_POS);
+
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor_name");
         gyro = new RevIMU(hardwareMap, "gyro_name");
         touchSensor = hardwareMap.touchSensor.get("touch_sensor_name");
@@ -126,6 +139,15 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
             telemetry.addData("Pixel stack selected", selectedPixelStack);
             telemetry.addData("Current state", currentState.toString());
 
+            if (currentState == State.IDLE) {
+                linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POS);
+
+                if (!linearSlideMotor.atTargetPosition()) {
+                    linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED);
+                } else {
+                    linearSlideMotor.set(0);
+                }
+            }
 
             if (currentState == State.SEARCHING_FOR_APRIL_TAGS) {
                 aprilTagDetection = getAprilTag();
@@ -142,7 +164,6 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                     aprilTagDetection = null;
                     currentState = State.TURNING;
                 }
-
             }
 
             if (currentState == State.TURNING) {
@@ -163,13 +184,36 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
             }
 
             if (currentState == State.SHIFTING_TO_PIXEL_STACK) {
-                mecanum.driveRobotCentric(0, MAX_AUTO_SPEED / 3, 0);
+                boolean hasFinished = driveToDistance(SHIFTING_DESIRED_DISTANCE, DistanceUnit.INCH);
 
                 if (distanceSensor.getDistance(DistanceUnit.INCH) > closestAngle[1]) { // if the robot has driven off at the wrong angle
                     currentState = State.TURNING;
+                }
 
-                } else if (touchSensor.isPressed()) { // if the robot has reached the pixel stack
+                if (hasFinished) {
+                    currentState = State.PREPARING_FOR_PIXEL_PICKUP;
+                }
+            }
+
+            if (currentState == State.PREPARING_FOR_PIXEL_PICKUP) {
+                if (!linearSlideMotor.atTargetPosition()) {
+                    linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED);
+                }
+                grabberServo.turnToAngle(GRABBER_OPEN_POS);
+                grabberTiltServo.turnToAngle(GRABBER_TILTED_DOWN_POS);
+
+                if (linearSlideMotor.atTargetPosition()) {
                     currentState = State.PICKING_UP_PIXEL;
+                }
+            }
+
+            if (currentState == State.PICKING_UP_PIXEL) {
+                linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POS);
+                if (!touchSensor.isPressed()) {
+                    linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED / 2);
+                } else {
+                    grabberServo.turnToAngle(GRABBER_CLOSED_POS);
+                    currentState = State.IDLE;
                 }
             }
 
@@ -214,7 +258,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
 
             turnToAngle(headingError);
 
-        } else if (!(Math.abs(distanceError - DESIRED_DISTANCE) <= DISTANCE_ERROR)) {
+        } else if (!(Math.abs(distanceError - MOVING_DESIRED_DISTANCE) <= DISTANCE_ERROR)) {
             telemetry.addLine("\tMoving to correct distance");
 
             driveToDistance(distanceError, DistanceUnit.INCH);
@@ -278,6 +322,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
         TURNING("Turning"),
         SEARCHING_FOR_PIXEL_STACK("Searching for stack"),
         SHIFTING_TO_PIXEL_STACK("Shifting to  stack"),
+        PREPARING_FOR_PIXEL_PICKUP("Preparing for pixel pickup"),
         PICKING_UP_PIXEL("Picking up pixel");
 
         private final String stringRepr;
