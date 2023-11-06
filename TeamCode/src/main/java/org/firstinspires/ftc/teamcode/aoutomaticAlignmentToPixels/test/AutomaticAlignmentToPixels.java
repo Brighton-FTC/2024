@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.GyroEx;
 import com.arcrobotics.ftclib.hardware.RevIMU;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
@@ -14,9 +12,7 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.Range;
 
@@ -38,64 +34,60 @@ import java.util.stream.Collectors;
  *
  * <hr />
  *
- * Controls:
- * <ul>
- *     <li>X - Start going to a cone stack (press again to cancel). </li>
- *     <li>DPAD LEFT and DPAD RIGHT - change the pixel stack that the robot is meant to be going to. </li>
- * </ul>
+ * Call
  */
 
-@Disabled
-@TeleOp(name = "Automatic Alignment To Pixels", group = "operation-valour-test")
-public class AutomaticAlignmentToPixels extends LinearOpMode {
+public class AutomaticAlignmentToPixels {
     // TODO: fine tune these by testing
-    private final double DISTANCE_ERROR = 6; // in inches
-    private final double ANGLE_ERROR = 20; // in degrees
-    private final double LINEAR_SLIDE_ERROR = 15;
+    public static final double DISTANCE_ERROR = 6; // in inches
+    public static final double ANGLE_ERROR = 20; // in degrees
+    public static final double LINEAR_SLIDE_ERROR = 15;
 
-    private final double MOVING_DESIRED_DISTANCE = 18; // in inches
-    private final double SHIFTING_DESIRED_DISTANCE = 6; // in inches
+    public static final double MOVING_DESIRED_DISTANCE = 18; // in inches
+    public static final double SHIFTING_DESIRED_DISTANCE = 6; // in inches
 
-    private final double MAX_AUTO_SPEED = 0.5;
-    private final double MAX_AUTO_TURN = 0.3;
-    private final double MAX_LINEAR_SLIDE_SPEED = 0.5;
+    public static final double MAX_AUTO_SPEED = 0.5;
+    public static final double MAX_AUTO_TURN = 0.3;
+    public static final double MAX_LINEAR_SLIDE_SPEED = 0.5;
 
-    private final int LINEAR_SLIDE_DOWN_POS = 0;
-    private final int LINEAR_SLIDE_UP_POS = 2000;
+    public static final int LINEAR_SLIDE_DOWN_POS = 0;
+    public static final int LINEAR_SLIDE_UP_POS = 2000;
 
-    private final double GRABBER_CLOSED_POS = 0;
-    private final double GRABBER_OPEN_POS = 90;
+    public static final double GRABBER_CLOSED_POS = 0;
+    public static final double GRABBER_OPEN_POS = 90;
 
-    private final double GRABBER_TILTED_DOWN_POS = 0;
-    private final double GRABBER_TILTED_UP_POS = 90;
+    public static final double GRABBER_TILTED_DOWN_POS = 0;
+    public static final double GRABBER_TILTED_UP_POS = 90;
 
-    private final double kP = 0.05;
+    public static final double kP = 0.05;
 
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
+    public static AprilTagProcessor aprilTag;
+    public static VisionPortal visionPortal;
 
-    private MecanumDrive mecanum;
+    public static MecanumDrive mecanum;
 
-    private MotorEx linearSlideMotor;
-    private ServoEx grabberServo;
-    private ServoEx grabberTiltServo;
+    public static MotorEx linearSlideMotor;
+    public static ServoEx grabberServo;
+    public static ServoEx grabberTiltServo;
 
-    private SensorDistanceEx distanceSensor;
-    private GyroEx gyro;
-    private TouchSensor touchSensor;
+    public static SensorDistanceEx distanceSensor;
+    public static GyroEx gyro;
+    public static TouchSensor touchSensor;
 
-    private GamepadEx gamepad = new GamepadEx(gamepad1);
+    public static final int N_PIXEL_STACKS = 6;
+    public static final double[] xOffsetFromAprilTags = {0, 11, 22, -22, -11, 0}; // 11 inch spacing between stacks
 
-    private final int N_PIXEL_STACKS = 6;
-    private final double[] xOffsetFromAprilTags = {0, 11, 22, -22, -11, 0}; // 11 inch spacing between stacks
+    public static double[] closestAngle = {0, Double.POSITIVE_INFINITY}; // [angle (degrees), distance (inches)]
 
-    private double[] closestAngle = {0, Double.POSITIVE_INFINITY}; // [angle (degrees), distance (inches)]
-    private int selectedPixelStack = 0;
+    public static State currentState = State.IDLE;
 
-    private State currentState = State.IDLE;
+    public static AprilTagDetection aprilTagDetection;
 
-    @Override
-    public void runOpMode() {
+    /**
+     * Call in the init() method of an opmode, or right at the start of the runOpMode() method of a linear opmode.
+     * @param hardwareMap The hardware map.
+     */
+    public static void init(HardwareMap hardwareMap) {
         // TODO: fill in component names
 
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -124,22 +116,50 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor_name");
         gyro = new RevIMU(hardwareMap, "gyro_name");
         touchSensor = hardwareMap.touchSensor.get("touch_sensor_name");
+    }
 
-        gamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whenPressed(() -> selectedPixelStack = (selectedPixelStack + 1) % N_PIXEL_STACKS);
-        gamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(() -> selectedPixelStack = (selectedPixelStack - 1) % N_PIXEL_STACKS);
+    /**
+     * Call in the stop() method of an opmode, or after the while loop of a linear opmode.
+     */
+    public static void stop() {
+        startMoving();
+        visionPortal.close();
+    }
 
-        gamepad.getGamepadButton(GamepadKeys.Button.X).whenPressed(() -> currentState = State.SEARCHING_FOR_APRIL_TAGS);
+    public static boolean isMoving() {
+        return currentState != State.IDLE;
+    }
 
+    public static void stopMoving() {
+        currentState = State.IDLE;
+    }
 
-        AprilTagDetection aprilTagDetection = null;
+    public static void startMoving() {
+        if (currentState == State.IDLE) {
+            currentState = State.SEARCHING_FOR_APRIL_TAGS;
+        }
+    }
 
-        waitForStart();
+    public static State getCurrentState() {
+        return currentState;
+    }
 
-        while (opModeIsActive()) {
-            telemetry.addData("Pixel stack selected", selectedPixelStack);
-            telemetry.addData("Current state", currentState.toString());
+    /**
+     *
+     * Call continuously to drive the robot to the specified pixel stack. <br />
+     * You must call startMoving() for the robot to actually do stuff. <br />
+     * Note: You must point the robot to the left april tag for the first 3 pixel stacks, and to the right april tag for the last 3.
+     * Otherwise the robot will crash into a wall.
+     * @param pixelStackIndex The index of the pixel stack to go to. 0 to 5 (inclusive).
+     *
+     */
+    public static void goToPixelStack(int pixelStackIndex) {
+        if (pixelStackIndex < 0 || pixelStackIndex >= N_PIXEL_STACKS) {
+            throw new IllegalArgumentException("pixelStackIndex must be between 0 and " + N_PIXEL_STACKS + ".");
+        }
 
-            if (currentState == State.IDLE) {
+        switch (currentState) {
+            case IDLE:
                 linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POS);
 
                 if (!linearSlideMotor.atTargetPosition()) {
@@ -147,44 +167,50 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                 } else {
                     linearSlideMotor.set(0);
                 }
-            }
 
-            if (currentState == State.SEARCHING_FOR_APRIL_TAGS) {
+                break;
+
+            case SEARCHING_FOR_APRIL_TAGS:
                 aprilTagDetection = getAprilTag();
                 gyro.reset();
 
-            }
+                if (aprilTagDetection != null) {
+                    currentState = State.MOVING_TO_PIXEL_STACK;
+                }
 
-            if (aprilTagDetection != null) {
-                currentState = State.MOVING_TO_PIXEL_STACK;
+                break;
 
-                boolean hasStopped = moveToPosition(aprilTagDetection.ftcPose, xOffsetFromAprilTags[selectedPixelStack]);
+            case MOVING_TO_PIXEL_STACK:
+                boolean hasFinished = moveToPosition(aprilTagDetection.ftcPose, xOffsetFromAprilTags[pixelStackIndex]);
 
-                if (hasStopped) {
+                if (hasFinished) {
                     aprilTagDetection = null;
                     currentState = State.TURNING;
                 }
-            }
 
-            if (currentState == State.TURNING) {
+                break;
+
+            case TURNING:
                 // TODO: clear up magic numbers
-                boolean hasTurned = turnToAngle(-30);
+                hasFinished = turnToAngle(-30);
 
-                if (hasTurned) {
+                if (hasFinished) {
                     currentState = State.SEARCHING_FOR_PIXEL_STACK;
                 }
-            }
 
-            if (currentState == State.SEARCHING_FOR_PIXEL_STACK) {
-                boolean hasFinished = scanForPixelStack(30, true);
+                break;
+
+            case SEARCHING_FOR_PIXEL_STACK:
+                hasFinished = scanForPixelStack(30, true);
 
                 if (hasFinished) {
                     currentState = State.SHIFTING_TO_PIXEL_STACK;
                 }
-            }
 
-            if (currentState == State.SHIFTING_TO_PIXEL_STACK) {
-                boolean hasFinished = driveToDistance(SHIFTING_DESIRED_DISTANCE, DistanceUnit.INCH);
+                break;
+
+            case SHIFTING_TO_PIXEL_STACK:
+                hasFinished = driveToDistance(SHIFTING_DESIRED_DISTANCE, DistanceUnit.INCH);
 
                 if (distanceSensor.getDistance(DistanceUnit.INCH) > closestAngle[1]) { // if the robot has driven off at the wrong angle
                     currentState = State.TURNING;
@@ -216,17 +242,12 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                     currentState = State.IDLE;
                 }
             }
-
-            sleep(10);
         }
-
-        visionPortal.close();
-    }
 
     // gets the april tag that the robot should use for its pathfinding
     // if there are more than one april tags on the screen, then it will chose the first one returned
     @Nullable
-    private AprilTagDetection getAprilTag() {
+    private static AprilTagDetection getAprilTag() {
         // get the detections and filter out the ones without metadata
         List<AprilTagDetection> aprilTagDetections = aprilTag.getDetections()
                 .stream()
@@ -234,16 +255,14 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
                 .collect(Collectors.toList());
 
         if (aprilTagDetections.size() == 0) {
-            telemetry.addLine("\tNo april tags detected");
             return null;
         } else {
-            telemetry.addLine("\t" + aprilTagDetections.size() + "april tags detected");
             return aprilTagDetections.get(0); // TODO: if multiple april tags is a problem, replace this with something more rigorous
         }
     }
 
     // attempts to move robot to april tag, and returns if the robot has stopped
-    private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
+    private static boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         // calculate how far the robot has to turn/move
         // idk if I have to use anchor.y or anchor.range here, but am using anchor.y for now
         double headingError = Math.atan2(anchor.y, anchor.x + xOffset) * 180 / Math.PI;
@@ -254,13 +273,9 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
         currentHeading = currentHeading > 180 ? currentHeading - 360 : currentHeading;
 
         if (!(Math.abs(headingError - currentHeading) <= ANGLE_ERROR)) {
-            telemetry.addLine("\tTurning to correct angle");
-
             turnToAngle(headingError);
 
         } else if (!(Math.abs(distanceError - MOVING_DESIRED_DISTANCE) <= DISTANCE_ERROR)) {
-            telemetry.addLine("\tMoving to correct distance");
-
             driveToDistance(distanceError, DistanceUnit.INCH);
 
         } else {
@@ -270,7 +285,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
         return false;
     }
 
-    private boolean scanForPixelStack(double searchAngle, boolean isClockwise) {
+    private static boolean scanForPixelStack(double searchAngle, boolean isClockwise) {
         if (distanceSensor.getDistance(DistanceUnit.INCH) < closestAngle[1]) {
             closestAngle[0] = gyro.getHeading();
             closestAngle[1] = distanceSensor.getDistance(DistanceUnit.INCH);
@@ -283,7 +298,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
     // note that angle should be -179 to 180 rather than 0 to 360
     // returns whether it's done turning
 
-    private boolean turnToAngle(double angle) {
+    private static boolean turnToAngle(double angle) {
         double currentHeading = gyro.getHeading() > 180 ? gyro.getHeading() - 360 : gyro.getHeading();
 
         if (Math.abs(currentHeading - angle) <= ANGLE_ERROR) {
@@ -300,7 +315,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
 
     // drives robot forwards to distance
     // returns whether it's done driving
-    private boolean driveToDistance(double distance, DistanceUnit distanceUnit) {
+    private static boolean driveToDistance(double distance, DistanceUnit distanceUnit) {
         double currentDistance = distanceSensor.getDistance(distanceUnit);
 
         if (Math.abs(currentDistance - distance) <= DISTANCE_ERROR) {
@@ -315,7 +330,7 @@ public class AutomaticAlignmentToPixels extends LinearOpMode {
         }
     }
 
-    private enum State {
+    public enum State {
         IDLE("Idle"),
         SEARCHING_FOR_APRIL_TAGS("Searching for april tags"),
         MOVING_TO_PIXEL_STACK("Moving to stack"),
