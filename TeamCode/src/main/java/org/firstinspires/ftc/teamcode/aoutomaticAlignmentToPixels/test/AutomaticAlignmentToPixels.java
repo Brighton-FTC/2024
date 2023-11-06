@@ -31,10 +31,6 @@ import java.util.stream.Collectors;
  * It's meant to go to a specified pixel stack when an input is given <br />
  * <i>Warning: make sure that the robot is angled towards the left april tag for the first 3 pixel stacks, and the right april tag for the last 3.
  * Otherwise, the robot will inevitably crash into a wall. </i>
- *
- * <hr />
- *
- * Call
  */
 
 public class AutomaticAlignmentToPixels {
@@ -58,6 +54,11 @@ public class AutomaticAlignmentToPixels {
 
     public static final double GRABBER_TILTED_DOWN_POS = 0;
     public static final double GRABBER_TILTED_UP_POS = 90;
+
+    public static final double SCANNING_FOR_PIXEL_STACK_ANGLE = 30; // degrees
+
+    public static final double AUTO_DRIVING_DIVISOR = 6;
+    public static final double AUTO_ANGLE_DIVISOR = 45;
 
     public static final double kP = 0.05;
 
@@ -87,7 +88,7 @@ public class AutomaticAlignmentToPixels {
      * Call in the init() method of an opmode, or right at the start of the runOpMode() method of a linear opmode.
      * @param hardwareMap The hardware map.
      */
-    public static void init(HardwareMap hardwareMap) {
+    public static void init(@NonNull HardwareMap hardwareMap) {
         // TODO: fill in component names
 
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -191,17 +192,18 @@ public class AutomaticAlignmentToPixels {
                 break;
 
             case TURNING:
-                // TODO: clear up magic numbers
-                hasFinished = turnToAngle(-30);
+                hasFinished = turnToAngle(-SCANNING_FOR_PIXEL_STACK_ANGLE);
 
                 if (hasFinished) {
+                    gyro.reset();
+
                     currentState = State.SEARCHING_FOR_PIXEL_STACK;
                 }
 
                 break;
 
             case SEARCHING_FOR_PIXEL_STACK:
-                hasFinished = scanForPixelStack(30, true);
+                hasFinished = scanForPixelStack(SCANNING_FOR_PIXEL_STACK_ANGLE * 2, true);
 
                 if (hasFinished) {
                     currentState = State.SHIFTING_TO_PIXEL_STACK;
@@ -219,9 +221,10 @@ public class AutomaticAlignmentToPixels {
                 if (hasFinished) {
                     currentState = State.PREPARING_FOR_PIXEL_PICKUP;
                 }
-            }
 
-            if (currentState == State.PREPARING_FOR_PIXEL_PICKUP) {
+                break;
+
+            case PREPARING_FOR_PIXEL_PICKUP:
                 if (!linearSlideMotor.atTargetPosition()) {
                     linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED);
                 }
@@ -231,9 +234,10 @@ public class AutomaticAlignmentToPixels {
                 if (linearSlideMotor.atTargetPosition()) {
                     currentState = State.PICKING_UP_PIXEL;
                 }
-            }
 
-            if (currentState == State.PICKING_UP_PIXEL) {
+                break;
+
+            case PICKING_UP_PIXEL:
                 linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POS);
                 if (!touchSensor.isPressed()) {
                     linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED / 2);
@@ -305,9 +309,8 @@ public class AutomaticAlignmentToPixels {
             return true;
 
         } else {
-            // TODO: clear up magic numbers
             mecanum.driveRobotCentric(0, 0,
-                    Range.clip(MAX_AUTO_TURN * (currentHeading - angle) / 45, -MAX_AUTO_TURN, MAX_AUTO_TURN));
+                    Range.clip(MAX_AUTO_TURN * (currentHeading - angle) / AUTO_ANGLE_DIVISOR, -MAX_AUTO_TURN, MAX_AUTO_TURN));
 
             return false;
         }
@@ -322,9 +325,8 @@ public class AutomaticAlignmentToPixels {
             return true;
 
         } else {
-            // TODO: clear up magic numbers
             mecanum.driveRobotCentric(0,
-                    Range.clip(MAX_AUTO_SPEED * (distance - currentDistance) /distanceUnit.fromInches(6),
+                    Range.clip(MAX_AUTO_SPEED * (distance - currentDistance) / distanceUnit.fromInches(AUTO_DRIVING_DIVISOR),
                             -MAX_AUTO_SPEED, MAX_AUTO_SPEED), 0);
             return false;
         }
