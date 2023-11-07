@@ -12,6 +12,8 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.Range;
@@ -28,9 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * Prototype for aligning robot to a stack of pixels (<b>untested and in development</b>). <br />
- * It's meant to go to a specified pixel stack when goToPixelStack() is called continuously, and startMoving() has also been called. <br />
- * <i>Warning: make sure that the robot is angled towards the left april tag for the first 3 pixel stacks, and the right april tag for the last 3.
- * Otherwise, the robot will inevitably crash into a wall. </i> <br />
+ * It's meant to go to a specified pixel stack when {@link #goToPixelStack(int) goToPixelStack()})} is called continuously, and startMoving() has also been called. <br />
  *
  * An example of how to implement this is shown in the {@link AutomaticAlignmentToPixelsTestOpMode} class.
  */
@@ -64,6 +64,14 @@ public class AutomaticAlignmentToPixels {
 
     public static final double kP = 0.05;
 
+    public static final int N_PIXEL_STACKS = 6;
+    public static final double[] xOffsetFromAprilTags = {6, 18, 30, -30, -18, 6}; // 12 inch spacing between stacks
+    public static final double DISTANCE_BETWEEN_APRIL_TAGS = 72; // inches
+
+    // TODO: check these are the right way round
+    public static final int LEFT_APRIL_TAG_ID = 7;
+    public static final int RIGHT_APRIL_TAG_ID = 10;
+
     public static AprilTagProcessor aprilTag;
     public static VisionPortal visionPortal;
 
@@ -77,9 +85,6 @@ public class AutomaticAlignmentToPixels {
     public static GyroEx gyro;
     public static TouchSensor touchSensor;
 
-    public static final int N_PIXEL_STACKS = 6;
-    public static final double[] xOffsetFromAprilTags = {0, 11, 22, -22, -11, 0}; // 11 inch spacing between stacks
-
     public static double[] closestAngle = {0, Double.POSITIVE_INFINITY}; // [angle (degrees), distance (inches)]
 
     public static State currentState = State.IDLE;
@@ -87,7 +92,7 @@ public class AutomaticAlignmentToPixels {
     public static AprilTagDetection aprilTagDetection;
 
     /**
-     * Call in the init() method of an opmode, or right at the start of the runOpMode() method of a linear opmode.
+     * Call in the {@link OpMode#init() init()} method of an opmode, or right at the start of the {@link LinearOpMode#runOpMode() runOpMode()} method of a linear opmode.
      * @param hardwareMap The hardware map.
      */
     public static void init(@NonNull HardwareMap hardwareMap) {
@@ -122,27 +127,40 @@ public class AutomaticAlignmentToPixels {
     }
 
     /**
-     * Call in the stop() method of an opmode, or after the while loop of a linear opmode.
+     * Call in the stop() method of an opmode, or after the while loop of the {@link LinearOpMode#runOpMode() runOpMode()} linear opmode.
      */
     public static void stop() {
         startMoving();
         visionPortal.close();
     }
 
+    /**
+     * @return If the robot is moving (if it is aligning to a pixel stack).
+     */
     public static boolean isMoving() {
         return currentState != State.IDLE;
     }
 
+    /**
+     * Call once to make the robot stop its process of aligning to a pixel stack.
+     */
     public static void stopMoving() {
         currentState = State.IDLE;
     }
 
+    /**
+     * Call once to make the robot start scanning for april tags (and then move). <br />
+     * Once called, you must continuously call {@link #goToPixelStack(int) goToPixelStack()} for the robot to actually do stuff.
+     */
     public static void startMoving() {
         if (currentState == State.IDLE) {
             currentState = State.SEARCHING_FOR_APRIL_TAGS;
         }
     }
 
+    /**
+     * @return The current {@link AutomaticAlignmentToPixels.State state} of moving to the april tags that the robot is at.
+     */
     public static State getCurrentState() {
         return currentState;
     }
@@ -150,14 +168,12 @@ public class AutomaticAlignmentToPixels {
     /**
      *
      * Call continuously to drive the robot to the specified pixel stack. <br />
-     * You must call startMoving() for the robot to actually do stuff. <br />
+     * You must call {@link #startMoving()} for the robot to actually do stuff. <br />
      * The program will then (hopefully) use april tags to get to a certain distance from the wall,
      * use the distance sensor to get even closer, and then pick up a pixel (still in development). <br />
      * If the robot is closer to the wall, it will just go straight to the nearest pixel stack
      * (needs to be confirmed by JRCs). <br />
      *
-     * Note: You must point the robot to the left april tag for the first 3 pixel stacks, and to the right april tag for the last 3.
-     * Otherwise the robot will inevitably crash into a wall.
      * @param pixelStackIndex The index of the pixel stack to go to. 0 to 5 (inclusive).
      *
      */
@@ -183,7 +199,16 @@ public class AutomaticAlignmentToPixels {
                 gyro.reset();
 
                 if (aprilTagDetection != null) {
-                    currentState = State.MOVING_TO_PIXEL_STACK;
+                    if (aprilTagDetection.metadata.id != LEFT_APRIL_TAG_ID && pixelStackIndex <= 2) {
+                        // rotate the robot towards the correct april tag
+                        turnToAngle(Math.atan2(aprilTagDetection.ftcPose.y, -aprilTagDetection.ftcPose.x - DISTANCE_BETWEEN_APRIL_TAGS));
+                    } else if (aprilTagDetection.metadata.id != RIGHT_APRIL_TAG_ID && pixelStackIndex >= 3) {
+                        // rotate the robot towards the correct april tag
+                        turnToAngle(Math.atan2(aprilTagDetection.ftcPose.y, aprilTagDetection.ftcPose.x + DISTANCE_BETWEEN_APRIL_TAGS));
+                    } else { // if the robot is facing towards the correct april tag
+                        currentState = State.MOVING_TO_PIXEL_STACK;
+                    }
+
                 } else if (distanceSensor.getDistance(DistanceUnit.INCH) <= MOVING_DESIRED_DISTANCE) {
                     currentState = State.TURNING;
                 }
@@ -265,6 +290,7 @@ public class AutomaticAlignmentToPixels {
         List<AprilTagDetection> aprilTagDetections = aprilTag.getDetections()
                 .stream()
                 .filter(detection -> detection.metadata != null)
+                .filter(detection -> detection.metadata.id == LEFT_APRIL_TAG_ID || detection.metadata.id == RIGHT_APRIL_TAG_ID)
                 .collect(Collectors.toList());
 
         if (aprilTagDetections.size() == 0) {
