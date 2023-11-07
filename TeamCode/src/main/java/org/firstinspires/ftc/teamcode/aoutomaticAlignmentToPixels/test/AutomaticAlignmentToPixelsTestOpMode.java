@@ -6,9 +6,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.PSButtons;
+
 
 /**
- * An opmode showing how the automatic alignment to pixels should be implemented. <br />
+ * An opmode showing how the {@link AutomaticAlignmentToPixels} class should be implemented. <br />
  *
  * Controls:
  * <ul>
@@ -29,7 +31,7 @@ public class AutomaticAlignmentToPixelsTestOpMode extends OpMode {
     public void init() {
         AutomaticAlignmentToPixels.init(hardwareMap);
 
-        gamepad.getGamepadButton(GamepadKeys.Button.A).whenPressed(() -> {
+        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(() -> {
             if (AutomaticAlignmentToPixels.isMoving()) {
                 AutomaticAlignmentToPixels.startMoving();
             } else {

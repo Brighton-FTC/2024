@@ -28,9 +28,11 @@ import java.util.stream.Collectors;
 
 /**
  * Prototype for aligning robot to a stack of pixels (<b>untested and in development</b>). <br />
- * It's meant to go to a specified pixel stack when an input is given <br />
+ * It's meant to go to a specified pixel stack when goToPixelStack() is called continuously, and startMoving() has also been called. <br />
  * <i>Warning: make sure that the robot is angled towards the left april tag for the first 3 pixel stacks, and the right april tag for the last 3.
- * Otherwise, the robot will inevitably crash into a wall. </i>
+ * Otherwise, the robot will inevitably crash into a wall. </i> <br />
+ *
+ * An example of how to implement this is shown in the {@link AutomaticAlignmentToPixelsTestOpMode} class.
  */
 
 public class AutomaticAlignmentToPixels {
@@ -149,8 +151,13 @@ public class AutomaticAlignmentToPixels {
      *
      * Call continuously to drive the robot to the specified pixel stack. <br />
      * You must call startMoving() for the robot to actually do stuff. <br />
+     * The program will then (hopefully) use april tags to get to a certain distance from the wall,
+     * use the distance sensor to get even closer, and then pick up a pixel (still in development). <br />
+     * If the robot is closer to the wall, it will just go straight to the nearest pixel stack
+     * (needs to be confirmed by JRCs). <br />
+     *
      * Note: You must point the robot to the left april tag for the first 3 pixel stacks, and to the right april tag for the last 3.
-     * Otherwise the robot will crash into a wall.
+     * Otherwise the robot will inevitably crash into a wall.
      * @param pixelStackIndex The index of the pixel stack to go to. 0 to 5 (inclusive).
      *
      */
@@ -177,6 +184,8 @@ public class AutomaticAlignmentToPixels {
 
                 if (aprilTagDetection != null) {
                     currentState = State.MOVING_TO_PIXEL_STACK;
+                } else if (distanceSensor.getDistance(DistanceUnit.INCH) <= MOVING_DESIRED_DISTANCE) {
+                    currentState = State.TURNING;
                 }
 
                 break;
