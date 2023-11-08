@@ -66,30 +66,29 @@ public class AutomaticAlignmentToPixels {
 
     public static final int N_PIXEL_STACKS = 6;
     public static final double[] xOffsetFromAprilTags = {6, 18, 30, -30, -18, 6}; // 12 inch spacing between stacks
-    public static final double DISTANCE_BETWEEN_APRIL_TAGS = 72; // inches
 
     // TODO: check these are the right way round
     public static final int LEFT_APRIL_TAG_ID = 7;
     public static final int RIGHT_APRIL_TAG_ID = 10;
 
-    public static AprilTagProcessor aprilTag;
-    public static VisionPortal visionPortal;
+    private static AprilTagProcessor aprilTag;
+    private static VisionPortal visionPortal;
 
     public static MecanumDrive mecanum;
 
-    public static MotorEx linearSlideMotor;
-    public static ServoEx grabberServo;
-    public static ServoEx grabberTiltServo;
+    private static MotorEx linearSlideMotor;
+    private static ServoEx grabberServo;
+    private static ServoEx grabberTiltServo;
 
-    public static SensorDistanceEx distanceSensor;
-    public static GyroEx gyro;
-    public static TouchSensor touchSensor;
+    private static SensorDistanceEx distanceSensor;
+    private static GyroEx gyro;
+    private static TouchSensor touchSensor;
 
-    public static double[] closestAngle = {0, Double.POSITIVE_INFINITY}; // [angle (degrees), distance (inches)]
+    private static double[] closestAngle = {0, Double.POSITIVE_INFINITY}; // [angle (degrees), distance (inches)]
 
-    public static State currentState = State.IDLE;
+    private static State currentState = State.IDLE;
 
-    public static AprilTagDetection aprilTagDetection;
+    private static AprilTagDetection aprilTagDetection;
 
     /**
      * Call in the {@link OpMode#init() init()} method of an opmode, or right at the start of the {@link LinearOpMode#runOpMode() runOpMode()} method of a linear opmode.
@@ -184,14 +183,6 @@ public class AutomaticAlignmentToPixels {
 
         switch (currentState) {
             case IDLE:
-                linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POS);
-
-                if (!linearSlideMotor.atTargetPosition()) {
-                    linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED);
-                } else {
-                    linearSlideMotor.set(0);
-                }
-
                 break;
 
             case SEARCHING_FOR_APRIL_TAGS:
@@ -201,10 +192,10 @@ public class AutomaticAlignmentToPixels {
                 if (aprilTagDetection != null) {
                     if (aprilTagDetection.metadata.id != LEFT_APRIL_TAG_ID && pixelStackIndex <= 2) {
                         // rotate the robot towards the correct april tag
-                        turnToAngle(Math.atan2(aprilTagDetection.ftcPose.y, -aprilTagDetection.ftcPose.x - DISTANCE_BETWEEN_APRIL_TAGS));
+                        mecanum.driveRobotCentric(0, 0, -MAX_AUTO_TURN);
                     } else if (aprilTagDetection.metadata.id != RIGHT_APRIL_TAG_ID && pixelStackIndex >= 3) {
                         // rotate the robot towards the correct april tag
-                        turnToAngle(Math.atan2(aprilTagDetection.ftcPose.y, aprilTagDetection.ftcPose.x + DISTANCE_BETWEEN_APRIL_TAGS));
+                        mecanum.driveRobotCentric(0, 0, MAX_AUTO_TURN);
                     } else { // if the robot is facing towards the correct april tag
                         currentState = State.MOVING_TO_PIXEL_STACK;
                     }
@@ -237,7 +228,7 @@ public class AutomaticAlignmentToPixels {
                 break;
 
             case SEARCHING_FOR_PIXEL_STACK:
-                hasFinished = scanForPixelStack(SCANNING_FOR_PIXEL_STACK_ANGLE * 2, true);
+                hasFinished = scanForPixelStack(SCANNING_FOR_PIXEL_STACK_ANGLE * 2);
 
                 if (hasFinished) {
                     currentState = State.SHIFTING_TO_PIXEL_STACK;
@@ -324,13 +315,15 @@ public class AutomaticAlignmentToPixels {
         return false;
     }
 
-    private static boolean scanForPixelStack(double searchAngle, boolean isClockwise) {
+    // turns clockwise while logging the closest angle in closestAngle
+    // TODO: find a better way to do this
+    private static boolean scanForPixelStack(double searchAngle) {
         if (distanceSensor.getDistance(DistanceUnit.INCH) < closestAngle[1]) {
             closestAngle[0] = gyro.getHeading();
             closestAngle[1] = distanceSensor.getDistance(DistanceUnit.INCH);
         }
 
-        return turnToAngle(isClockwise ? searchAngle : -searchAngle);
+        return turnToAngle(searchAngle);
     }
 
     // turns robot to angle

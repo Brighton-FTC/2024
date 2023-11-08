@@ -47,7 +47,7 @@ public class AutomaticAlignmentToPixelsTestOpMode extends OpMode {
     public void loop() {
         AutomaticAlignmentToPixels.goToPixelStack(selectedPixelStack);
 
-        telemetry.addLine(AutomaticAlignmentToPixels.isMoving() ? "Moving" : "Idle");
+        telemetry.addData("Curret state", AutomaticAlignmentToPixels.getCurrentState());
         telemetry.addData("Selected pixel stack", selectedPixelStack);
     }
 
