@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.aoutomaticAlignmentToPixels.test;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.GyroEx;
 import com.arcrobotics.ftclib.hardware.RevIMU;
@@ -39,6 +40,8 @@ public class AutomaticAlignmentToPixels {
     // TODO: fine tune these by testing
     public static final double DISTANCE_ERROR = 6; // in inches
     public static final double ANGLE_ERROR = 20; // in degrees
+
+    public static final double ARM_ERROR = 15;
     public static final double LINEAR_SLIDE_ERROR = 15;
 
     public static final double MOVING_DESIRED_DISTANCE = 18; // in inches
@@ -47,6 +50,9 @@ public class AutomaticAlignmentToPixels {
     public static final double MAX_AUTO_SPEED = 0.5;
     public static final double MAX_AUTO_TURN = 0.3;
     public static final double MAX_LINEAR_SLIDE_SPEED = 0.5;
+
+    public static final int ARM_LIFTED_POSITION = 0;
+    public static final int ARM_NOT_LIFTED_POSITION = 2000;
 
     public static final int LINEAR_SLIDE_DOWN_POS = 0;
     public static final int LINEAR_SLIDE_UP_POS = 2000;
@@ -57,12 +63,13 @@ public class AutomaticAlignmentToPixels {
     public static final double GRABBER_TILTED_DOWN_POS = 0;
     public static final double GRABBER_TILTED_UP_POS = 90;
 
+    public static final int INITIAL_ARM_POSITION_COUNTS = 200;
+    public static final int INITIAL_LINEAR_SLIDE_POSITION_COUNTS = 200;
+
     public static final double SCANNING_FOR_PIXEL_STACK_ANGLE = 30; // degrees
 
     public static final double AUTO_DRIVING_DIVISOR = 6;
     public static final double AUTO_ANGLE_DIVISOR = 45;
-
-    public static final double kP = 0.05;
 
     public static final int N_PIXEL_STACKS = 6;
     public static final double[] xOffsetFromAprilTags = {6, 18, 30, -30, -18, 6}; // 12 inch spacing between stacks
@@ -74,9 +81,14 @@ public class AutomaticAlignmentToPixels {
     private static AprilTagProcessor aprilTag;
     private static VisionPortal visionPortal;
 
+    // TODO: tune these
+    private static PIDFController armPidf;
+    private static PIDFController linearSlidePidf;
+
     public static MecanumDrive mecanum;
 
     private static MotorEx linearSlideMotor;
+    private static MotorEx armMotor;
     private static ServoEx grabberServo;
     private static ServoEx grabberTiltServo;
 
@@ -111,11 +123,16 @@ public class AutomaticAlignmentToPixels {
                 new Motor(hardwareMap, "back_right")
         );
 
-        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_name", LINEAR_SLIDE_DOWN_POS, LINEAR_SLIDE_UP_POS);
-        linearSlideMotor.setRunMode(Motor.RunMode.PositionControl);
+        armMotor = new MotorEx(hardwareMap, "arm_name");
+        armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        linearSlideMotor.setPositionTolerance(ARM_ERROR);
+
+        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_name");
         linearSlideMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         linearSlideMotor.setPositionTolerance(LINEAR_SLIDE_ERROR);
-        linearSlideMotor.setPositionCoefficient(kP);
+
+        armPidf = new PIDFController(0,0,0,0);
+        linearSlidePidf = new PIDFController(0, 0, 0, 0);
 
         grabberServo = new SimpleServo(hardwareMap, "grabber_servo_name", GRABBER_CLOSED_POS, GRABBER_OPEN_POS);
         grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo_name", GRABBER_TILTED_DOWN_POS, GRABBER_TILTED_UP_POS);
@@ -251,12 +268,16 @@ public class AutomaticAlignmentToPixels {
 
             case PREPARING_FOR_PIXEL_PICKUP:
                 if (!linearSlideMotor.atTargetPosition()) {
-                    linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED);
+                    setArmTargetPosition(ARM_LIFTED_POSITION);
+                    armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
+
+                    setLinearSlideTargetPosition(LINEAR_SLIDE_UP_POS);
+                    linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
                 }
                 grabberServo.turnToAngle(GRABBER_OPEN_POS);
                 grabberTiltServo.turnToAngle(GRABBER_TILTED_DOWN_POS);
 
-                if (linearSlideMotor.atTargetPosition()) {
+                if (linearSlideMotor.atTargetPosition() && armMotor.atTargetPosition()) {
                     currentState = State.PICKING_UP_PIXEL;
                 }
 
@@ -313,6 +334,22 @@ public class AutomaticAlignmentToPixels {
         }
 
         return false;
+    }
+
+    /**
+     * Set arm PID and feedforward to desired position
+     * @param position The desired final position of the arm
+     */
+    private static void setArmTargetPosition(int position) {
+        armPidf.setSetPoint(position - INITIAL_ARM_POSITION_COUNTS);
+    }
+
+    /**
+     * Set arm PID and feedforward to desired position
+     * @param position The desired final position of the arm
+     */
+    private static void setLinearSlideTargetPosition(int position) {
+        linearSlidePidf.setSetPoint(position - INITIAL_LINEAR_SLIDE_POSITION_COUNTS);
     }
 
     // turns clockwise while logging the closest angle in closestAngle
