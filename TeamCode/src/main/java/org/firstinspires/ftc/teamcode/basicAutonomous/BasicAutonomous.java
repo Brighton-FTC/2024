@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.basicAutonomous;
 
 import android.util.Size;
 
+import androidx.annotation.NonNull;
+
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.GyroEx;
@@ -24,13 +26,15 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Rudimentary autonomous code.
+ */
 @Disabled
 @Autonomous(name = "Basic Autonomous", group = "autonomous-test")
 public class BasicAutonomous extends OpMode {
@@ -49,11 +53,15 @@ public class BasicAutonomous extends OpMode {
     // TODO: fine tune these values
     public double ARM_ERROR = 15;
     public double LINEAR_SLIDE_ERROR = 15;
-    public double DRIVE_ERROR = 2;
     public double ANGLE_ERROR = 20;
     public int VISION_ERROR = 20;
 
+    public double DRIVING_TO_BACKDROP_DIST = 12;
+    public double SHIFTING_TO_BACKDROP_DIST = 3;
+
+    public double DRIVE_DIVISOR = 12;
     public double ANGLE_DIVISOR = 90;
+    public double STRAFE_DIVISOR = 24;
 
     public double ARM_DOWN_POS = 0;
     public double ARM_UP_POS = 180;
@@ -69,8 +77,7 @@ public class BasicAutonomous extends OpMode {
 
     public double MIN_DISTANCE_FROM_OBJECT = 6;
 
-    public double SPIKES_X = 24;
-    public double SPIKES_Y = 0;
+    public double PARKING_DIST_ERROR = 3;
 
     protected VisionPortal visionPortal;
 
@@ -95,9 +102,10 @@ public class BasicAutonomous extends OpMode {
     protected PIDFController armPidf = new PIDFController(0, 0, 0, 0);
     protected PIDFController linearSlidePidf = new PIDFController(0, 0, 0, 0);
 
-    protected State currentState = State.DETECTING_APRIL_TAGS;
+    protected State currentState = State.DRIVING_TO_SPIKE_MARKS;
+    protected CorrectSpikeMark correctSpikeMark = null;
 
-    protected AprilTagDetection currentDetection;
+    protected TeamColor teamColor = null; // fill this in
 
     @Override
     public void init() {
@@ -149,31 +157,6 @@ public class BasicAutonomous extends OpMode {
     @Override
     public void loop() {
         switch (currentState) {
-            case DETECTING_APRIL_TAGS:
-                List<AprilTagDetection> detections = getAprilTagDetections();
-
-                if (detections.size() > 0) {
-                    AprilTagDetection closestDetection = detections.stream()
-                            .min(Comparator.comparingDouble(x -> x.ftcPose.range))
-                            .get();
-
-                    gyro.reset();
-                    currentDetection = closestDetection;
-                    currentState = State.DRIVING_TO_SPIKE_MARKS;
-                }
-
-                break;
-
-            case TURNING_TO_SPIKE_TAGS:
-                double turnAngle = Math.atan2(SPIKES_Y - currentDetection.ftcPose.y, SPIKES_X - currentDetection.ftcPose.x);
-                boolean hasTurned = turnToAngle(turnAngle);
-
-                if (hasTurned) {
-                    currentState = State.DRIVING_TO_SPIKE_MARKS;
-                }
-
-                break;
-
             case DRIVING_TO_SPIKE_MARKS:
                 List<Recognition> recognitions = getTfodDetections();
 
@@ -185,6 +168,14 @@ public class BasicAutonomous extends OpMode {
                     boolean isDone = driveToTfodObject(currentRecognition, cameraSize.getWidth() * 2 / 3, cameraSize.getHeight() / 2);
 
                     if (isDone) {
+                        if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
+                            correctSpikeMark = CorrectSpikeMark.LEFT;
+                        } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * 2.0 / 3.0) {
+                            correctSpikeMark = CorrectSpikeMark.RIGHT;
+                        } else {
+                            correctSpikeMark = CorrectSpikeMark.CENTER;
+                        }
+
                         currentState = State.PLACING_PURPLE_PIXEL;
                     }
                 } else {
@@ -207,11 +198,86 @@ public class BasicAutonomous extends OpMode {
                 if (armPidf.atSetPoint() && linearSlidePidf.atSetPoint()) {
                     grabberServo.turnToAngle(GRABBER_OPEN_POS);
                     currentState = State.DONE;
+                    gyro.reset();
+                }
+
+            case TURNING_TO_BACKDROP:
+                boolean isDone = turnToAngle(-90);
+
+                if (isDone) {
+                    currentState = State.DRIVING_TO_BACKDROP;
+                }
+
+            case DRIVING_TO_BACKDROP:
+                if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
+                    mecanum.driveRobotCentric(0, 1, 0);
+                } else {
+                    currentState = State.SHIFTING_TO_BACKDROP;
+                }
+
+            case PREPARING_FOR_SHIFTING:
+                armPidf.setSetPoint(ARM_UP_POS);
+                armMotor.set(armPidf.calculate());
+
+                linearSlidePidf.setSetPoint(LINEAR_SLIDE_UP_POS);
+                linearSlideMotor.set(linearSlidePidf.calculate());
+
+                grabberTiltServo.turnToAngle(GRABBER_TILTED_UP_POS);
+                break;
+
+            case SHIFTING_TO_BACKDROP:
+                AprilTagDetection currentDetection = null;
+                try {
+                    if (teamColor == TeamColor.RED) {
+                        currentDetection = getAprilTagDetections().stream()
+                                .filter((detection) -> detection.id == correctSpikeMark.getRedAprilTagId())
+                                .collect(Collectors.toList())
+                                .get(0);
+
+                    } else if (teamColor == TeamColor.BLUE) {
+                        currentDetection = getAprilTagDetections().stream()
+                                .filter((detection) -> detection.id == correctSpikeMark.getBlueAprilTagId())
+                                .collect(Collectors.toList())
+                                .get(0);
+                    }
+
+                    assert currentDetection != null;
+                    boolean hasShifted = shiftToAprilTag(currentDetection);
+
+                    if (hasShifted) {
+                        currentState = State.PLACING_YELLOW_PIXEL;
+                    }
+
+                } catch (IndexOutOfBoundsException e) {
+                    currentState = State.STRAFING_TO_PARK;
+
+                    break;
+                }
+
+            case PLACING_YELLOW_PIXEL:
+                grabberServo.turnToAngle(GRABBER_OPEN_POS);
+                currentState = State.STRAFING_TO_PARK;
+                gyro.reset();
+                break;
+
+            case STRAFING_TO_PARK:
+                mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? 0.5 : -0.5, 0);
+
+                if (distanceSensor.getDistance(DistanceUnit.INCH) > SHIFTING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
+                    currentState = State.PARKING;
+                }
+                break;
+
+            case PARKING:
+                if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
+                    mecanum.driveRobotCentric(0, 0.5, 0);
+                } else {
+                    currentState = State.DONE;
                 }
         }
     }
 
-    @NotNull
+    @NonNull
     protected List<Recognition> getTfodDetections() {
         List<Recognition> currentRecognitions = tfod.getRecognitions();
         telemetry.addLine(currentRecognitions.size() + " Objects Detected. ");
@@ -223,7 +289,7 @@ public class BasicAutonomous extends OpMode {
         return currentRecognitions;
     }
 
-    @NotNull
+    @NonNull
     protected List<AprilTagDetection> getAprilTagDetections() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addLine(currentDetections.size() + " AprilTags Detected. ");
@@ -246,7 +312,7 @@ public class BasicAutonomous extends OpMode {
         }
     }
 
-    protected boolean driveToTfodObject(Recognition object, int xPos, int yPos) {
+    protected boolean driveToTfodObject(@NonNull Recognition object, int xPos, int yPos) {
         if (Math.abs(object.estimateAngleToObject(AngleUnit.DEGREES)) <= ANGLE_ERROR) {
             gyro.reset();
             turnToAngle(object.estimateAngleToObject(AngleUnit.DEGREES));
@@ -268,12 +334,52 @@ public class BasicAutonomous extends OpMode {
         }
     }
 
+    protected boolean shiftToAprilTag(@NonNull AprilTagDetection detection) {
+        if (Math.abs(detection.ftcPose.range) <= SHIFTING_TO_BACKDROP_DIST) {
+            return true;
+        } else {
+            mecanum.driveRobotCentric(0, detection.ftcPose.y / DRIVE_DIVISOR, detection.ftcPose.x / STRAFE_DIVISOR);
+            return false;
+        }
+    }
+
     public enum State {
-        DETECTING_APRIL_TAGS,
-        TURNING_TO_SPIKE_TAGS,
         DRIVING_TO_SPIKE_MARKS,
         PLACING_PURPLE_PIXEL,
+        TURNING_TO_BACKDROP,
+        DRIVING_TO_BACKDROP,
+        PREPARING_FOR_SHIFTING,
+        SHIFTING_TO_BACKDROP,
+        PLACING_YELLOW_PIXEL,
+        STRAFING_TO_PARK,
+        PARKING,
         DONE
     }
 
+    public enum CorrectSpikeMark {
+        LEFT(1, 4),
+        CENTER(2, 5),
+        RIGHT(3, 6);
+
+        private final int blueAprilTagId;
+        private final int redAprilTagId;
+
+        CorrectSpikeMark(int blueAprilTagId, int redAprilTagId) {
+            this.blueAprilTagId = blueAprilTagId;
+            this.redAprilTagId = redAprilTagId;
+        }
+
+        public int getBlueAprilTagId() {
+            return blueAprilTagId;
+        }
+
+        public int getRedAprilTagId() {
+            return redAprilTagId;
+        }
+    }
+
+    public enum TeamColor {
+        BLUE,
+        RED
+    }
 }
