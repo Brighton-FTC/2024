@@ -12,42 +12,27 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  *
  * Controls:
  * <ul>
- *     <li>Change servo - dpad left & dpad right</li>
+ *     <li>Rotate servo - dpad left & dpad right</li>
  *     <li>Change rotation angle - dpad down & dpad up</li>
- *     <li>Rotate servo by rotation angle - A (cross on playstation) and B (circle on playstation)</li>
  * </ul>
  *
  */
 
-@TeleOp(name = "Grabber Servo Position Tester", group = "components_test")
+@TeleOp(name = "Grabber Servo Position Tester", group = "components-test")
 public class ServoPositionTester extends OpMode {
-    private ServoEx[] servos;
-    private int currentServoIndex = 0;
-
     private GamepadEx gamepad = new GamepadEx(gamepad1);
+
+    private ServoEx testServo;
 
     private int rotationAngle = 20;
 
     @Override
     public void init() {
-        servos = new ServoEx[]{
-                new SimpleServo(hardwareMap, "servo_name", 0, 360),
-                new SimpleServo(hardwareMap, "servo_name", 0, 360)
-        };
+        testServo = new SimpleServo(hardwareMap, "servo_name", 0, 360);
     }
 
     @Override
     public void loop() {
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            currentServoIndex--;
-            currentServoIndex %= servos.length;
-        }
-
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            currentServoIndex++;
-            currentServoIndex %= servos.length;
-        }
-
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
             rotationAngle -= 5;
         }
@@ -56,16 +41,14 @@ public class ServoPositionTester extends OpMode {
             rotationAngle += 5;
         }
 
-        if (gamepad.wasJustPressed(GamepadKeys.Button.A)) {
-            servos[currentServoIndex].rotateByAngle(rotationAngle);
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            testServo.rotateByAngle(rotationAngle);
         }
 
-        if (gamepad.wasJustPressed(GamepadKeys.Button.B)) {
-            servos[currentServoIndex].rotateByAngle(-rotationAngle);
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            testServo.rotateByAngle(-rotationAngle);
         }
 
-        telemetry.addData("Current servo index", currentServoIndex);
         telemetry.addData("Rotation angle", rotationAngle);
-        telemetry.addData("Current servo angle", servos[currentServoIndex].getAngle());
     }
 }
