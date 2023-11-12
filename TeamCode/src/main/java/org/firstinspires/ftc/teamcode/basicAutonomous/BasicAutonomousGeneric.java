@@ -14,8 +14,6 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -35,14 +33,12 @@ import java.util.stream.Collectors;
 /**
  * Rudimentary autonomous code.
  */
-@Disabled
-@Autonomous(name = "Basic Autonomous", group = "autonomous-test")
-public class BasicAutonomous extends OpMode {
+public class BasicAutonomousGeneric extends OpMode {
     // TODO: once the custom model exists, replace this with the custom model name
-    public String TFOD_MODEL_ASSET = "CenterStage.tflite";
+    public final String TFOD_MODEL_ASSET = "CenterStage.tflite";
 
     // TODO: once the custom model exists, modify this
-    public String[] LABELS = {
+    public final String[] LABELS = {
             "Pixel"
     };
 
@@ -51,33 +47,33 @@ public class BasicAutonomous extends OpMode {
     };
 
     // TODO: fine tune these values
-    public double ARM_ERROR = 15;
-    public double LINEAR_SLIDE_ERROR = 15;
-    public double ANGLE_ERROR = 20;
-    public int VISION_ERROR = 20;
+    public final double ARM_ERROR = 15;
+    public final double LINEAR_SLIDE_ERROR = 15;
+    public final double ANGLE_ERROR = 20;
+    public final int VISION_ERROR = 20;
 
-    public double DRIVING_TO_BACKDROP_DIST = 12;
-    public double SHIFTING_TO_BACKDROP_DIST = 3;
+    public final double DRIVING_TO_BACKDROP_DIST = 12;
+    public final double SHIFTING_TO_BACKDROP_DIST = 3;
 
-    public double DRIVE_DIVISOR = 12;
-    public double ANGLE_DIVISOR = 90;
-    public double STRAFE_DIVISOR = 24;
+    public final double DRIVE_DIVISOR = 12;
+    public final double ANGLE_DIVISOR = 90;
+    public final double STRAFE_DIVISOR = 24;
 
-    public double ARM_DOWN_POS = 0;
-    public double ARM_UP_POS = 180;
+    public final double ARM_DOWN_POS = 0;
+    public final double ARM_UP_POS = 180;
 
-    public double LINEAR_SLIDE_DOWN_POS = 0;
-    public double LINEAR_SLIDE_UP_POS = 180;
+    public final double LINEAR_SLIDE_DOWN_POS = 0;
+    public final double LINEAR_SLIDE_UP_POS = 180;
 
-    public double GRABBER_CLOSED_POS = 0;
-    public double GRABBER_OPEN_POS = 90;
+    public final double GRABBER_CLOSED_POS = 0;
+    public final double GRABBER_OPEN_POS = 90;
 
-    public double GRABBER_TILTED_DOWN_POS = 0;
-    public double GRABBER_TILTED_UP_POS = 90;
+    public final double GRABBER_TILTED_DOWN_POS = 0;
+    public final double GRABBER_TILTED_UP_POS = 90;
 
-    public double MIN_DISTANCE_FROM_OBJECT = 6;
+    public final double MIN_DISTANCE_FROM_OBJECT = 6;
 
-    public double PARKING_DIST_ERROR = 3;
+    public final double PARKING_DIST_ERROR = 3;
 
     protected VisionPortal visionPortal;
 
