@@ -17,7 +17,6 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -161,7 +160,7 @@ public class BasicAutonomousGeneric extends OpMode {
                             .min(Comparator.comparingDouble(Recognition::getTop))
                             .get();
 
-                    boolean isDone = driveToTfodObject(currentRecognition, cameraSize.getWidth() * 2 / 3, cameraSize.getHeight() / 2);
+                    boolean isDone = driveToTfodObject(currentRecognition, cameraSize.getHeight() * 2 / 3);
 
                     if (isDone) {
                         if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
@@ -308,20 +307,11 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    protected boolean driveToTfodObject(@NonNull Recognition object, int xPos, int yPos) {
-        if (Math.abs(object.estimateAngleToObject(AngleUnit.DEGREES)) <= ANGLE_ERROR) {
-            gyro.reset();
-            turnToAngle(object.estimateAngleToObject(AngleUnit.DEGREES));
-            return false;
-
-        } else if (Math.abs((object.getTop() + object.getBottom()) / 2 - yPos) <= VISION_ERROR) {
+    protected boolean driveToTfodObject(@NonNull Recognition object, int yPos) {
+        if (Math.abs((object.getTop() + object.getBottom()) / 2 - yPos) <= VISION_ERROR) {
             if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
                 mecanum.driveRobotCentric(0, (object.getTop() + object.getBottom() / (2 * cameraSize.getHeight())), 0);
             }
-            return false;
-
-        } else if (Math.abs(object.getLeft() + object.getRight() / 2 - xPos) <= VISION_ERROR) {
-            mecanum.driveRobotCentric(0, 0, (object.getTop() + object.getBottom() / (2 * cameraSize.getWidth())));
 
             return false;
 
