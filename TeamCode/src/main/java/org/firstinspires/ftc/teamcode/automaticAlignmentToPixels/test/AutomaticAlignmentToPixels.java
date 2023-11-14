@@ -23,7 +23,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.inputs.PSButtons;
+import org.firstinspires.ftc.teamcode.PSButtons;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
@@ -171,16 +171,25 @@ public class AutomaticAlignmentToPixels extends OpMode {
         return currentState != State.IDLE;
     }
 
+    /**
+     * Make the robot stop moving.
+     */
     public void stopMoving() {
         currentState = State.IDLE;
     }
 
+    /**
+     * If the robot isn't moving, then make it move.
+     */
     public void startMoving() {
         if (currentState == State.IDLE) {
             currentState = State.SEARCHING_FOR_APRIL_TAGS;
         }
     }
 
+    /**
+     * If the robot is idle, then make it move, otherwise make it stop moving.
+     */
     public void toggleMoving() {
         if (isMoving()) {
             stopMoving();
@@ -189,6 +198,9 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
+    /**
+     * @return The current state.
+     */
     public State getCurrentState() {
         return currentState;
     }
@@ -312,7 +324,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
     private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         // calculate how far the robot has to turn/move
         // idk if I have to use anchor.y or anchor.range here, but am using anchor.y for now
-        double headingError = Math.atan2(anchor.y, anchor.x + xOffset) * 180 / Math.PI;
+        double headingError = Math.toDegrees(Math.atan2(anchor.y, anchor.x + xOffset));
         double distanceError = distanceSensor.getDistance(DistanceUnit.INCH);
 
         double currentHeading = gyro.getHeading();
