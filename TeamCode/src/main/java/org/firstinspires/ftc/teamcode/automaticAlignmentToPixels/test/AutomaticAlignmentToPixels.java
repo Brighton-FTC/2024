@@ -63,14 +63,14 @@ public class AutomaticAlignmentToPixels extends OpMode {
     public final int ARM_LIFTED_POSITION = 0;
     public final int ARM_NOT_LIFTED_POSITION = 2000;
 
-    public final int LINEAR_SLIDE_DOWN_POS = 0;
+    public final int LINEAR_SLIDE_DOWN_POSITION = 0;
     public final int LINEAR_SLIDE_UP_POSITION = 2000;
 
-    public final double GRABBER_CLOSED_POS = 0;
+    public final double GRABBER_CLOSED_POSITION = 0;
     public final double GRABBER_OPEN_POSITION = 90;
 
     public final double GRABBER_TILTED_DOWN_POSITION = 0;
-    public final double GRABBER_TILTED_UP_POS = 90;
+    public final double GRABBER_TILTED_UP_POSITION = 90;
 
     public final int INITIAL_ARM_POSITION_COUNTS = 200;
     public final int INITIAL_LINEAR_SLIDE_POSITION_COUNTS = 200;
@@ -145,8 +145,8 @@ public class AutomaticAlignmentToPixels extends OpMode {
         armPidf = new PIDFController(0, 0, 0, 0);
         linearSlidePidf = new PIDFController(0, 0, 0, 0);
 
-        grabberServo = new SimpleServo(hardwareMap, "grabber_servo_name", GRABBER_CLOSED_POS, GRABBER_OPEN_POSITION);
-        grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo_name", GRABBER_TILTED_DOWN_POSITION, GRABBER_TILTED_UP_POS);
+        grabberServo = new SimpleServo(hardwareMap, "grabber_servo_name", GRABBER_CLOSED_POSITION, GRABBER_OPEN_POSITION);
+        grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo_name", GRABBER_TILTED_DOWN_POSITION, GRABBER_TILTED_UP_POSITION);
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor_name");
         gyro = new RevIMU(hardwareMap, "gyro_name");
@@ -292,11 +292,11 @@ public class AutomaticAlignmentToPixels extends OpMode {
                 break;
 
             case PICKING_UP_PIXEL:
-                linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POS);
+                linearSlideMotor.setTargetPosition(LINEAR_SLIDE_DOWN_POSITION);
                 if (!touchSensor.isPressed()) {
                     linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED / 2);
                 } else {
-                    grabberServo.turnToAngle(GRABBER_CLOSED_POS);
+                    grabberServo.turnToAngle(GRABBER_CLOSED_POSITION);
                     currentState = State.IDLE;
                 }
         }
