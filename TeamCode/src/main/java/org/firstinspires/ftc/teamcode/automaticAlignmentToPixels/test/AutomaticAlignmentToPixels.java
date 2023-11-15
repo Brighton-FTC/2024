@@ -64,12 +64,12 @@ public class AutomaticAlignmentToPixels extends OpMode {
     public final int ARM_NOT_LIFTED_POSITION = 2000;
 
     public final int LINEAR_SLIDE_DOWN_POS = 0;
-    public final int LINEAR_SLIDE_UP_POS = 2000;
+    public final int LINEAR_SLIDE_UP_POSITION = 2000;
 
     public final double GRABBER_CLOSED_POS = 0;
-    public final double GRABBER_OPEN_POS = 90;
+    public final double GRABBER_OPEN_POSITION = 90;
 
-    public final double GRABBER_TILTED_DOWN_POS = 0;
+    public final double GRABBER_TILTED_DOWN_POSITION = 0;
     public final double GRABBER_TILTED_UP_POS = 90;
 
     public final int INITIAL_ARM_POSITION_COUNTS = 200;
@@ -90,7 +90,6 @@ public class AutomaticAlignmentToPixels extends OpMode {
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
-    // TODO: tune these
     private PIDFController armPidf;
     private PIDFController linearSlidePidf;
 
@@ -142,11 +141,12 @@ public class AutomaticAlignmentToPixels extends OpMode {
         linearSlideMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         linearSlideMotor.setPositionTolerance(LINEAR_SLIDE_ERROR);
 
+        // TODO: tune these
         armPidf = new PIDFController(0, 0, 0, 0);
         linearSlidePidf = new PIDFController(0, 0, 0, 0);
 
-        grabberServo = new SimpleServo(hardwareMap, "grabber_servo_name", GRABBER_CLOSED_POS, GRABBER_OPEN_POS);
-        grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo_name", GRABBER_TILTED_DOWN_POS, GRABBER_TILTED_UP_POS);
+        grabberServo = new SimpleServo(hardwareMap, "grabber_servo_name", GRABBER_CLOSED_POS, GRABBER_OPEN_POSITION);
+        grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo_name", GRABBER_TILTED_DOWN_POSITION, GRABBER_TILTED_UP_POS);
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor_name");
         gyro = new RevIMU(hardwareMap, "gyro_name");
@@ -279,11 +279,11 @@ public class AutomaticAlignmentToPixels extends OpMode {
                     setArmTargetPosition(ARM_LIFTED_POSITION);
                     armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
 
-                    setLinearSlideTargetPosition(LINEAR_SLIDE_UP_POS);
+                    setLinearSlideTargetPosition(LINEAR_SLIDE_UP_POSITION);
                     linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
                 }
-                grabberServo.turnToAngle(GRABBER_OPEN_POS);
-                grabberTiltServo.turnToAngle(GRABBER_TILTED_DOWN_POS);
+                grabberServo.turnToAngle(GRABBER_OPEN_POSITION);
+                grabberTiltServo.turnToAngle(GRABBER_TILTED_DOWN_POSITION);
 
                 if (linearSlideMotor.atTargetPosition() && armMotor.atTargetPosition()) {
                     currentState = State.PICKING_UP_PIXEL;
@@ -302,8 +302,12 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
-    // gets the april tag that the robot should use for its pathfinding
-    // if there are more than one april tags on the screen, then it will chose the first one returned
+    /** Gets the April Tag that the robot should use for its pathfinding.
+     * Rejects April Tags that aren't the two specific tags used.
+     * If there is more than one April Tag on the screen, then it will choose the first one returned.
+     *
+     * @return null if there are no April Tags with the correct metadata, the first April Tag with the correct metadata returned otherwise
+     */
     @Nullable
     private AprilTagDetection getAprilTag() {
         // get the detections and filter out the ones without metadata
@@ -320,16 +324,21 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
-    // attempts to move robot to april tag, and returns if the robot has stopped
+    /**
+     * Moves the robot to the pixel stack using a April Tag.
+     *
+     * @param anchor The April Tag detected - either the left or the right one
+     * @param xOffset a offset to the heading depending on which pixel stack the robot is going to
+     * @return whether the robot has finished moving as a boolean
+     */
     private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         // calculate how far the robot has to turn/move
         // idk if I have to use anchor.y or anchor.range here, but am using anchor.y for now
+        // TODO: figure out if this is wrong and how to fix if so
         double headingError = Math.toDegrees(Math.atan2(anchor.y, anchor.x + xOffset));
         double distanceError = distanceSensor.getDistance(DistanceUnit.INCH);
 
-        double currentHeading = gyro.getHeading();
-        // set the angle to be from -179 to 180 instead of 0 to 359
-        currentHeading = currentHeading > 180 ? currentHeading - 360 : currentHeading;
+        double currentHeading = angleConvert(gyro.getHeading());
 
         if (!(Math.abs(headingError - currentHeading) <= ANGLE_ERROR)) {
             turnToAngle(headingError);
@@ -354,16 +363,27 @@ public class AutomaticAlignmentToPixels extends OpMode {
     }
 
     /**
-     * Set arm PID and feedforward to desired position
+     * Converts angle from 0 to 360 into -180 to 180
+     * @param currentHeading angle from 0 to 360 you want to convert
+     * @return angle from -180 to 180
+     */
+    private double angleConvert(double currentHeading) {
+        return currentHeading > 180 ? currentHeading - 360 : currentHeading;
+    }
+
+    /**
+     * Set linear slide to desired position
      *
-     * @param position The desired final position of the arm
+     * @param position The desired final position of the linear slide
      */
     private void setLinearSlideTargetPosition(int position) {
         linearSlidePidf.setSetPoint(position - INITIAL_LINEAR_SLIDE_POSITION_COUNTS);
     }
 
-    // turns clockwise while logging the closest angle in closestAngle
     // TODO: find a better way to do this
+    /** turns clockwise while logging the closest angle in closestAngle
+     * @return if robot has turned to angle yet
+     */
     private boolean scanForPixelStack(double searchAngle) {
         if (distanceSensor.getDistance(DistanceUnit.INCH) < closestAngle[1]) {
             closestAngle[0] = gyro.getHeading();
@@ -373,12 +393,14 @@ public class AutomaticAlignmentToPixels extends OpMode {
         return turnToAngle(searchAngle);
     }
 
-    // turns robot to angle
-    // note that angle should be -179 to 180 rather than 0 to 360
-    // returns whether it's done turning
+    /** Turns robot to angle.
+     *
+     * @param angle angle required in degrees, 0 to 360
+     * @return whether it's done turning as a boolean
+     */
 
     private boolean turnToAngle(double angle) {
-        double currentHeading = gyro.getHeading() > 180 ? gyro.getHeading() - 360 : gyro.getHeading();
+        double currentHeading = angleConvert(gyro.getHeading());
 
         if (Math.abs(currentHeading - angle) <= ANGLE_ERROR) {
             return true;
@@ -391,8 +413,13 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
-    // drives robot forwards to distance
-    // returns whether it's done driving
+    /**
+     * Drives robot forward until the distance sensor has a reading closer than the distance passed in
+     *
+     * @param distance the distance (detected by the distance sensor) that the method will stop moving at
+     * @param distanceUnit the unit that distance is measured in
+     * @return whether the distance has been reached as a boolean
+     */
     private boolean driveToDistance(double distance, DistanceUnit distanceUnit) {
         double currentDistance = distanceSensor.getDistance(distanceUnit);
 
@@ -407,6 +434,9 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
+    /**
+     * Contains the possible states of the robot.
+     */
     public enum State {
         IDLE("Idle"),
         SEARCHING_FOR_APRIL_TAGS("Searching for april tags"),
