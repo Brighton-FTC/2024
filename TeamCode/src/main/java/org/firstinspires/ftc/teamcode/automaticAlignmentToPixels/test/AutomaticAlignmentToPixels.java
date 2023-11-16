@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Prototype for aligning robot to a stack of pixels (<b>untested and in development</b>). <br />
- * It's meant to go to a specified pixel stack. <br />
+ * Prototype for aligning robot to a stack of pixels (<b>untested and in developement</b>). <br />
+ * It's meant to go to a specified pixel stack. <br /><br />
  * <p>
  * Controls:
  * <ul>
@@ -55,6 +55,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
 
     public final double MOVING_DESIRED_DISTANCE = 18; // in inches
     public final double SHIFTING_DESIRED_DISTANCE = 6; // in inches
+    public final double FINISHED_DESIRED_DISTANCE = 12; // in inches
 
     public final double MAX_AUTO_SPEED = 0.5;
     public final double MAX_AUTO_TURN = 0.3;
@@ -297,13 +298,26 @@ public class AutomaticAlignmentToPixels extends OpMode {
                     linearSlideMotor.set(MAX_LINEAR_SLIDE_SPEED / 2);
                 } else {
                     grabberServo.turnToAngle(GRABBER_CLOSED_POS);
+                    currentState = State.MOVING_BACK_FROM_PIXELS;
+                }
+
+                break;
+
+            case MOVING_BACK_FROM_PIXELS:
+                hasFinished = driveToDistance(FINISHED_DESIRED_DISTANCE, DistanceUnit.INCH);
+
+                if (hasFinished) {
                     currentState = State.IDLE;
                 }
         }
     }
 
-    // gets the april tag that the robot should use for its pathfinding
-    // if there are more than one april tags on the screen, then it will chose the first one returned
+    /**
+     * Gets the april tag that the robot should use for its pathfinding.
+     * If there are more than one april tags on the screen, then it will chose the first one returned.
+     *
+     * @return The first april tag found. If there are no april tags with metadata found, then it will return null.
+     */
     @Nullable
     private AprilTagDetection getAprilTag() {
         // get the detections and filter out the ones without metadata
@@ -320,7 +334,14 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
-    // attempts to move robot to april tag, and returns if the robot has stopped
+    /**
+     * Attempts to move robot to april tag.
+     *
+     * @param anchor  The april tag that the robot must move to.
+     * @param xOffset The horizontal offset from the april tag, in inches.
+     *                For example, if you want to move the robot half a foot right of an april tag, then pass in 6.
+     * @return If it has finished moving the robot.
+     */
     private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         // calculate how far the robot has to turn/move
         // idk if I have to use anchor.y or anchor.range here, but am using anchor.y for now
@@ -362,7 +383,11 @@ public class AutomaticAlignmentToPixels extends OpMode {
         linearSlidePidf.setSetPoint(position - INITIAL_LINEAR_SLIDE_POSITION_COUNTS);
     }
 
-    // turns clockwise while logging the closest angle in closestAngle
+    /**
+     * Turns the robot clockwise while logging the closest angle in closestAngle.
+     *
+     * @return If it has finished scanning.
+     */
     // TODO: find a better way to do this
     private boolean scanForPixelStack(double searchAngle) {
         if (distanceSensor.getDistance(DistanceUnit.INCH) < closestAngle[1]) {
@@ -373,9 +398,13 @@ public class AutomaticAlignmentToPixels extends OpMode {
         return turnToAngle(searchAngle);
     }
 
-    // turns robot to angle
-    // note that angle should be -179 to 180 rather than 0 to 360
-    // returns whether it's done turning
+
+    /**
+     * Turns robot to angle.
+     * Note that angle should be -179 to 180 rather than 0 to 360.
+     *
+     * @return whether it's done turning
+     */
 
     private boolean turnToAngle(double angle) {
         double currentHeading = gyro.getHeading() > 180 ? gyro.getHeading() - 360 : gyro.getHeading();
@@ -391,8 +420,13 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
-    // drives robot forwards to distance
-    // returns whether it's done driving
+    /**
+     * Drives the robot to the specified distance.
+     *
+     * @param distance     The distance that the robot must drive to.
+     * @param distanceUnit The unit that <i>distance</i> is in.
+     * @return If it has finished moving the robot.
+     */
     private boolean driveToDistance(double distance, DistanceUnit distanceUnit) {
         double currentDistance = distanceSensor.getDistance(distanceUnit);
 
@@ -407,6 +441,9 @@ public class AutomaticAlignmentToPixels extends OpMode {
         }
     }
 
+    /**
+     * The state that the robot is currently in.
+     */
     public enum State {
         IDLE("Idle"),
         SEARCHING_FOR_APRIL_TAGS("Searching for april tags"),
@@ -415,7 +452,8 @@ public class AutomaticAlignmentToPixels extends OpMode {
         SEARCHING_FOR_PIXEL_STACK("Searching for stack"),
         SHIFTING_TO_PIXEL_STACK("Shifting to  stack"),
         PREPARING_FOR_PIXEL_PICKUP("Preparing for pixel pickup"),
-        PICKING_UP_PIXEL("Picking up pixel");
+        PICKING_UP_PIXEL("Picking up pixel"),
+        MOVING_BACK_FROM_PIXELS("Moving back from pixel stack");
 
         private final String stringRepr;
 
