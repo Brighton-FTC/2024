@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Prototype for aligning robot to a stack of pixels (<b>untested and in developement</b>). <br />
+ * Prototype for aligning robot to a stack of pixels (<b>untested and in development</b>). <br />
  * It's meant to go to a specified pixel stack. <br /><br />
  * <p>
  * Controls:
@@ -442,7 +442,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
     }
 
     /**
-     * The state that the robot is currently in.
+     * Possible states for the robot.
      */
     public enum State {
         IDLE("Idle"),
