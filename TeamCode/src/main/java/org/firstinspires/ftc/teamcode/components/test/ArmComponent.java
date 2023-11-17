@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -47,7 +48,7 @@ public class ArmComponent extends OpMode {
     @Override
     public void init() {
         // TODO: fill in device names
-        grabberTiltServo = (ServoEx) hardwareMap.servo.get("device name here as well");
+        grabberTiltServo = new SimpleServo(hardwareMap, "servo_name", 0, 360);
         armMotor = new Motor(hardwareMap, "motorOne");
 
         // set ranges on servos, just in case
