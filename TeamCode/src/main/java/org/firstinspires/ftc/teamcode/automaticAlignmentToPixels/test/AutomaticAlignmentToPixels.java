@@ -82,7 +82,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
     public final double AUTO_ANGLE_DIVISOR = 45;
 
     public final int N_PIXEL_STACKS = 6;
-    public final double[] xOffsetFromAprilTags = {6, 18, 30, -30, -18, 6}; // 12 inch spacing between stacks
+    public final double[] xOffsetFromAprilTags = {6, 18, 30, -30, -18, -6}; // 12 inch spacing between stacks
 
     // TODO: check these are the right way round
     public final int LEFT_APRIL_TAG_ID = 7;
@@ -345,7 +345,7 @@ public class AutomaticAlignmentToPixels extends OpMode {
     private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         // calculate how far the robot has to turn/move
         // idk if I have to use anchor.y or anchor.range here, but am using anchor.y for now
-        double headingError = Math.toDegrees(Math.atan2(anchor.y, anchor.x + xOffset));
+        double headingError = 90 - Math.toDegrees(Math.atan2(anchor.y, anchor.x + xOffset));
         double distanceError = distanceSensor.getDistance(DistanceUnit.INCH);
 
         double currentHeading = gyro.getHeading();
