@@ -14,8 +14,10 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Point;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -80,26 +82,32 @@ public class BasicLocalizationStack {
      */
     @Nullable
     public Point getRobotLocation() {
-        List<AprilTagDetection> aprilTagDetections = getAprilTagDetections();
+        List<AprilTagDetection> aprilTagDetections = getAprilTagDetections().stream()
+                .filter((detection) ->  nearSideAprilTags.containsKey(detection.id) || farSideAprilTags.containsKey(detection.id))
+                .collect(Collectors.toList());
 
         if (aprilTagDetections.size() == 0) {
             return null;
+
         } else {
-            AprilTagDetection detection = aprilTagDetections.get(0);
+            double[] x = new double[aprilTagDetections.size()];
+            double[] y = new double[aprilTagDetections.size()];
 
-            if (nearSideAprilTags.containsKey(detection.id)) {
-                double x = nearSideAprilTags.get(detection.id).x + detection.ftcPose.x;
-                double y = nearSideAprilTags.get(detection.id).y - detection.ftcPose.y;
+            int i = 0;
+            for (AprilTagDetection detection : aprilTagDetections) {
+                if (nearSideAprilTags.containsKey(detection.id)) {
+                    x[i] = Objects.requireNonNull(nearSideAprilTags.get(detection.id)).x + detection.ftcPose.x;
+                    y[i] = Objects.requireNonNull(nearSideAprilTags.get(detection.id)).y - detection.ftcPose.y;
 
-                return new Point(x, y);
-            } else if (farSideAprilTags.containsKey(detection.id)) {
-                double x = farSideAprilTags.get(detection.id).x + detection.ftcPose.x;
-                double y = farSideAprilTags.get(detection.id).y + detection.ftcPose.x;
+                } else if (farSideAprilTags.containsKey(detection.id)) {
+                    x[i] = Objects.requireNonNull(farSideAprilTags.get(detection.id)).x + detection.ftcPose.x;
+                    y[i] = Objects.requireNonNull(farSideAprilTags.get(detection.id)).y + detection.ftcPose.x;
+                }
 
-                return new Point(x, y);
-            } else {
-                return null;
+                i++;
             }
+
+            return new Point(Arrays.stream(x).average().orElse(0), Arrays.stream(y).average().orElse(0));
         }
     }
 
