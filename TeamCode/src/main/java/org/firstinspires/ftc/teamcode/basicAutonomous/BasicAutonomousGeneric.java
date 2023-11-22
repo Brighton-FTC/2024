@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 /**
  * Rudimentary autonomous code.
+ * Moves to the Team Prop, places down the purple pixel, drives to the backdrop, and places the yellow pixel.
  */
 public class BasicAutonomousGeneric extends OpMode {
     // TODO: once the custom model exists, replace this with the custom model name
@@ -73,6 +74,8 @@ public class BasicAutonomousGeneric extends OpMode {
     public final double MIN_DISTANCE_FROM_OBJECT = 6;
 
     public final double PARKING_DIST_ERROR = 3;
+
+    public final double CAMERA_YPOS = 2.0 / 3.0;
 
     protected VisionPortal visionPortal;
 
@@ -160,12 +163,12 @@ public class BasicAutonomousGeneric extends OpMode {
                             .min(Comparator.comparingDouble(Recognition::getTop))
                             .get();
 
-                    boolean isDone = driveToTfodObject(currentRecognition, cameraSize.getHeight() * 2 / 3);
+                    boolean isDone = driveToTfodObject(currentRecognition, (int) (cameraSize.getHeight() * CAMERA_YPOS));
 
                     if (isDone) {
                         if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
                             correctSpikeMark = CorrectSpikeMark.LEFT;
-                        } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * 2.0 / 3.0) {
+                        } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * CAMERA_YPOS) {
                             correctSpikeMark = CorrectSpikeMark.RIGHT;
                         } else {
                             correctSpikeMark = CorrectSpikeMark.CENTER;
@@ -192,7 +195,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
                 if (armPidf.atSetPoint() && linearSlidePidf.atSetPoint()) {
                     grabberServo.turnToAngle(GRABBER_OPEN_POS);
-                    currentState = State.DONE;
+                    currentState = State.TURNING_TO_BACKDROP;
                     gyro.reset();
                 }
 
@@ -207,19 +210,19 @@ public class BasicAutonomousGeneric extends OpMode {
                 if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
                     mecanum.driveRobotCentric(0, 1, 0);
                 } else {
+                    linearSlidePidf.setSetPoint(LINEAR_SLIDE_UP_POS);
+                    armPidf.setSetPoint(ARM_UP_POS);
+                    grabberTiltServo.turnToAngle(GRABBER_TILTED_UP_POS);
+
                     currentState = State.PREPARING_FOR_SHIFTING;
                 }
 
             case PREPARING_FOR_SHIFTING:
-                armPidf.setSetPoint(ARM_UP_POS);
                 armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
 
-                linearSlidePidf.setSetPoint(LINEAR_SLIDE_UP_POS);
                 linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
 
-                grabberTiltServo.turnToAngle(GRABBER_TILTED_UP_POS);
-
-                if (linearSlidePidf.atSetPoint() && armPidf.atSetPoint()) {
+                if (armPidf.atSetPoint() && linearSlidePidf.atSetPoint()) {
                     currentState = State.SHIFTING_TO_BACKDROP;
                 }
 
@@ -277,18 +280,28 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
+    /**
+     * Gets TFOD recognitions.
+     * 
+     * @return the TFOD recognitions that are in WANTED_LABELS
+     */
     @NonNull
     protected List<Recognition> getTfodDetections() {
         List<Recognition> currentRecognitions = tfod.getRecognitions();
         telemetry.addLine(currentRecognitions.size() + " Objects Detected. ");
 
         currentRecognitions = currentRecognitions.stream()
-                .filter((recognition) -> Arrays.asList(WANTED_LABELS).contains(recognition))
+                .filter((recognition) -> Arrays.asList(WANTED_LABELS).contains(recognition.getLabel()))
                 .collect(Collectors.toList());
 
         return currentRecognitions;
     }
 
+    /**
+     * Gets April Tags.
+     *
+     * @return all April Tags with metadata
+     */
     @NonNull
     protected List<AprilTagDetection> getAprilTagDetections() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -301,6 +314,12 @@ public class BasicAutonomousGeneric extends OpMode {
         return currentDetections;
     }
 
+    /**
+     * Turns the robot.
+     *
+     * @param angle angle from 0 to 360
+     * @return whether the robot is finished turning
+     */
     protected boolean turnToAngle(double angle) {
         double heading = gyro.getHeading() > 180 ? gyro.getHeading() - 360 : gyro.getHeading();
 
@@ -312,6 +331,14 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
+    /**
+     * Drives to the TFOD object.
+     * Uses the y position of the object and the distance sensor to determine if it is close enough.
+     *
+     * @param object the TFOD recognition
+     * @param yPos The y position that the TFOD object should be at.
+     * @return if the robot has finished driving yet
+     */
     protected boolean driveToTfodObject(@NonNull Recognition object, int yPos) {
         if (Math.abs((object.getTop() + object.getBottom()) / 2 - yPos) <= VISION_ERROR) {
             if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
@@ -325,6 +352,12 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
+    /**
+     * Shifts to the April Tag (strafes horizontally to line up with the April Tag)
+     *
+     * @param detection the April Tag that the robot is shifting to
+     * @return if the robot has finished shifting.
+     */
     protected boolean shiftToAprilTag(@NonNull AprilTagDetection detection) {
         if (Math.abs(detection.ftcPose.range) <= SHIFTING_TO_BACKDROP_DIST) {
             return true;
