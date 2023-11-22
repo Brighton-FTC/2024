@@ -185,8 +185,8 @@ public class BasicAutonomousGeneric extends OpMode {
                 armPidf.setSetPoint(ARM_DOWN_POS);
                 linearSlidePidf.setSetPoint(LINEAR_SLIDE_DOWN_POS);
 
-                armMotor.set(armPidf.calculate());
-                linearSlideMotor.set(linearSlidePidf.calculate());
+                armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
+                linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
 
                 grabberTiltServo.turnToAngle(GRABBER_TILTED_DOWN_POS);
 
@@ -207,17 +207,22 @@ public class BasicAutonomousGeneric extends OpMode {
                 if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
                     mecanum.driveRobotCentric(0, 1, 0);
                 } else {
-                    currentState = State.SHIFTING_TO_BACKDROP;
+                    currentState = State.PREPARING_FOR_SHIFTING;
                 }
 
             case PREPARING_FOR_SHIFTING:
                 armPidf.setSetPoint(ARM_UP_POS);
-                armMotor.set(armPidf.calculate());
+                armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
 
                 linearSlidePidf.setSetPoint(LINEAR_SLIDE_UP_POS);
-                linearSlideMotor.set(linearSlidePidf.calculate());
+                linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
 
                 grabberTiltServo.turnToAngle(GRABBER_TILTED_UP_POS);
+
+                if (linearSlidePidf.atSetPoint() && armPidf.atSetPoint()) {
+                    currentState = State.SHIFTING_TO_BACKDROP;
+                }
+
                 break;
 
             case SHIFTING_TO_BACKDROP:
