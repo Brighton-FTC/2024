@@ -39,16 +39,16 @@ public class GrabberComponent extends OpMode {
     @Override
     public void start() {
         // set servos to their starting positions
-        grabberServo.setPosition(GRABBER_OPEN_POSITION);
+        grabberServo.turnToAngle(GRABBER_OPEN_POSITION);
     }
 
     @Override
     public void loop() {
         if (gamepad.wasJustPressed(Button.RIGHT_BUMPER)) {
             if (isGrabberClosed) {
-                grabberServo.setPosition(GRABBER_OPEN_POSITION);
+                grabberServo.turnToAngle(GRABBER_OPEN_POSITION);
             } else {
-                grabberServo.setPosition(GRABBER_CLOSED_POSITION);
+                grabberServo.turnToAngle(GRABBER_CLOSED_POSITION);
             }
 
             isGrabberClosed = !isGrabberClosed;
