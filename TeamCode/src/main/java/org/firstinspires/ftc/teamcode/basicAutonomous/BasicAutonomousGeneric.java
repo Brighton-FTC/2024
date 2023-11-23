@@ -75,7 +75,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
     public final double PARKING_DIST_ERROR = 3;
 
-    public final double CAMERA_YPOS = 2.0 / 3.0;
+    public final double CAMERA_Y_POS = 2.0 / 3.0;
 
     protected VisionPortal visionPortal;
 
@@ -163,12 +163,12 @@ public class BasicAutonomousGeneric extends OpMode {
                             .min(Comparator.comparingDouble(Recognition::getTop))
                             .get();
 
-                    boolean isDone = driveToTfodObject(currentRecognition, (int) (cameraSize.getHeight() * CAMERA_YPOS));
+                    boolean isDone = driveToTfodObject(currentRecognition, (int) (cameraSize.getHeight() * CAMERA_Y_POS));
 
                     if (isDone) {
                         if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
                             correctSpikeMark = CorrectSpikeMark.LEFT;
-                        } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * CAMERA_YPOS) {
+                        } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * CAMERA_Y_POS) {
                             correctSpikeMark = CorrectSpikeMark.RIGHT;
                         } else {
                             correctSpikeMark = CorrectSpikeMark.CENTER;
@@ -179,6 +179,28 @@ public class BasicAutonomousGeneric extends OpMode {
                 } else {
                     if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
                         mecanum.driveRobotCentric(0, 1, 0);
+                    }
+                }
+
+                break;
+
+            case STRAFING_FOR_PURPLE_PIXEL_PLACEMENT:
+                recognitions = getTfodDetections();
+
+                if (recognitions.size() > 0) {
+                    Recognition currentRecognition = recognitions.stream()
+                            .min(Comparator.comparingDouble(Recognition::getTop))
+                            .get();
+
+                    // get the pixel centered to between 2/5 and 3/5 of the camera width
+                    if (currentRecognition.getRight() > cameraSize.getWidth() * 3.0 / 5.0) {
+                        mecanum.driveRobotCentric(0.5, 0, 0);
+
+                    } else if (currentRecognition.getLeft() < cameraSize.getWidth() * 2.0 / 5.0) {
+                        mecanum.driveRobotCentric(-0.5, 0, 0);
+
+                    } else {
+                        currentState = State.PLACING_PURPLE_PIXEL;
                     }
                 }
 
@@ -282,7 +304,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
     /**
      * Gets TFOD recognitions.
-     * 
+     *
      * @return the TFOD recognitions that are in WANTED_LABELS
      */
     @NonNull
@@ -336,7 +358,7 @@ public class BasicAutonomousGeneric extends OpMode {
      * Uses the y position of the object and the distance sensor to determine if it is close enough.
      *
      * @param object the TFOD recognition
-     * @param yPos The y position that the TFOD object should be at.
+     * @param yPos   The y position that the TFOD object should be at.
      * @return if the robot has finished driving yet
      */
     protected boolean driveToTfodObject(@NonNull Recognition object, int yPos) {
@@ -369,6 +391,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
     public enum State {
         DRIVING_TO_SPIKE_MARKS,
+        STRAFING_FOR_PURPLE_PIXEL_PLACEMENT,
         PLACING_PURPLE_PIXEL,
         TURNING_TO_BACKDROP,
         DRIVING_TO_BACKDROP,
