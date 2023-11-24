@@ -33,6 +33,10 @@ public class ArmComponent extends OpMode {
     // Keeping this as a OpMode so it's a little easier to test, will convert later
     private final int initialArmPositionCounts = 200;
 
+    // TODO: Tune somehow to make sure is correct
+    // Speed which makes robot 'just' start to move - static friction
+    private final int STATIC_FRICTION_CONST = 170;
+
     public static final GamepadKeys.Button SET_ARM_LIFTED = GamepadKeys.Button.B;
 
     private ServoEx grabberTiltServo;
@@ -93,6 +97,7 @@ public class ArmComponent extends OpMode {
 
         double velocity = 0;
         velocity += pidf.calculate(armMotor.getCurrentPosition());
+        velocity += STATIC_FRICTION_CONST;
         armMotor.set(velocity);
 
         telemetry.addData("Grabber Tilt Angle", grabberTiltServo.getAngle());
