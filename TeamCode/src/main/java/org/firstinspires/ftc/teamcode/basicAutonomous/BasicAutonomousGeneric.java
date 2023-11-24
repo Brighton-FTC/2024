@@ -103,7 +103,8 @@ public class BasicAutonomousGeneric extends OpMode {
     protected State currentState = State.DRIVING_TO_SPIKE_MARKS;
     protected CorrectSpikeMark correctSpikeMark = null;
 
-    protected TeamColor teamColor = null; // fill this in
+    protected TeamColor teamColor = null; // fill this in in the color specific opmode
+    protected double backdropTurningAngle = 0; // fill this in as well
 
     @Override
     public void init() {
@@ -222,7 +223,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 }
 
             case TURNING_TO_BACKDROP:
-                boolean isDone = turnToAngle(-90);
+                boolean isDone = turnToAngle(backdropTurningAngle);
 
                 if (isDone) {
                     currentState = State.DRIVING_TO_BACKDROP;
