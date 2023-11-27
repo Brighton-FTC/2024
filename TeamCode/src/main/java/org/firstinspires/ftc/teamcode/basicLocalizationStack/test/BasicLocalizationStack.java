@@ -195,26 +195,17 @@ public class BasicLocalizationStack {
 
     /**
      * Get an estimate of the robot's position, given motor encoders.
+     *
      * @param odometry The mecanum odometry that represents the robot.
      * @param motors The wheel motors. Should be ordered {frontLeft, frontRight, backLeft, backRight}.
      * @param currentTime The time (in seconds) since the start of the opmode.
      * @return A {@link Pose2d} object representing the position and rotation of the robot.
      */
     public Pose2d getOdometryLocationEstimate(@NonNull MecanumDriveOdometry odometry, @NonNull Motor[] motors, double currentTime) {
-        if (motors.length != 4) {
-            throw new IllegalArgumentException("Array 'encoders' must have length 4, but was length " + motors.length);
-        }
-
-        MecanumDriveWheelSpeeds wheelSpeeds = new MecanumDriveWheelSpeeds(
-                motors[0].getRate(), motors[1].getRate(),
-                motors[2].getRate(), motors[3].getRate()
-        );
-
-        return odometry.updateWithTime(
-                currentTime,
-                Rotation2d.fromDegrees(gyro.getHeading() - headingOffset),
-                wheelSpeeds
-        );
+        return getOdometryLocationEstimate(odometry,
+                Arrays.stream(motors)
+                        .map(motor -> motor.encoder).toArray(Motor.Encoder[]::new),
+                currentTime);
     }
 
     private List<AprilTagDetection> getAprilTagDetections() {
