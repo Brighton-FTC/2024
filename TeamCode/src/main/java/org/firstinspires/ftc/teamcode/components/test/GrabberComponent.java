@@ -1,59 +1,60 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
 import com.arcrobotics.ftclib.hardware.ServoEx;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
  * Code to open/close grabber, and tilt grabber. <br />
- * Controls:
- * <ul>
- *     <li>Open/close grabber: Right bumper</li>
- * </ul>
  */
 
-@Disabled
-@TeleOp(name = "Grabber component (untested)", group = "components-test")
-public class GrabberComponent extends OpMode {
+public class GrabberComponent {
     // TODO: fill in these values
-    public final int GRABBER_CLOSED_POSITION = 0;
-    public final int GRABBER_OPEN_POSITION = 90;
+    public static final int GRABBER_CLOSED_POSITION = 0;
+    public static final int GRABBER_OPEN_POSITION = 90;
 
-    private ServoEx grabberServo;
+    private final ServoEx grabberServo;
 
     private boolean isGrabberClosed = true;
-    // private boolean isGrabberTiltedDown = true;
 
-    private GamepadEx gamepad = new GamepadEx(gamepad1);
 
-    @Override
-    public void init() {
-        // TODO: fill in device name
-        grabberServo = new SimpleServo(hardwareMap, "servo_name", GRABBER_CLOSED_POSITION, GRABBER_OPEN_POSITION);
+    /**
+     * Code to open/close grabber, and tilt grabber. <br />
+     * @param grabberServo The servo that controls the grabber.
+     */
+    public GrabberComponent(ServoEx grabberServo) {
+        this.grabberServo = grabberServo;
+        this.grabberServo.setRange(GRABBER_CLOSED_POSITION, GRABBER_OPEN_POSITION);
     }
 
-    @Override
-    public void start() {
-        // set servos to their starting positions
+    /**
+     * Open the grabber.
+     */
+    public void open() {
         grabberServo.turnToAngle(GRABBER_OPEN_POSITION);
+        isGrabberClosed = false;
     }
 
-    @Override
-    public void loop() {
-        if (gamepad.wasJustPressed(Button.RIGHT_BUMPER)) {
-            if (isGrabberClosed) {
-                grabberServo.turnToAngle(GRABBER_OPEN_POSITION);
-            } else {
-                grabberServo.turnToAngle(GRABBER_CLOSED_POSITION);
-            }
+    /**
+     * Close the grabber.
+     */
+    public void close() {
+        grabberServo.turnToAngle(GRABBER_CLOSED_POSITION);
+        isGrabberClosed = true;
+    }
 
-            isGrabberClosed = !isGrabberClosed;
+    /**
+     * If the grabber is open, then close it, otherwise open it.
+     */
+    public void toggle() {
+        if (isGrabberClosed) {
+            open();
+        } else {
+            close();
         }
 
-        telemetry.addData("Grabber Position", isGrabberClosed ? "Closed" : "Open");
+        isGrabberClosed = !isGrabberClosed;
+    }
+
+    public boolean isClosed() {
+        return isGrabberClosed;
     }
 }

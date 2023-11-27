@@ -9,18 +9,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
  * Some code I made to get the servo positions for the grabber. <br />
- *
+ * <p>
  * Controls:
  * <ul>
  *     <li>Rotate servo - dpad left & dpad right</li>
  *     <li>Change rotation angle - dpad down & dpad up</li>
  * </ul>
- *
  */
 
-@TeleOp(name = "Grabber Servo Position Tester", group = "components-test")
-public class ServoPositionTester extends OpMode {
-    private GamepadEx gamepad = new GamepadEx(gamepad1);
+@TeleOp(name = "Grabber Servo Position Finder", group = "grabber-test")
+public class GrabberPositionFinder extends OpMode {
+    private final GamepadEx gamepad = new GamepadEx(gamepad1);
 
     private ServoEx testServo;
 
