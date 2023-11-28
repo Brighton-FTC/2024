@@ -19,9 +19,12 @@ public class GrabberFunctionalityTester extends OpMode {
     @Override
     public void init() {
         grabberComponent = new GrabberComponent(
-                new SimpleServo(hardwareMap, "grabber_servo",
+                new SimpleServo(hardwareMap, "grabber_servo1",
                         GrabberComponent.GRABBER_CLOSED_POSITION,
-                        GrabberComponent.GRABBER_OPEN_POSITION)
+                        GrabberComponent.GRABBER_OPEN_POSITION),
+                new SimpleServo(hardwareMap, "grabber_servo_2",
+                        GrabberComponent.GRABBER_CLOSED_POSITION,
+                        GrabberComponent.GRABBER_CLOSED_POSITION)
         );
 
         gamepad = new GamepadEx(gamepad1);

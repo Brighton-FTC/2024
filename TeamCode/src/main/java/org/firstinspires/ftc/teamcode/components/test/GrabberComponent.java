@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 /**
  * Code to open/close grabber, and tilt grabber. <br />
@@ -11,25 +12,32 @@ public class GrabberComponent {
     public static final int GRABBER_CLOSED_POSITION = 0;
     public static final int GRABBER_OPEN_POSITION = 90;
 
-    private final ServoEx grabberServo;
+    private final ServoEx grabberServo1;
+    private final ServoEx grabberServo2;
 
     private boolean isGrabberClosed = true;
 
 
     /**
      * Code to open/close grabber, and tilt grabber. <br />
-     * @param grabberServo The servo that controls the grabber.
+     * @param grabberServo1 One of the servos that controls the grabber.
+     * @param grabberServo2 One of the servos that controls the grabber.
      */
-    public GrabberComponent(ServoEx grabberServo) {
-        this.grabberServo = grabberServo;
-        this.grabberServo.setRange(GRABBER_CLOSED_POSITION, GRABBER_OPEN_POSITION);
+    public GrabberComponent(ServoEx grabberServo1, ServoEx grabberServo2) {
+        this.grabberServo1 = grabberServo1;
+        this.grabberServo1.setRange(GRABBER_CLOSED_POSITION, GRABBER_OPEN_POSITION);
+
+        this.grabberServo2 = grabberServo2;
+        this.grabberServo2.setRange(GRABBER_CLOSED_POSITION, GRABBER_OPEN_POSITION);
+        this.grabberServo2.setInverted(true);
     }
 
     /**
      * Open the grabber.
      */
     public void open() {
-        grabberServo.turnToAngle(GRABBER_OPEN_POSITION);
+        grabberServo1.turnToAngle(GRABBER_OPEN_POSITION);
+        grabberServo2.turnToAngle(GRABBER_OPEN_POSITION);
         isGrabberClosed = false;
     }
 
@@ -37,7 +45,8 @@ public class GrabberComponent {
      * Close the grabber.
      */
     public void close() {
-        grabberServo.turnToAngle(GRABBER_CLOSED_POSITION);
+        grabberServo1.turnToAngle(GRABBER_CLOSED_POSITION);
+        grabberServo2.turnToAngle(GRABBER_CLOSED_POSITION);
         isGrabberClosed = true;
     }
 

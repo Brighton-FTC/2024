@@ -21,13 +21,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class GrabberPositionFinder extends OpMode {
     private final GamepadEx gamepad = new GamepadEx(gamepad1);
 
-    private ServoEx testServo;
+    private ServoEx testServo1;
+    private ServoEx testServo2;
 
     private int rotationAngle = 20;
 
     @Override
     public void init() {
-        testServo = new SimpleServo(hardwareMap, "servo_name", 0, 360);
+        testServo1 = new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360);
+
+        testServo2 = new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360);
+        testServo2.setInverted(true);
     }
 
     @Override
@@ -41,11 +45,13 @@ public class GrabberPositionFinder extends OpMode {
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            testServo.rotateByAngle(rotationAngle);
+            testServo1.rotateByAngle(rotationAngle);
+            testServo2.rotateByAngle(rotationAngle);
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            testServo.rotateByAngle(-rotationAngle);
+            testServo1.rotateByAngle(-rotationAngle);
+            testServo2.rotateByAngle(-rotationAngle);
         }
 
         telemetry.addData("Rotation angle", rotationAngle);
