@@ -21,7 +21,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  */
 
 @TeleOp(name = "Grabber Arm Position Tester", group = "components-test")
-public class ArmPositionTester extends OpMode {
+public class ArmPositionFinder extends OpMode {
     private final GamepadEx gamepad = new GamepadEx(gamepad1);
 
     private Motor armMotor;

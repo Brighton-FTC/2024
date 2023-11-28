@@ -1,108 +1,134 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
-import com.arcrobotics.ftclib.command.InstantCommand;
+import androidx.annotation.NonNull;
+
 import com.arcrobotics.ftclib.controller.PIDFController;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.ServoEx;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
- * Code to lift/lower arm. Also moves grabber when arm is lifted or lowered. <br />
- * Controls:
- * <ul>
- *     <li>Lift/Lower Arm: B (Circle on PlayStation controller)</li>
- * </ul>
+ * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
  */
-
-
-@Disabled
-@TeleOp(name = "Arm Component", group = "components_test")
-public class ArmComponent extends OpMode {
+public class ArmComponent {
     // TODO: fill in these values
-    public final int GRABBER_TILT_DOWN_POSITION = 0;
-    public final int GRABBER_TILT_UP_POSITION = 180;
-    public final int ARM_LIFTED_POSITION = 0;
-    public final int ARM_NONLIFTED_POSITION = 2000;
+    public static final int GRABBER_TILT_DOWN_POSITION = 0;
+    public static final int GRABBER_TILT_UP_POSITION = 180;
+    public static final int ARM_LIFTED_POSITION = 0;
+    public static final int ARM_LOWERED_POSITION = 2000;
 
-    // TODO: A value should be assigned to this when the class is turned into a component instead of a OpMode
-    // Keeping this as a OpMode so it's a little easier to test, will convert later
-    private final int initialArmPositionCounts = 200;
+    private final ServoEx grabberTiltServo;
 
-    // TODO: Tune somehow to make sure is correct
-    // Speed which makes robot 'just' start to move - static friction
-    private final int STATIC_FRICTION_CONST = 170;
-
-    public static final GamepadKeys.Button SET_ARM_LIFTED = GamepadKeys.Button.B;
-
-    private ServoEx grabberTiltServo;
-
+    private final MotorEx armMotor;
     private boolean isArmLifted = false;
 
-    private final GamepadEx gamepad = new GamepadEx(gamepad1);
-
     // TODO: Tune this
-    private final PIDFController pidf = new PIDFController(0,0,0, 0);
-    private Motor armMotor;
+    private final PIDFController pidf = new PIDFController(0, 0, 0, 0);
 
-    @Override
-    public void init() {
-        // TODO: fill in device names
-        grabberTiltServo = new SimpleServo(hardwareMap, "servo_name", 0, 360);
-        armMotor = new Motor(hardwareMap, "motorOne");
+    /**
+     * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
+     *
+     * @param armMotor         The motor that controls the arm.
+     * @param grabberTiltServo The servo that controls the grabber tilting.
+     */
+    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx grabberTiltServo) {
+        this.armMotor = armMotor;
+        this.grabberTiltServo = grabberTiltServo;
 
-        // set ranges on servos, just in case
         grabberTiltServo.setRange(GRABBER_TILT_DOWN_POSITION, GRABBER_TILT_UP_POSITION);
 
-        armMotor.setRunMode(Motor.RunMode.RawPower);
-
-        gamepad.getGamepadButton(SET_ARM_LIFTED).whenPressed(new InstantCommand(() -> {
-            isArmLifted = !isArmLifted;
-            if (isArmLifted){
-                setTargetPosition(ARM_LIFTED_POSITION);
-            }
-            else {
-                setTargetPosition(ARM_NONLIFTED_POSITION);
-            }
-        }));
-
+        setTargetPosition(ARM_LOWERED_POSITION);
+        grabberTiltServo.turnToAngle(GRABBER_TILT_DOWN_POSITION);
     }
 
-    @Override
-    public void start() {
-        // set servo and motor to their starting positions
-        grabberTiltServo.setPosition(GRABBER_TILT_DOWN_POSITION);
-        setTargetPosition(ARM_NONLIFTED_POSITION);
+    /**
+     * Call once to set the arm to be lifted. <br />
+     * (You need to call {@link #moveToSetPosition()} for the arm to actually move.
+     */
+    public void lift() {
+        isArmLifted = true;
+
+        setTargetPosition(ARM_LIFTED_POSITION);
+
+        grabberTiltServo.turnToAngle(GRABBER_TILT_UP_POSITION);
+        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
+    }
+
+    /**
+     * Call once to set the arm to be lowered. <br />
+     * (You need to call {@link #moveToSetPosition()} for the arm to actually move.
+     */
+    public void lower() {
+        isArmLifted = false;
+
+        setTargetPosition(ARM_LOWERED_POSITION);
+
+        grabberTiltServo.turnToAngle(GRABBER_TILT_DOWN_POSITION);
+        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
+    }
+
+    /**
+     * Call once to toggle the position of the arm <br />
+     * (You need to call {@link #moveToSetPosition()} for the arm to actually move.
+     */
+    public void toggle() {
+        if (isArmLifted) {
+            lower();
+        } else {
+            lift();
+        }
+
+        isArmLifted = !isArmLifted;
+    }
+
+    /**
+     * Get the state of the arm (lifted/lowered).
+     *
+     * @return If the arm is lifted or not.
+     */
+    public boolean isLifted() {
+        return isArmLifted;
+    }
+
+    /**
+     * Get the position of the arm (in ticks).
+     *
+     * @return The position of the arm.
+     */
+    public double getArmPosition() {
+        return armMotor.getCurrentPosition();
+    }
+
+    /**
+     * Get the velocity of the arm (in ticks per second).
+     *
+     * @return The velocity of the arm motor.
+     */
+    public double getArmVelocity() {
+        return armMotor.getVelocity();
+    }
+
+    /**
+     * Get the angle that the grabber is tilted at (in degrees).
+     *
+     * @return The angle of the grabber tilt servo.
+     */
+    public double getGrabberTiltAngle() {
+        return grabberTiltServo.getAngle();
+    }
+
+    /**
+     * Call continuously to move the arm to the required position.
+     */
+    public void moveToSetPosition() {
+        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
     }
 
     /**
      * Set PID and feedforward to desired position
+     *
      * @param position The desired final position of the arm
      */
     private void setTargetPosition(int position) {
-        pidf.setSetPoint(position - initialArmPositionCounts);
-    }
-
-    @Override
-    public void loop() {
-        if (isArmLifted) {
-            grabberTiltServo.setPosition(GRABBER_TILT_UP_POSITION);
-        } else {
-            grabberTiltServo.setPosition(GRABBER_TILT_DOWN_POSITION);
-        }
-
-        double velocity = 0;
-        velocity += pidf.calculate(armMotor.getCurrentPosition());
-        velocity += STATIC_FRICTION_CONST;
-        armMotor.set(velocity);
-
-        telemetry.addData("Grabber Tilt Angle", grabberTiltServo.getAngle());
-        telemetry.addData("Motor Position", armMotor.getCurrentPosition());
-        telemetry.addData("Motor Speed", armMotor.encoder.getRawVelocity());
-        telemetry.addData("Motor Acceleration", armMotor.encoder.getAcceleration());
+        pidf.setSetPoint(position);
     }
 }
