@@ -11,6 +11,7 @@ public class MecanumDriveTrain extends OpMode {
     private Motor frontleft, frontright, backleft, backright;
     private MecanumDrive drive;
     private GamepadEx driverOp;
+
     @Override
     public void init() {
         frontleft = new Motor(hardwareMap, "frontleftmotor");
@@ -21,7 +22,7 @@ public class MecanumDriveTrain extends OpMode {
         drive = new MecanumDrive(frontleft, frontright, backleft, backright);
         driverOp = new GamepadEx(gamepad1);
     }
-    // This needs FTClib to work
+
     @Override
     public void loop() {
         drive.driveRobotCentric(
