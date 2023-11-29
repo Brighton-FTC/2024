@@ -33,6 +33,6 @@ public class LinearSlideFunctionalityTester extends OpMode {
     public void loop() {
         linearSlide.moveToSetPoint();
 
-        telemetry.addLine(linearSlide.isLowered() ? "Linear slide is lowered" : "Linear slide is lifted.");
+        telemetry.addLine(linearSlide.isLifted() ? "Linear slide is lifted" : "Linear slide is lowered");
     }
 }

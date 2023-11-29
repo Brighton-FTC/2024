@@ -16,7 +16,7 @@ public class LinearSlideComponent {
     private final MotorEx linearSlideMotor;
     private final PIDFController pidf;
 
-    private boolean isLowered = true;
+    private boolean isLifted = false;
 
     /**
      * Linear slide component.
@@ -35,7 +35,7 @@ public class LinearSlideComponent {
     public void lift() {
         pidf.setSetPoint(LINEAR_SLIDE_LIFTED_POSITION);
 
-        isLowered = false;
+        isLifted = true;
     }
 
     /**
@@ -45,7 +45,7 @@ public class LinearSlideComponent {
     public void lower() {
         pidf.setSetPoint(LINEAR_SLIDE_LOWERED_POSITION);
 
-        isLowered = true;
+        isLifted = false;
     }
 
     /**
@@ -53,10 +53,10 @@ public class LinearSlideComponent {
      * You need to call {@link #moveToSetPoint()} for the linear slide to actually move.
      */
     public void toggle() {
-        if (isLowered) {
-            lift();
-        } else {
+        if (isLifted) {
             lower();
+        } else {
+            lift();
         }
     }
 
@@ -79,7 +79,31 @@ public class LinearSlideComponent {
      * Get the position of the linear slide.
      * @return If the linear slide is lowered or not.
      */
-    public boolean isLowered() {
-        return isLowered;
+    public boolean isLifted() {
+        return isLifted;
+    }
+
+    /**
+     * Get if the linear slide is at its set point.
+     * @return If the linear slide is at its set point.
+     */
+    public boolean atSetPoint() {
+        return pidf.atSetPoint();
+    }
+
+    /**
+     * Get the position of the linear slide motor.
+     * @return The position of the linear slide motor, in ticks.
+     */
+    public double getPosition() {
+        return linearSlideMotor.getCurrentPosition();
+    }
+
+    /**
+     * Get the velocity of the linear slide motor.
+     * @return The velocity of the linear slide motor, in ticks per second.
+     */
+    public double getVelocity() {
+        return linearSlideMotor.getVelocity();
     }
 }
