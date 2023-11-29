@@ -74,4 +74,12 @@ public class LinearSlideComponent {
     public void setVelocity(double velocity) {
         linearSlideMotor.set(velocity);
     }
+
+    /**
+     * Get the position of the linear slide.
+     * @return If the linear slide is lowered or not.
+     */
+    public boolean isLowered() {
+        return isLowered;
+    }
 }
