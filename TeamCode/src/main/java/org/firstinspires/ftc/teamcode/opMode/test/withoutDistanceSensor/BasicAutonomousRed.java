@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.basicAutonomous;
+package org.firstinspires.ftc.teamcode.opMode.test.withoutDistanceSensor;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;

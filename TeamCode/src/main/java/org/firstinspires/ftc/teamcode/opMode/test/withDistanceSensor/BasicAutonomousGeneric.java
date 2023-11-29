@@ -1,16 +1,14 @@
-package org.firstinspires.ftc.teamcode.basicAutonomous;
+package org.firstinspires.ftc.teamcode.opMode.test.withDistanceSensor;
 
 import android.util.Size;
 
 import androidx.annotation.NonNull;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.GyroEx;
 import com.arcrobotics.ftclib.hardware.RevIMU;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
 import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
-import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -19,6 +17,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
+import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
+import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -30,8 +31,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Rudimentary autonomous code.
- * Moves to the Team Prop, places down the purple pixel, drives to the backdrop, and places the yellow pixel.
+ * Rudimentary autonomous code. <br />
+ * Moves to the Team Prop, places down the purple pixel, drives to the backdrop, and places the yellow pixel. <br />
+ *
+ * <b>
+ * Note: this code uses method calls from component classes in other branches.
+ * Be sure to merge the grabber-code, linear-slide-code, and arm-code branches into the branch that this is in before running.
+ * </b>
  */
 public class BasicAutonomousGeneric extends OpMode {
     // TODO: once the custom model exists, replace this with the custom model name
@@ -47,8 +53,6 @@ public class BasicAutonomousGeneric extends OpMode {
     };
 
     // TODO: fine tune these values
-    public final double ARM_ERROR = 15;
-    public final double LINEAR_SLIDE_ERROR = 15;
     public final double ANGLE_ERROR = 20;
     public final int VISION_ERROR = 20;
 
@@ -58,18 +62,6 @@ public class BasicAutonomousGeneric extends OpMode {
     public final double DRIVE_DIVISOR = 12;
     public final double ANGLE_DIVISOR = 90;
     public final double STRAFE_DIVISOR = 24;
-
-    public final double ARM_DOWN_POS = 0;
-    public final double ARM_UP_POS = 180;
-
-    public final double LINEAR_SLIDE_DOWN_POS = 0;
-    public final double LINEAR_SLIDE_UP_POS = 180;
-
-    public final double GRABBER_CLOSED_POS = 0;
-    public final double GRABBER_OPEN_POS = 90;
-
-    public final double GRABBER_TILTED_DOWN_POS = 0;
-    public final double GRABBER_TILTED_UP_POS = 90;
 
     public final double MIN_DISTANCE_FROM_OBJECT = 6;
 
@@ -87,18 +79,12 @@ public class BasicAutonomousGeneric extends OpMode {
 
     protected MecanumDrive mecanum;
 
-    protected MotorEx armMotor;
-    protected MotorEx linearSlideMotor;
-
-    protected ServoEx grabberServo;
-    protected ServoEx grabberTiltServo;
+    protected ArmComponent arm;
+    protected LinearSlideComponent linearSlide;
+    protected GrabberComponent grabber;
 
     protected SensorDistanceEx distanceSensor;
     protected GyroEx gyro;
-
-    // TODO: tune these
-    protected PIDFController armPidf = new PIDFController(0, 0, 0, 0);
-    protected PIDFController linearSlidePidf = new PIDFController(0, 0, 0, 0);
 
     protected State currentState = State.DRIVING_TO_SPIKE_MARKS;
     protected CorrectSpikeMark correctSpikeMark = null;
@@ -116,16 +102,10 @@ public class BasicAutonomousGeneric extends OpMode {
                 new Motor(hardwareMap, "back_right")
         );
 
-        armMotor = new MotorEx(hardwareMap, "arm_motor");
-        armMotor.setPositionTolerance(ARM_ERROR);
-        armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-
-        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_motor");
-        linearSlideMotor.setPositionTolerance(LINEAR_SLIDE_ERROR);
-        linearSlideMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-
-        grabberServo = new SimpleServo(hardwareMap, "grabber_servo", GRABBER_CLOSED_POS, GRABBER_OPEN_POS);
-        grabberTiltServo = new SimpleServo(hardwareMap, "grabber_tilt_servo", GRABBER_TILTED_DOWN_POS, GRABBER_TILTED_UP_POS);
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "grabber_rotation_servo", 0, 360));
+        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
+        grabber = new GrabberComponent(new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360),
+                new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
         gyro = new RevIMU(hardwareMap, "gyro");
@@ -201,6 +181,9 @@ public class BasicAutonomousGeneric extends OpMode {
                         mecanum.driveRobotCentric(-0.5, 0, 0);
 
                     } else {
+                        arm.lower();
+                        linearSlide.lower();
+
                         currentState = State.PLACING_PURPLE_PIXEL;
                     }
                 }
@@ -208,16 +191,11 @@ public class BasicAutonomousGeneric extends OpMode {
                 break;
 
             case PLACING_PURPLE_PIXEL:
-                armPidf.setSetPoint(ARM_DOWN_POS);
-                linearSlidePidf.setSetPoint(LINEAR_SLIDE_DOWN_POS);
+                arm.moveToSetPoint();
+                linearSlide.moveToSetPoint();
 
-                armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
-                linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
-
-                grabberTiltServo.turnToAngle(GRABBER_TILTED_DOWN_POS);
-
-                if (armPidf.atSetPoint() && linearSlidePidf.atSetPoint()) {
-                    grabberServo.turnToAngle(GRABBER_OPEN_POS);
+                if (arm.atSetPoint() && linearSlide.atSetPoint()) {
+                    grabber.open();
                     currentState = State.TURNING_TO_BACKDROP;
                     gyro.reset();
                 }
@@ -233,19 +211,17 @@ public class BasicAutonomousGeneric extends OpMode {
                 if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
                     mecanum.driveRobotCentric(0, 1, 0);
                 } else {
-                    linearSlidePidf.setSetPoint(LINEAR_SLIDE_UP_POS);
-                    armPidf.setSetPoint(ARM_UP_POS);
-                    grabberTiltServo.turnToAngle(GRABBER_TILTED_UP_POS);
+                    arm.lift();
+                    linearSlide.lift();
 
                     currentState = State.PREPARING_FOR_SHIFTING;
                 }
 
             case PREPARING_FOR_SHIFTING:
-                armMotor.set(armPidf.calculate(armMotor.getCurrentPosition()));
+                arm.moveToSetPoint();
+                linearSlide.moveToSetPoint();
 
-                linearSlideMotor.set(linearSlidePidf.calculate(linearSlideMotor.getCurrentPosition()));
-
-                if (armPidf.atSetPoint() && linearSlidePidf.atSetPoint()) {
+                if (arm.atSetPoint() && linearSlide.atSetPoint()) {
                     currentState = State.SHIFTING_TO_BACKDROP;
                 }
 
@@ -281,7 +257,8 @@ public class BasicAutonomousGeneric extends OpMode {
                 }
 
             case PLACING_YELLOW_PIXEL:
-                grabberServo.turnToAngle(GRABBER_OPEN_POS);
+                grabber.open();
+
                 currentState = State.STRAFING_TO_PARK;
                 gyro.reset();
                 break;
