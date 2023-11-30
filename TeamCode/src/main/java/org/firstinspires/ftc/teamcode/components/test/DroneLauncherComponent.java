@@ -1,38 +1,34 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.hardware.ServoEx;
 
 /**
  * Code to launch the paper drone.
  */
 public class DroneLauncherComponent {
-    Motor aeroplaneMotor;
+    ServoEx droneServo;
 
     // TODO: Tune this
-    public static final int TARGET_POSITION = 2000;
+    // Should turn 120 to 180 degrees (according to engineers)
+    public static final int READY_POSITION = 90;
+    public static final int LAUNCH_POSITION = 270;
 
     /**
      * Code to launch the paper drone.
      *
-     * @param paperAeroplaneMotor Motor for drone launcher.
+     * @param droneLauncherServo for drone launcher.
      */
-    public DroneLauncherComponent(MotorEx paperAeroplaneMotor) {
-        aeroplaneMotor = paperAeroplaneMotor;
+    public DroneLauncherComponent(ServoEx droneLauncherServo) {
+        droneServo = droneLauncherServo;
+        droneServo.turnToAngle(READY_POSITION);
     }
 
     /**
-     * Sets the motor's setpoint and moves motor until at setpoint.
+     * Turns servo. (amazing)
      * Only needs to be called once, but can be called multiple times without anything happening.
      */
     public void launch() {
-        aeroplaneMotor.setRunMode(Motor.RunMode.PositionControl);
-        aeroplaneMotor.setTargetPosition(TARGET_POSITION);
-
-        while (!aeroplaneMotor.atTargetPosition()) {
-            aeroplaneMotor.set(0.75);
-        }
-        aeroplaneMotor.stopMotor();
+        droneServo.turnToAngle(LAUNCH_POSITION);
     }
 }
 

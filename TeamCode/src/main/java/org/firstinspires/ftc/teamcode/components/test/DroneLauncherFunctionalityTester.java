@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -24,15 +24,17 @@ public class DroneLauncherFunctionalityTester extends OpMode {
     @Override
     public void init() {
         droneLauncherComponent = new DroneLauncherComponent(
-                new MotorEx(hardwareMap, "drone_motor")
+                new SimpleServo(hardwareMap, "drone_servo",
+                        DroneLauncherComponent.READY_POSITION,
+                        DroneLauncherComponent.LAUNCH_POSITION)
         );
 
         gamepad = new GamepadEx(gamepad1);
-
         gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(droneLauncherComponent::launch);
     }
 
     @Override
     public void loop() {
+
     }
 }
