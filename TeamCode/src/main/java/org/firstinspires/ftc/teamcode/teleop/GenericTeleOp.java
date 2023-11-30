@@ -117,6 +117,8 @@ public class GenericTeleOp extends OpMode {
             droneLauncher.launch();
         }
 
+        arm.moveToSetPosition();
+
         telemetry.update();
     }
 }
