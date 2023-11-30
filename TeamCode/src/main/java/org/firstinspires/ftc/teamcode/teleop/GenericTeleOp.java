@@ -95,20 +95,12 @@ public class GenericTeleOp extends OpMode {
         double leftX = player1Gamepad.getLeftX();
         double rightX = player1Gamepad.getRightX();
 
-        if (player1Gamepad.getButton(DPAD_STRAFE_LEFT)){
-            leftX += 0.75;
-        }
-        if (player1Gamepad.getButton(DPAD_STRAFE_RIGHT)){
-            leftX -= 0.75;
-        }
+        leftX += player1Gamepad.getButton(DPAD_STRAFE_LEFT) ? 0.75 : 0;
+        leftX -= player1Gamepad.getButton(DPAD_STRAFE_RIGHT) ? 0.75 : 0;
         leftX = Range.clip(leftX, -1, 1);
 
-        if (player1Gamepad.getButton(DPAD_FORWARD)){
-            leftY += 0.75;
-        }
-        if (player1Gamepad.getButton(DPAD_BACKWARDS)){
-            leftY -= 0.75;
-        }
+        leftY += player1Gamepad.getButton(DPAD_FORWARD) ? 0.75 : 0;
+        leftY -= player1Gamepad.getButton(DPAD_BACKWARDS) ? 0.75 : 0;
         leftY = Range.clip(leftY, -1, 1);
 
         mecanumDrive.driveRobotCentric(leftX, leftY, rightX,false);
@@ -119,6 +111,8 @@ public class GenericTeleOp extends OpMode {
 
         arm.moveToSetPosition();
 
+        telemetry.addData("Arm position", arm.getArmPosition());
+        telemetry.addData("Grabber closed?", grabber.isClosed());
         telemetry.update();
     }
 }
