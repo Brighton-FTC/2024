@@ -60,10 +60,10 @@ public class GenericTeleOp extends OpMode {
         player1Gamepad = new GamepadEx(gamepad1);
         player2Gamepad = new GamepadEx(gamepad2);
 
-        grabberServo1 = new SimpleServo(hardwareMap, "grabber_servo",
+        grabberServo1 = new SimpleServo(hardwareMap, "grabber_servo_1",
                 GrabberComponent.GRABBER_CLOSED_POSITION,
                 GrabberComponent.GRABBER_OPEN_POSITION);
-        grabberServo2 = new SimpleServo(hardwareMap, "grabber_servo",
+        grabberServo2 = new SimpleServo(hardwareMap, "grabber_servo_2",
                 GrabberComponent.GRABBER_CLOSED_POSITION,
                 GrabberComponent.GRABBER_OPEN_POSITION);
 
@@ -76,7 +76,7 @@ public class GenericTeleOp extends OpMode {
                 DroneLauncherComponent.READY_POSITION,
                 DroneLauncherComponent.LAUNCH_POSITION);
 
-        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_");
+        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_motor");
 
         mecanumDrive = new MecanumDrive(
                 new Motor(hardwareMap, "frontLeftDrive"),
