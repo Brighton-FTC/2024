@@ -68,9 +68,11 @@ public class BasicAutonomousGeneric extends OpMode {
     public static final double STRAFE_DIVISOR = 24;
 
     public static final double PARKING_DRIVE_DISTANCE = 12;
-    public static final double PARKING_STRAFE_DISTANCE = 24;
+    public static final double[] PARKING_STRAFE_DISTANCES = {18, 24, 30};
 
-    public static final MecanumDriveKinematics ROBOT_KINEMATICS = new MecanumDriveKinematics(
+    public static final double MECANUM_DPP = 18; // distance per pulse, in mm per tick
+
+    public static final MecanumDriveKinematics MECANUM_KINEMATICS = new MecanumDriveKinematics(
             new Translation2d(0.5, 0.5),
             new Translation2d(0.5, -0.5),
             new Translation2d(-0.5, 0.5),
@@ -117,6 +119,10 @@ public class BasicAutonomousGeneric extends OpMode {
                 new Motor(hardwareMap, "back_left"),
                 new Motor(hardwareMap, "back_right")
         };
+
+        for (Motor motor : mecanumMotors) {
+            motor.setDistancePerPulse(MECANUM_DPP);
+        }
 
         mecanum = new MecanumDrive(mecanumMotors[0], mecanumMotors[1], mecanumMotors[2], mecanumMotors[3]);
 
@@ -295,7 +301,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
                 currentState = State.STRAFING_TO_PARK;
 
-                odometry = new MecanumDriveOdometry(ROBOT_KINEMATICS, Rotation2d.fromDegrees(0), new Pose2d(0, 0, Rotation2d.fromDegrees(0)));
+                odometry = new MecanumDriveOdometry(MECANUM_KINEMATICS, Rotation2d.fromDegrees(0), new Pose2d(0, 0, Rotation2d.fromDegrees(0)));
                 elapsedTime.reset();
 
                 gyro.reset();
@@ -313,7 +319,19 @@ public class BasicAutonomousGeneric extends OpMode {
                         )
                 );
 
-                if (Math.abs(odometry.getPoseMeters().getY()) >= PARKING_STRAFE_DISTANCE) {
+                int aprilTagIndex;
+
+                if ((correctSpikeMark == CorrectSpikeMark.LEFT && teamColor == TeamColor.RED)
+                        || (correctSpikeMark == CorrectSpikeMark.RIGHT && teamColor == TeamColor.BLUE)) {
+                    aprilTagIndex = 0;
+                } else if ((correctSpikeMark == CorrectSpikeMark.RIGHT && teamColor == TeamColor.RED)
+                || (correctSpikeMark == CorrectSpikeMark.LEFT && teamColor == TeamColor.BLUE)) {
+                    aprilTagIndex = 2;
+                } else {
+                    aprilTagIndex = 1;
+                }
+
+                if (Math.abs(odometry.getPoseMeters().getY()) >= PARKING_STRAFE_DISTANCES[aprilTagIndex]) {
                     currentState = State.PARKING;
                     break;
                 }
