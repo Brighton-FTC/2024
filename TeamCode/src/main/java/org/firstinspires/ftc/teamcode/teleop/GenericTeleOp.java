@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.PSButtons;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
+import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 
 @TeleOp(name = "TeleOp", group = "teleop-test")
 public class GenericTeleOp extends OpMode {
@@ -29,10 +30,9 @@ public class GenericTeleOp extends OpMode {
     // P2 Controls
     public static final GamepadKeys.Button TOGGLE_ARM_BUTTON = PSButtons.CROSS;
     public static final GamepadKeys.Button TOGGLE_GRABBER_BUTTON = PSButtons.CIRCLE;
+    public static final GamepadKeys.Button TOGGLE_LINEAR_SLIDE_BUTTON = PSButtons.SQUARE;
     public static final GamepadKeys.Button DRONE_LAUNCH_1_BUTTON = GamepadKeys.Button.LEFT_BUMPER;
     public static final GamepadKeys.Button DRONE_LAUNCH_2_BUTTON = GamepadKeys.Button.RIGHT_BUMPER;
-
-
 
 
     private GamepadEx player1Gamepad;
@@ -48,6 +48,9 @@ public class GenericTeleOp extends OpMode {
 
     private ServoEx droneServo;
     private DroneLauncherComponent droneLauncher;
+
+    private LinearSlideComponent linearSlide;
+    private MotorEx linearSlideMotor;
 
     private MecanumDrive mecanumDrive;
 
@@ -73,6 +76,8 @@ public class GenericTeleOp extends OpMode {
                 DroneLauncherComponent.READY_POSITION,
                 DroneLauncherComponent.LAUNCH_POSITION);
 
+        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_");
+
         mecanumDrive = new MecanumDrive(
                 new Motor(hardwareMap, "frontLeftDrive"),
                 new Motor(hardwareMap, "frontRightDrive"),
@@ -83,10 +88,12 @@ public class GenericTeleOp extends OpMode {
         arm = new ArmComponent(armMotor, grabberRotatorServo);
         grabber = new GrabberComponent(grabberServo1, grabberServo2);
         droneLauncher = new DroneLauncherComponent(droneServo);
+        linearSlide = new LinearSlideComponent(linearSlideMotor);
 
 
         player2Gamepad.getGamepadButton(TOGGLE_GRABBER_BUTTON).whenPressed(grabber::toggle);
         player2Gamepad.getGamepadButton(TOGGLE_ARM_BUTTON).whenPressed(arm::toggle);
+        player2Gamepad.getGamepadButton(TOGGLE_LINEAR_SLIDE_BUTTON).whenPressed(linearSlide::toggle);
     }
 
     @Override
@@ -110,9 +117,11 @@ public class GenericTeleOp extends OpMode {
         }
 
         arm.moveToSetPosition();
+        linearSlide.moveToSetPoint();
 
         telemetry.addData("Arm position", arm.getArmPosition());
         telemetry.addData("Grabber closed?", grabber.isClosed());
+        telemetry.addData("Linear slide position", linearSlide.getPosition());
         telemetry.update();
     }
 }
