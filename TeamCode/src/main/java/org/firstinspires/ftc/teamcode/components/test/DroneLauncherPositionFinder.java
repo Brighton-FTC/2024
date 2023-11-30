@@ -2,64 +2,52 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
- * Some code I made to get the motor encoder positions for drone launcher.
- * Use the joystick for large adjustments, and dpad left & right for small adjustments. <br />
- *
+ * Some code I made to get servo for drone launcher.
  * Controls:
  * <ul>
- *     <li>Rotate motor by small increments - dpad left & dpad right</li>
- *     <li>Change how much motor rotates  - dpad down & dpad up</li>
- *     <li>Rotate motor by large increments  - left joystick left & right</li>
+ *     <li>Rotate servo - dpad left & dpad right</li>
+ *     <li>Change rotation angle - dpad down & dpad up</li>
  * </ul>
- *
  */
 
 @TeleOp(name = "Drone Launcher Position Tester", group = "drone-test")
 public class DroneLauncherPositionFinder extends OpMode {
     private final GamepadEx gamepad = new GamepadEx(gamepad1);
 
-    private Motor droneLauncherMotor;
+    private ServoEx droneLauncherServo;
 
-    private int motorIncrement = 20;
-
-    private int currentTargetPosition = 0;
-
-    private final int gamepadMultiplier = 10;
+    private int rotationAngle = 20;
 
     @Override
     public void init() {
-        droneLauncherMotor = new Motor(hardwareMap, "motorOne");
-        droneLauncherMotor.setRunMode(Motor.RunMode.PositionControl);
+        droneLauncherServo = new SimpleServo(hardwareMap, "drone_servo", 0, 360);
     }
 
     @Override
     public void loop() {
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            motorIncrement -= 5;
+            rotationAngle -= 5;
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            motorIncrement += 5;
+            rotationAngle += 5;
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            currentTargetPosition += motorIncrement;
+            droneLauncherServo.rotateByAngle(rotationAngle);
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            currentTargetPosition += motorIncrement;
+            droneLauncherServo.rotateByAngle(-rotationAngle);
         }
 
-        currentTargetPosition += gamepad.getLeftX() * motorIncrement * gamepadMultiplier;
-
-        droneLauncherMotor.setTargetPosition(currentTargetPosition);
-
-        telemetry.addData("Motor increment", motorIncrement);
-        telemetry.addData("Motor position", droneLauncherMotor.getCurrentPosition());
+        telemetry.addData("Rotation angle", rotationAngle);
+        telemetry.addData("Motor position", droneLauncherServo.getAngle());
     }
 }
