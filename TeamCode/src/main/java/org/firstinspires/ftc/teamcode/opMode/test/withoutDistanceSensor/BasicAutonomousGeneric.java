@@ -68,7 +68,7 @@ public class BasicAutonomousGeneric extends OpMode {
     public static final double STRAFE_DIVISOR = 24;
 
     public static final double PARKING_DRIVE_DISTANCE = 12;
-    public static final double[] PARKING_STRAFE_DISTANCES = {18, 24, 30};
+    public static final double[] PARKING_STRAFE_DISTANCES = {18, 24, 30}; // in inches
 
     public static final double MECANUM_DPP = 18; // distance per pulse, in mm per tick
 
@@ -132,6 +132,8 @@ public class BasicAutonomousGeneric extends OpMode {
                 new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
 
         gyro = new RevIMU(hardwareMap, "gyro");
+
+        odometry = new MecanumDriveOdometry(MECANUM_KINEMATICS, Rotation2d.fromDegrees(0), new Pose2d(0, 0, Rotation2d.fromDegrees(0)));
 
         // vision stuff
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -243,17 +245,19 @@ public class BasicAutonomousGeneric extends OpMode {
                     }
                 } catch (IndexOutOfBoundsException e) {
                     mecanum.driveRobotCentric(0, 1, 0);
-
                     break;
                 }
 
                 assert currentDetection != null;
-                if (currentDetection.ftcPose.y > DRIVING_TO_BACKDROP_DIST) {
+                if (currentDetection.ftcPose.y < DRIVING_TO_BACKDROP_DIST) {
                     arm.lift();
                     linearSlide.lift();
+                    currentState = State.PREPARING_FOR_SHIFTING;
                 }
-
-                currentState = State.PREPARING_FOR_SHIFTING;
+                else {
+                    mecanum.driveRobotCentric(0, 1, 0);
+                    break;
+                }
 
                 break;
 
@@ -301,7 +305,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
                 currentState = State.STRAFING_TO_PARK;
 
-                odometry = new MecanumDriveOdometry(MECANUM_KINEMATICS, Rotation2d.fromDegrees(0), new Pose2d(0, 0, Rotation2d.fromDegrees(0)));
+                odometry.resetPosition(new Pose2d(), new Rotation2d());
                 elapsedTime.reset();
 
                 gyro.reset();
@@ -353,6 +357,7 @@ public class BasicAutonomousGeneric extends OpMode {
                     currentState = State.DONE;
                 }
         }
+        telemetry.update();
     }
 
     /**
