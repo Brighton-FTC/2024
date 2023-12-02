@@ -23,7 +23,7 @@ public class LinearSlidePositionFinder extends OpMode {
 
     @Override
     public void init() {
-        linearSlideMotor = new MotorEx(hardwareMap, "motorOne");
+        linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_motor");
     }
 
     @Override
