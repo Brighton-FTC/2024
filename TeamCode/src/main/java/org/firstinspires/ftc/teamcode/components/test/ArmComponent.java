@@ -42,7 +42,7 @@ public class ArmComponent {
 
     /**
      * Call once to set the arm to be lifted. <br />
-     * (You need to call {@link #moveToSetPosition()} for the arm to actually move.
+     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void lift() {
         isArmLifted = true;
@@ -55,7 +55,7 @@ public class ArmComponent {
 
     /**
      * Call once to set the arm to be lowered. <br />
-     * (You need to call {@link #moveToSetPosition()} for the arm to actually move.
+     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void lower() {
         isArmLifted = false;
@@ -68,7 +68,7 @@ public class ArmComponent {
 
     /**
      * Call once to toggle the position of the arm <br />
-     * (You need to call {@link #moveToSetPosition()} for the arm to actually move.
+     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void toggle() {
         if (isArmLifted) {
@@ -78,6 +78,15 @@ public class ArmComponent {
         }
 
         isArmLifted = !isArmLifted;
+    }
+
+
+    /**
+     * Directly control the movement of the arm.
+     * @param velocity The velocity (-1 to 1) that the motor is set to.
+     */
+    public void setVelocity(double velocity) {
+        armMotor.set(velocity);
     }
 
     /**
@@ -119,7 +128,7 @@ public class ArmComponent {
     /**
      * Call continuously to move the arm to the required position.
      */
-    public void moveToSetPosition() {
+    public void moveToSetPoint() {
         armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
     }
 

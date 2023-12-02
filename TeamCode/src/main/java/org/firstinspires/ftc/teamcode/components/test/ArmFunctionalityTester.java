@@ -36,6 +36,6 @@ public class ArmFunctionalityTester extends OpMode {
 
     @Override
     public void loop() {
-        armComponent.moveToSetPosition();
+        armComponent.moveToSetPoint();
     }
 }
