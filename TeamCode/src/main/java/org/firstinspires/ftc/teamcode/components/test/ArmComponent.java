@@ -11,12 +11,12 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 public class ArmComponent {
     // TODO: fill in these values
-    public static final int GRABBER_TILT_DOWN_POSITION = 0;
-    public static final int GRABBER_TILT_UP_POSITION = 180;
+    public static final int GRABBER_ROTATE_DOWN_POSITION = 0;
+    public static final int GRABBER_ROTATE_UP_POSITION = 180;
     public static final int ARM_LIFTED_POSITION = 0;
     public static final int ARM_LOWERED_POSITION = 2000;
 
-    private final ServoEx grabberTiltServo;
+    private final ServoEx grabberRotatorServo;
 
     private final MotorEx armMotor;
     private boolean isArmLifted = false;
@@ -27,17 +27,17 @@ public class ArmComponent {
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
      *
-     * @param armMotor         The motor that controls the arm.
-     * @param grabberTiltServo The servo that controls the grabber tilting.
+     * @param armMotor The motor that controls the arm.
+     * @param grabberRotatorServo The servo that controls the grabber tilting.
      */
-    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx grabberTiltServo) {
+    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx grabberRotatorServo) {
         this.armMotor = armMotor;
-        this.grabberTiltServo = grabberTiltServo;
+        this.grabberRotatorServo = grabberRotatorServo;
 
-        grabberTiltServo.setRange(GRABBER_TILT_DOWN_POSITION, GRABBER_TILT_UP_POSITION);
+        grabberRotatorServo.setRange(GRABBER_ROTATE_DOWN_POSITION, GRABBER_ROTATE_UP_POSITION);
 
         setTargetPosition(ARM_LOWERED_POSITION);
-        grabberTiltServo.turnToAngle(GRABBER_TILT_DOWN_POSITION);
+        grabberRotatorServo.turnToAngle(GRABBER_ROTATE_DOWN_POSITION);
     }
 
     /**
@@ -49,7 +49,7 @@ public class ArmComponent {
 
         setTargetPosition(ARM_LIFTED_POSITION);
 
-        grabberTiltServo.turnToAngle(GRABBER_TILT_UP_POSITION);
+        grabberRotatorServo.turnToAngle(GRABBER_ROTATE_UP_POSITION);
         armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
     }
 
@@ -62,7 +62,7 @@ public class ArmComponent {
 
         setTargetPosition(ARM_LOWERED_POSITION);
 
-        grabberTiltServo.turnToAngle(GRABBER_TILT_DOWN_POSITION);
+        grabberRotatorServo.turnToAngle(GRABBER_ROTATE_DOWN_POSITION);
         armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
     }
 
@@ -117,12 +117,12 @@ public class ArmComponent {
     }
 
     /**
-     * Get the angle that the grabber is tilted at (in degrees).
+     * Get the angle that the grabber is rotated at (in degrees).
      *
-     * @return The angle of the grabber tilt servo.
+     * @return The angle of the grabber rotate servo.
      */
-    public double getGrabberTiltAngle() {
-        return grabberTiltServo.getAngle();
+    public double getGrabberRotateAngle() {
+        return grabberRotatorServo.getAngle();
     }
 
     /**

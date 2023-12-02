@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
- * Some code I made to get the motor encoder positions for the arm. <br />
+ * Some code I made to get the motor encoder and servo positions for the arm. <br />
  *
  * Controls:
  * <ul>
@@ -26,14 +26,14 @@ public class ArmPositionFinder extends OpMode {
 
     private Motor armMotor;
 
-    private ServoEx grabberTiltServo;
+    private ServoEx grabberRotatorServo;
 
     private int rotationAngle = 20;
 
     @Override
     public void init() {
-        grabberTiltServo = new SimpleServo(hardwareMap, "servo_name", 0, 360);
-        armMotor = new Motor(hardwareMap, "motorOne");
+        grabberRotatorServo = new SimpleServo(hardwareMap, "grabber_rotator_servo", 0, 360);
+        armMotor = new Motor(hardwareMap, "arm_motor");
     }
 
     @Override
@@ -47,17 +47,17 @@ public class ArmPositionFinder extends OpMode {
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            grabberTiltServo.rotateByAngle(rotationAngle);
+            grabberRotatorServo.rotateByAngle(rotationAngle);
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            grabberTiltServo.rotateByAngle(-rotationAngle);
+            grabberRotatorServo.rotateByAngle(-rotationAngle);
         }
 
         armMotor.set(gamepad.getLeftX());
         armMotor.setRunMode(Motor.RunMode.RawPower);
 
-        telemetry.addData("Servo's current angle", grabberTiltServo.getAngle());
+        telemetry.addData("Servo's current angle", grabberRotatorServo.getAngle());
         telemetry.addData("Motor position", armMotor.getCurrentPosition());
     }
 }
