@@ -12,6 +12,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -36,14 +37,23 @@ public class rotateSpeedTest extends OpMode {
             new Translation2d(-0.5, 0.5),
             new Translation2d(-0.5, -0.5)
     );
+    private Motor motor1;
+    private Motor motor2;
+    private Motor motor3;
+    private Motor motor4;
 
     @Override
     public void init() {
+        motor1 = new Motor(hardwareMap, "front_left_drive");
+        motor2 = new Motor(hardwareMap, "front_right_drive");
+        motor3 = new Motor(hardwareMap, "back_left_drive");
+        motor4 = new Motor(hardwareMap, "back_right_drive");
+
         mecanumMotors = new Motor[]{
-                new Motor(hardwareMap, "front_left_drive"),
-                new Motor(hardwareMap, "front_right_drive"),
-                new Motor(hardwareMap, "back_left_drive"),
-                new Motor(hardwareMap, "back_right_drive")
+                motor1,
+                motor2,
+                motor3,
+                motor4
         };
 
         mecanumDrive = new MecanumDrive(mecanumMotors[0], mecanumMotors[1], mecanumMotors[2], mecanumMotors[3]);
@@ -85,6 +95,14 @@ public class rotateSpeedTest extends OpMode {
             String device_name = String.format("Device %s current is: ", module.getDeviceName());
 
             telemetry.addData(device_name, current);
+        }
+
+        for (int i = 0; i < mecanumMotors.length; i++){
+            Motor motor = mecanumMotors[i];
+            telemetry.addData(
+                    String.format("Current of motor%d is:", i),
+                    ((DcMotorEx)motor.motor).getCurrent(CurrentUnit.AMPS)
+            );
         }
 
         telemetry.addData("Odometry position: ", mecanumDriveOdometry.getPoseMeters().getHeading());
