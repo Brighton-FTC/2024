@@ -96,13 +96,14 @@ public class BasicAutonomousGeneric extends OpMode {
     public void init() {
         // hardware
         mecanum = new MecanumDrive(
-                new Motor(hardwareMap, "front_left"),
-                new Motor(hardwareMap, "front_right"),
-                new Motor(hardwareMap, "back_left"),
-                new Motor(hardwareMap, "back_right")
+                new Motor(hardwareMap, "front_left_drive"),
+                new Motor(hardwareMap, "front_right_drive"),
+                new Motor(hardwareMap, "back_left_drive"),
+                new Motor(hardwareMap, "back_right_drive")
         );
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "grabber_rotation_servo", 0, 360));
+
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "grabber_rotator_servo", 0, 360));
         linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
         grabber = new GrabberComponent(new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360),
                 new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
