@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
+import static java.lang.Math.abs;
+
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
@@ -11,7 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.PSButtons;
+import org.firstinspires.ftc.teamcode.inputs.PSButtons;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
@@ -54,6 +56,8 @@ public class GenericTeleOp extends OpMode {
 
     private MecanumDrive mecanumDrive;
 
+    public static final double DEAD_ZONE_CONSTANT = 0.05;
+
 
     @Override
     public void init() {
@@ -69,8 +73,8 @@ public class GenericTeleOp extends OpMode {
 
         armMotor = new MotorEx(hardwareMap, "arm_motor");
         grabberRotatorServo = new SimpleServo(hardwareMap, "grabber_rotator_servo",
-                ArmComponent.GRABBER_TILT_DOWN_POSITION,
-                ArmComponent.GRABBER_TILT_UP_POSITION);
+                ArmComponent.GRABBER_ROTATE_DOWN_POSITION,
+                ArmComponent.GRABBER_ROTATE_UP_POSITION);
 
         droneServo = new SimpleServo(hardwareMap, "drone_servo",
                 DroneLauncherComponent.READY_POSITION,
@@ -110,13 +114,17 @@ public class GenericTeleOp extends OpMode {
         leftY -= player1Gamepad.getButton(DPAD_BACKWARDS) ? 0.75 : 0;
         leftY = Range.clip(leftY, -1, 1);
 
-        mecanumDrive.driveRobotCentric(leftX, leftY, rightX,false);
+        mecanumDrive.driveRobotCentric(
+                Math.abs(leftX) > DEAD_ZONE_CONSTANT ? leftX : 0,
+                Math.abs(leftY) > DEAD_ZONE_CONSTANT ? leftY : 0,
+                Math.abs(rightX) > DEAD_ZONE_CONSTANT ? rightX : 0,
+                false);
 
         if (player1Gamepad.getButton(DRONE_LAUNCH_1_BUTTON) || player1Gamepad.getButton(DRONE_LAUNCH_2_BUTTON)){
             droneLauncher.launch();
         }
 
-        arm.moveToSetPosition();
+        arm.moveToSetPoint();
         linearSlide.moveToSetPoint();
 
         telemetry.addData("Arm position", arm.getArmPosition());
