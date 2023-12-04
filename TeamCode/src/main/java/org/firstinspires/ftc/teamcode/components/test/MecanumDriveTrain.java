@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp
+@TeleOp(name = "Test Mecanum", group = "test")
 public class MecanumDriveTrain extends OpMode {
     private Motor frontleft, frontright, backleft, backright;
     private MecanumDrive drive;
@@ -19,8 +19,8 @@ public class MecanumDriveTrain extends OpMode {
     public static final GamepadKeys.Button DPAD_STRAFE_RIGHT = GamepadKeys.Button.DPAD_RIGHT;
     public static final GamepadKeys.Button DPAD_FORWARD = GamepadKeys.Button.DPAD_UP;
     public static final GamepadKeys.Button DPAD_BACKWARDS = GamepadKeys.Button.DPAD_DOWN;
-    public static final double DEAD_ZONE_CONSTANT = 0.05;
-    
+    public static final double DEAD_ZONE_CONSTANT = 0.2;
+
     @Override
     public void init() {
         frontleft = new Motor(hardwareMap, "front_left_drive");
@@ -29,6 +29,11 @@ public class MecanumDriveTrain extends OpMode {
         backright = new Motor(hardwareMap, "back_right_drive");
 
         drive = new MecanumDrive(frontleft, frontright, backleft, backright);
+
+        for (Motor motor : new Motor[]{frontleft, frontright, backleft, backright}) {
+            motor.setInverted(!motor.getInverted());
+        }
+
         player1Gamepad = new GamepadEx(gamepad1);
     }
 
