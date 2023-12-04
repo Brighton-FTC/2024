@@ -20,19 +20,21 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  *
  */
 
-@TeleOp(name = "Grabber Arm Position Tester", group = "components-test")
+@TeleOp(name = "Grabber Arm Position Tester", group = "arm-test")
 public class ArmPositionFinder extends OpMode {
-    private final GamepadEx gamepad = new GamepadEx(gamepad1);
+    private GamepadEx gamepad;
 
     private Motor armMotor;
 
-    private ServoEx grabberRotatorServo;
+//    private ServoEx grabberRotatorServo;
 
     private int rotationAngle = 20;
 
     @Override
     public void init() {
-        grabberRotatorServo = new SimpleServo(hardwareMap, "grabber_rotator_servo", 0, 360);
+        gamepad = new GamepadEx(gamepad1);
+
+//        grabberRotatorServo = new SimpleServo(hardwareMap, "grabber_rotator_servo", 0, 360);
         armMotor = new Motor(hardwareMap, "arm_motor");
     }
 
@@ -47,17 +49,17 @@ public class ArmPositionFinder extends OpMode {
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            grabberRotatorServo.rotateByAngle(rotationAngle);
+//            grabberRotatorServo.rotateByAngle(rotationAngle);
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            grabberRotatorServo.rotateByAngle(-rotationAngle);
+//            grabberRotatorServo.rotateByAngle(-rotationAngle);
         }
 
         armMotor.set(gamepad.getLeftX());
         armMotor.setRunMode(Motor.RunMode.RawPower);
 
-        telemetry.addData("Servo's current angle", grabberRotatorServo.getAngle());
+//        telemetry.addData("Servo's current angle", grabberRotatorServo.getAngle());
         telemetry.addData("Motor position", armMotor.getCurrentPosition());
     }
 }

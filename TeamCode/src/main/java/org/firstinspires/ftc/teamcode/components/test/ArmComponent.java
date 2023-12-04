@@ -11,8 +11,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 public class ArmComponent {
     // TODO: fill in these values
-    public static final int GRABBER_ROTATE_DOWN_POSITION = 0;
-    public static final int GRABBER_ROTATE_UP_POSITION = 180;
+    public static final int GRABBER_ROTATE_DOWN_POSITION = -60;
+    public static final int GRABBER_ROTATE_UP_POSITION = 220;
     public static final int ARM_LIFTED_POSITION = 0;
     public static final int ARM_LOWERED_POSITION = 2000;
 
