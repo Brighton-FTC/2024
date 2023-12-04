@@ -10,8 +10,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 public class LinearSlideComponent {
     // TODO: fill in
-    public static final int LINEAR_SLIDE_LIFTED_POSITION = 2000;
-    public static final int LINEAR_SLIDE_LOWERED_POSITION = 0;
+    public static final int LINEAR_SLIDE_LIFTED_POSITION = -1600;
+    public static final int LINEAR_SLIDE_LOWERED_POSITION = 75;
 
     private final MotorEx linearSlideMotor;
     private final PIDFController pidf;
