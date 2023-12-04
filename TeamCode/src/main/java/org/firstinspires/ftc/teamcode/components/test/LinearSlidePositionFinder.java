@@ -15,14 +15,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * </ul>
  */
 
-@TeleOp(name = "Grabber Arm Position Tester", group = "components-test")
+@TeleOp(name = "Linear Slide Position Finder", group = "linear-slide-test")
 public class LinearSlidePositionFinder extends OpMode {
-    private final GamepadEx gamepad = new GamepadEx(gamepad1);
+    private GamepadEx gamepad;
 
     private MotorEx linearSlideMotor;
 
     @Override
     public void init() {
+        gamepad = new GamepadEx(gamepad1);
+
         linearSlideMotor = new MotorEx(hardwareMap, "linear_slide_motor");
     }
 
