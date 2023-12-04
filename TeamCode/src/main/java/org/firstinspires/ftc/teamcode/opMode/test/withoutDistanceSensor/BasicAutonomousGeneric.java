@@ -122,12 +122,13 @@ public class BasicAutonomousGeneric extends OpMode {
                 new Motor(hardwareMap, "back_right_drive")
         };
 
-        for (Motor motor : mecanumMotors) {
-            motor.setDistancePerPulse(MECANUM_DPP);
-        }
-
 
         mecanum = new MecanumDrive(mecanumMotors[0], mecanumMotors[1], mecanumMotors[2], mecanumMotors[3]);
+
+        for (Motor motor : mecanumMotors) {
+            motor.setDistancePerPulse(MECANUM_DPP);
+            motor.setInverted(!motor.getInverted());
+        }
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "grabber_rotator_servo", 0, 360));
         linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
