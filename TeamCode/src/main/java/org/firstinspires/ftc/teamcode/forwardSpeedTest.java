@@ -75,8 +75,8 @@ public class forwardSpeedTest extends OpMode {
 
     @Override
     public void loop() {
-        // drive mecanum for 5 seconds
-        if (time.time(TimeUnit.SECONDS) < 5) {
+        // drive mecanum for 3 seconds
+        if (time.time(TimeUnit.SECONDS) < 3) {
             mecanumDrive.driveRobotCentric(0, 1, 0);
         }
 
