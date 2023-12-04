@@ -45,7 +45,9 @@ public class BasicAutonomousGeneric extends OpMode {
 
     // TODO: once the custom model exists, modify this
     public final String[] LABELS = {
-            "Pixel"
+            "Pixel",
+            "red_cone",
+            "blue_cone"
     };
 
     public String[] WANTED_LABELS = {
