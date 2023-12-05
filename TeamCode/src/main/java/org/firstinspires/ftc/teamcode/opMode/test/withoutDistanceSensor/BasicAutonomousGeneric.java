@@ -29,6 +29,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -45,14 +46,12 @@ import java.util.stream.Collectors;
  */
 public class BasicAutonomousGeneric extends OpMode {
     // TODO: once the custom model exists, replace this with the custom model name
-    public static final String TFOD_MODEL_ASSET = "CenterStage.tflite";
+    public static final String WHITE_PIXELS_MODEL_ASSET = "CenterStage.tflite";
+    public static final String TEAM_PROP_MODEL_ASSET = "TeamPropModel_v1.0.tflite";
 
     // TODO: once the custom model exists, modify this
-    public static final String[] LABELS = {
-            "Pixel",
-            "blue_cone",
-            "red_cone"
-    };
+    public static final String[] WHITE_PIXEL_LABELS = {"Pixel"};
+    public static final String[] TEAM_PROP_LABELS = {"red_pixel", "blue_pixel"};
 
     public String[] WANTED_LABELS = {
             "Pixel"
@@ -85,7 +84,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
     protected VisionPortal visionPortal;
 
-    protected TfodProcessor tfod;
+    protected TfodProcessor[] tfodModels;
     protected AprilTagProcessor aprilTag;
 
     // TODO: set these values
@@ -142,23 +141,37 @@ public class BasicAutonomousGeneric extends OpMode {
         // vision stuff
         aprilTag = new AprilTagProcessor.Builder().build();
 
-        tfod = new TfodProcessor.Builder()
-                .setModelAssetName(TFOD_MODEL_ASSET)
-                .setModelLabels(LABELS)
-                .setIsModelTensorFlow2(true)
-                .setIsModelQuantized(true)
-                // I have no idea what the following two statements do; find that out asap
-                .setModelInputSize(300)
-                .setModelAspectRatio(16.0 / 9.0)
-                .build();
+        // TODO: find out what the input size and aspect ratio things are and if we need them
+        tfodModels = new TfodProcessor[]{
+                new TfodProcessor.Builder()
+                        .setModelAssetName(WHITE_PIXELS_MODEL_ASSET)
+                        .setModelLabels(WHITE_PIXEL_LABELS)
+                        .setIsModelTensorFlow2(true)
+                        .setIsModelQuantized(true)
+//                        .setModelInputSize(0)
+//                        .setModelAspectRatio(0)
+                        .build(),
 
-        tfod.setMinResultConfidence(0.75F);
+                new TfodProcessor.Builder()
+                        .setModelAssetName(TEAM_PROP_MODEL_ASSET)
+                        .setModelLabels(TEAM_PROP_LABELS)
+                        .setIsModelTensorFlow2(true)
+                        .setIsModelQuantized(true)
+//                        .setModelInputSize(0)
+//                        .setModelAspectRatio(0)
+                        .build()
+        };
+
+        for (TfodProcessor model : tfodModels) {
+            model.setMinResultConfidence(0.75F); // TODO: set
+        }
 
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "webcam_name"))
                 .setCameraResolution(cameraSize)
                 .enableLiveView(true)
-                .addProcessors(tfod, aprilTag)
+                .addProcessors(tfodModels)
+                .addProcessor(aprilTag)
                 .build();
     }
 
@@ -371,7 +384,11 @@ public class BasicAutonomousGeneric extends OpMode {
      */
     @NonNull
     protected List<Recognition> getTfodDetections() {
-        List<Recognition> currentRecognitions = tfod.getRecognitions();
+        List<Recognition> currentRecognitions = new ArrayList<>();
+        for (TfodProcessor model : tfodModels) {
+            currentRecognitions.addAll(model.getRecognitions());
+        }
+
         telemetry.addLine(currentRecognitions.size() + " Objects Detected. ");
 
         currentRecognitions = currentRecognitions.stream()
