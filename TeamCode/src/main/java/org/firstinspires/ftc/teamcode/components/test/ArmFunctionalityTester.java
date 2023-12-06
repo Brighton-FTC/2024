@@ -25,8 +25,7 @@ public class ArmFunctionalityTester extends OpMode {
     @Override
     public void init() {
         armComponent = new ArmComponent(
-                new MotorEx(hardwareMap, "arm_motor"),
-                new SimpleServo(hardwareMap, "grabber_rotator_servo", ArmComponent.GRABBER_ROTATE_DOWN_POSITION, ArmComponent.GRABBER_ROTATE_UP_POSITION)
+                new MotorEx(hardwareMap, "arm_motor")
         );
 
         gamepad = new GamepadEx(gamepad1);
@@ -37,5 +36,9 @@ public class ArmFunctionalityTester extends OpMode {
     @Override
     public void loop() {
         armComponent.moveToSetPoint();
+
+        telemetry.addData("Is arm lifted? ", armComponent.isLifted());
+        telemetry.addData("Setpoint: ", armComponent.getSetPoint());
+        telemetry.update();
     }
 }
