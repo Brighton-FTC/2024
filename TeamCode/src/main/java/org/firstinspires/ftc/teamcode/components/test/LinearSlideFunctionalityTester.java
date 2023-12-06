@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import com.arcrobotics.ftclib.command.CommandScheduler;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -26,13 +28,26 @@ public class LinearSlideFunctionalityTester extends OpMode {
 
         gamepad = new GamepadEx(gamepad1);
 
-        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(linearSlide::toggle);
+        gamepad.getGamepadButton(PSButtons.SQUARE).whenPressed(linearSlide::toggle);
     }
+
 
     @Override
     public void loop() {
         linearSlide.moveToSetPoint();
 
         telemetry.addLine(linearSlide.isLifted() ? "Linear slide is lifted" : "Linear slide is lowered");
+        telemetry.addData("setpoint: ",linearSlide.getSetPoint());
+
+
+        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
+            linearSlide.lift();
+        }
+
+        if (gamepad.wasJustPressed(PSButtons.CIRCLE)) {
+            linearSlide.lower();
+        }
+
+        CommandScheduler.getInstance().run();
     }
 }

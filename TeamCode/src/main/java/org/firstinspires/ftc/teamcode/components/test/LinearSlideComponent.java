@@ -10,8 +10,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 public class LinearSlideComponent {
     // TODO: fill in
-    public static final int LINEAR_SLIDE_LIFTED_POSITION = -1600;
-    public static final int LINEAR_SLIDE_LOWERED_POSITION = 75;
+    public static final int LINEAR_SLIDE_LIFTED_POSITION = -1800;
+    public static final int LINEAR_SLIDE_LOWERED_POSITION = -100;
 
     private final MotorEx linearSlideMotor;
     private final PIDFController pidf;
@@ -25,7 +25,7 @@ public class LinearSlideComponent {
     public LinearSlideComponent(MotorEx linearSlideMotor) {
         this.linearSlideMotor = linearSlideMotor;
 
-        pidf = new PIDFController(0, 0, 0, 0); // TODO: tune this
+        pidf = new PIDFController(0.1, 0.015, 0.01, 0);
     }
 
     /**
@@ -105,5 +105,13 @@ public class LinearSlideComponent {
      */
     public double getVelocity() {
         return linearSlideMotor.getVelocity();
+    }
+
+    /**
+     * Get the setpoint of the PID controller.
+     * @return The setpoint of the PID Controller, in ticks.
+     */
+    public double getSetPoint(){
+        return pidf.getSetPoint();
     }
 }
