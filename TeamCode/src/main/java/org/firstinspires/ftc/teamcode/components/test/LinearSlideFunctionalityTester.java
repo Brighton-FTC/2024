@@ -30,8 +30,7 @@ public class LinearSlideFunctionalityTester extends OpMode {
 
         gamepad.getGamepadButton(PSButtons.SQUARE).whenPressed(linearSlide::toggle);
     }
-
-
+    
     @Override
     public void loop() {
         linearSlide.moveToSetPoint();

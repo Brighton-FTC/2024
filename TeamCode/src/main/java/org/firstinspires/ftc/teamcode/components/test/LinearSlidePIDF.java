@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -17,6 +18,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 @Config
 @TeleOp( name = "Linear Slide PIDF", group = "linear-slide-test")
 public class LinearSlidePIDF extends OpMode {
+    public static int POSITION_ERROR = 5;
+
     private PIDController controller;
 
     public static double p = 0;
@@ -30,10 +33,14 @@ public class LinearSlidePIDF extends OpMode {
 
     private DcMotorEx slide_motor;
 
+    public static boolean atsetpoint = false;
+
 
     @Override
     public void init() {
         controller = new PIDController(p, i, d);
+        controller.setTolerance(3);
+
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         slide_motor = hardwareMap.get(DcMotorEx.class, "linear_slide_motor");
@@ -41,8 +48,9 @@ public class LinearSlidePIDF extends OpMode {
 
     @Override
     public void loop() {
-        controller.setPID(p, i, d);
         int slidePos = slide_motor.getCurrentPosition();
+
+        controller.setPID(p, i, d);
         double pid = controller.calculate(slidePos, target);
         double ff = Math.cos(Math.toRadians(target / ticks_in_degrees)) * f;
 
@@ -50,6 +58,13 @@ public class LinearSlidePIDF extends OpMode {
 
         slide_motor.setPower(power);
 
+        atsetpoint = false;
+
+        if (controller.atSetPoint()){
+            slide_motor.setPower(0.05);
+            atsetpoint = true;
+        }
+        telemetry.addData("at setpoint?: ", atsetpoint);
         telemetry.addData("pos ", slidePos);
         telemetry.addData("target ", target);
         telemetry.update();

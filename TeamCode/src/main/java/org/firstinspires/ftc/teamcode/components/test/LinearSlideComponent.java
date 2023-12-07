@@ -25,7 +25,8 @@ public class LinearSlideComponent {
     public LinearSlideComponent(MotorEx linearSlideMotor) {
         this.linearSlideMotor = linearSlideMotor;
 
-        pidf = new PIDFController(0.1, 0.015, 0.01, 0);
+        pidf = new PIDFController(0.1, 0.01, 0.01, 0);
+        pidf.setTolerance(3);
     }
 
     /**
@@ -65,6 +66,10 @@ public class LinearSlideComponent {
      */
     public void moveToSetPoint() {
         linearSlideMotor.set(pidf.calculate(linearSlideMotor.getCurrentPosition()));
+
+        if (pidf.atSetPoint()){
+            linearSlideMotor.set(0.05);
+        }
     }
 
     /**
