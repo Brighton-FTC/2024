@@ -15,9 +15,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-import org.firstinspires.ftc.teamcode.component.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.component.test.GrabberComponent;
-import org.firstinspires.ftc.teamcode.component.test.LinearSlideComponent;
+import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
+import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
+import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
@@ -137,15 +137,15 @@ public class MoreBasicAutonomousGeneric extends LinearOpMode {
             List<Recognition> tfodRecognitions = getTfodDetections();
 
             if (tfodRecognitions.size() == 0) {
-                mecanum.driveRobotCentric(0, 1, 0);
+                mecanum.driveRobotCentric(0, 0.5, 0);
             } else {
                 recognition = tfodRecognitions.stream()
                         .sorted(Comparator.comparingDouble(Recognition::getBottom))
                         .collect(Collectors.toList()).get(0);
 
-                mecanum.driveRobotCentric(0, recognition.getBottom() / CAMERA_SIZE.getHeight(), 0);
+                boolean isDone = driveToTfodRecognition(recognition);
 
-                if (CAMERA_SIZE.getHeight() - recognition.getBottom() <= TFOD_RECOGNITION_SCREEN_POS) {
+                if (isDone) {
                     int recognitionX = (int) ((recognition.getLeft() + recognition.getRight()) / 2);
 
                     if (recognitionX < CAMERA_SIZE.getWidth() / 3) {
@@ -169,7 +169,7 @@ public class MoreBasicAutonomousGeneric extends LinearOpMode {
 
         if (pixelSide == PixelSide.LEFT) {
             do {
-                mecanum.driveRobotCentric(-0.5, 0, 0);
+                mecanum.driveRobotCentric(0, 0, -0.5);
 
                 recognitionX = (int) ((recognition.getLeft() + recognition.getRight()) / 2);
 
@@ -179,7 +179,7 @@ public class MoreBasicAutonomousGeneric extends LinearOpMode {
 
         } else if (pixelSide == PixelSide.RIGHT) {
             do {
-                mecanum.driveRobotCentric(0.5, 0, 0);
+                mecanum.driveRobotCentric(0, 0, 0.5);
 
                 recognitionX = (int) ((recognition.getLeft() + recognition.getRight()) / 2);
 
@@ -189,16 +189,34 @@ public class MoreBasicAutonomousGeneric extends LinearOpMode {
 
         }
 
-        arm.lower();
-        linearSlide.lower();
+        while (true) {
+            List<Recognition> tfodRecognitions = getTfodDetections();
 
-        while (!(arm.atSetPoint() && linearSlide.atSetPoint())) {
-            arm.moveToSetPoint();
-            linearSlide.moveToSetPoint();
-            sleep(20);
+            if (tfodRecognitions.size() == 0) {
+                mecanum.driveRobotCentric(0, 0.5, 0);
+            } else {
+                recognition = tfodRecognitions.stream()
+                        .sorted(Comparator.comparingDouble(Recognition::getBottom))
+                        .collect(Collectors.toList()).get(0);
+
+                boolean isDone = driveToTfodRecognition(recognition);
+
+                if (isDone) {
+                    break;
+                }
+            }
+
+            arm.lower();
+            linearSlide.lower();
+
+            while (!(arm.atSetPoint() && linearSlide.atSetPoint())) {
+                arm.moveToSetPoint();
+                linearSlide.moveToSetPoint();
+                sleep(20);
+            }
+
+            grabber.open();
         }
-
-        grabber.open();
     }
 
     /**
@@ -220,6 +238,12 @@ public class MoreBasicAutonomousGeneric extends LinearOpMode {
                 .collect(Collectors.toList());
 
         return currentRecognitions;
+    }
+
+    protected boolean driveToTfodRecognition(@NonNull Recognition recognition) {
+        mecanum.driveRobotCentric(0, recognition.getBottom() / CAMERA_SIZE.getHeight(), 0);
+
+        return CAMERA_SIZE.getHeight() - recognition.getBottom() <= TFOD_RECOGNITION_SCREEN_POS;
     }
 
     public enum PixelSide {
