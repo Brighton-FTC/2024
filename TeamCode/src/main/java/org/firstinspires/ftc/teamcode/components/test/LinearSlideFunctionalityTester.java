@@ -22,6 +22,8 @@ public class LinearSlideFunctionalityTester extends OpMode {
 
     private GamepadEx gamepad;
 
+    private boolean previousCrossValue = false; // store for button press.
+
     @Override
     public void init() {
         linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
@@ -39,15 +41,10 @@ public class LinearSlideFunctionalityTester extends OpMode {
         telemetry.addLine(linearSlide.isLifted() ? "Linear slide is lifted" : "Linear slide is lowered");
         telemetry.addData("setpoint: ",linearSlide.getSetPoint());
 
-
-        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
-            linearSlide.lift();
+        if(gamepad.getButton(PSButtons.CROSS) && !previousCrossValue) {
+            linearSlide.toggle();
         }
 
-        if (gamepad.wasJustPressed(PSButtons.CIRCLE)) {
-            linearSlide.lower();
-        }
-
-        CommandScheduler.getInstance().run();
+        previousCrossValue = gamepad.getButton(PSButtons.CROSS);
     }
 }
