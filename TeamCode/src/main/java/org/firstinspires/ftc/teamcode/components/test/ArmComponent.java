@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
-import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
@@ -14,15 +12,17 @@ public class ArmComponent {
 //    public static final int GRABBER_ROTATE_DOWN_POSITION = -60;
 //    public static final int GRABBER_ROTATE_UP_POSITION = 220;
 
-    // TODO: fill in these values
+    public static final int ERROR = 10;
+    public static final double VELOCITY = 0.5;
+
     public static final int ARM_LIFTED_POSITION = 0;
     public static final int ARM_LOWERED_POSITION = 2000;
 
     private final MotorEx armMotor;
     private boolean isArmLifted = false;
 
-    // TODO: Tune this
-    private final PIDFController pidf = new PIDFController(0, 0, 0, 0);
+    private int target = ARM_LOWERED_POSITION;
+
 
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
@@ -31,7 +31,6 @@ public class ArmComponent {
      */
     public ArmComponent(@NonNull MotorEx armMotor) {
         this.armMotor = armMotor;
-        setTargetPosition(ARM_LOWERED_POSITION);
     }
 
     /**
@@ -41,9 +40,7 @@ public class ArmComponent {
     public void lift() {
         isArmLifted = true;
 
-        setTargetPosition(ARM_LIFTED_POSITION);
-
-        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
+        target = ARM_LIFTED_POSITION;
     }
 
     /**
@@ -53,9 +50,7 @@ public class ArmComponent {
     public void lower() {
         isArmLifted = false;
 
-        setTargetPosition(ARM_LOWERED_POSITION);
-
-        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
+        target = ARM_LOWERED_POSITION;
     }
 
     /**
@@ -75,6 +70,7 @@ public class ArmComponent {
 
     /**
      * Directly control the movement of the arm.
+     *
      * @param velocity The velocity (-1 to 1) that the motor is set to.
      */
     public void setVelocity(double velocity) {
@@ -112,15 +108,26 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
+        if (!atSetPoint()) {
+            if (armMotor.getCurrentPosition() < target) {
+                armMotor.set(VELOCITY);
+            } else {
+                armMotor.set(-VELOCITY);
+            }
+        }
     }
 
     /**
      * Get the setpoint of the PID controller.
+     *
      * @return The setpoint of the PID Controller, in ticks.
      */
-    public double getSetPoint(){
-        return pidf.getSetPoint();
+    public double getSetPoint() {
+        return target;
+    }
+
+    public boolean atSetPoint() {
+        return Math.abs(target - armMotor.getCurrentPosition()) <= ERROR;
     }
 
     /**
@@ -129,6 +136,6 @@ public class ArmComponent {
      * @param position The desired final position of the arm
      */
     private void setTargetPosition(int position) {
-        pidf.setSetPoint(position);
+        target = position;
     }
 }
