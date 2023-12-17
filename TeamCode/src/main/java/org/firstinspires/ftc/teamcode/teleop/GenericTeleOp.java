@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
-import static java.lang.Math.abs;
-
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
@@ -13,11 +11,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.inputs.PSButtons;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
+import org.firstinspires.ftc.teamcode.inputs.PSButtons;
 
 @TeleOp(name = "TeleOp", group = "teleop-test")
 public class GenericTeleOp extends OpMode {
@@ -45,7 +43,6 @@ public class GenericTeleOp extends OpMode {
     private GrabberComponent grabber;
 
     private MotorEx armMotor;
-    private ServoEx grabberRotatorServo;
     private ArmComponent arm;
 
     private ServoEx droneServo;
@@ -72,9 +69,6 @@ public class GenericTeleOp extends OpMode {
                 GrabberComponent.GRABBER_OPEN_POSITION);
 
         armMotor = new MotorEx(hardwareMap, "arm_motor");
-        grabberRotatorServo = new SimpleServo(hardwareMap, "grabber_rotator_servo",
-                ArmComponent.GRABBER_ROTATE_DOWN_POSITION,
-                ArmComponent.GRABBER_ROTATE_UP_POSITION);
 
         droneServo = new SimpleServo(hardwareMap, "drone_servo",
                 DroneLauncherComponent.READY_POSITION,
@@ -89,7 +83,7 @@ public class GenericTeleOp extends OpMode {
                 new Motor(hardwareMap, "backRightDrive"));
 
 
-        arm = new ArmComponent(armMotor, grabberRotatorServo);
+        arm = new ArmComponent(armMotor);
         grabber = new GrabberComponent(grabberServo1, grabberServo2);
         droneLauncher = new DroneLauncherComponent(droneServo);
         linearSlide = new LinearSlideComponent(linearSlideMotor);
@@ -120,12 +114,15 @@ public class GenericTeleOp extends OpMode {
                 Math.abs(rightX) > DEAD_ZONE_CONSTANT ? rightX : 0,
                 false);
 
-        if (player1Gamepad.getButton(DRONE_LAUNCH_1_BUTTON) || player1Gamepad.getButton(DRONE_LAUNCH_2_BUTTON)){
+        if (player1Gamepad.getButton(DRONE_LAUNCH_1_BUTTON) || player1Gamepad.getButton(DRONE_LAUNCH_2_BUTTON)) {
             droneLauncher.launch();
         }
 
         arm.moveToSetPoint();
         linearSlide.moveToSetPoint();
+
+        player1Gamepad.readButtons();
+        player2Gamepad.readButtons();
 
         telemetry.addData("Arm position", arm.getArmPosition());
         telemetry.addData("Grabber closed?", grabber.isClosed());
