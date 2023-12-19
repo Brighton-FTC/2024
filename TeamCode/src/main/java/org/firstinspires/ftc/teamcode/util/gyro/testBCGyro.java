@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.util.gyro;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -16,7 +16,8 @@ public class testBCGyro extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addData("Gyro output: ", gyro.getAbsoluteHeading());
+        telemetry.addData("Gyro absolute heading: ", gyro.getAbsoluteHeading());
+        telemetry.addData("Gyro relative heading: ", gyro.getHeading());
         telemetry.update();
     }
 }
