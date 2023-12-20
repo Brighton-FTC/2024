@@ -119,6 +119,7 @@ public class GenericTeleOp extends OpMode {
         }
 
         linearSlide.read();
+        arm.read();
 
         double leftY = player1Gamepad.getLeftY();
         double leftX = player1Gamepad.getLeftX();
