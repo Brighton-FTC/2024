@@ -11,6 +11,7 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.arcrobotics.ftclib.kinematics.wpilibkinematics.MecanumDriveOdometry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -28,6 +29,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Don't use this for now, there are changes not applied here - go to Steve and get this fixed first
+ */
+@Disabled
 @Autonomous(name = "More basic autonomous (test first)", group = "autonomous-test")
 public class MoreBasicAutonomousGeneric extends LinearOpMode {
     // TODO: once the custom model exists, replace this with the custom model name

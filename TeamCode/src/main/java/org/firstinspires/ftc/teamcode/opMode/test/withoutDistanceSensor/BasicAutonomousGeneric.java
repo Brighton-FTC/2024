@@ -177,6 +177,9 @@ public class BasicAutonomousGeneric extends OpMode {
 
     @Override
     public void loop() {
+        arm.read();
+        linearSlide.read();
+
         switch (currentState) {
             case DRIVING_TO_SPIKE_MARKS:
                 List<Recognition> recognitions = getTfodDetections();
@@ -374,6 +377,8 @@ public class BasicAutonomousGeneric extends OpMode {
                     currentState = State.DONE;
                 }
         }
+
+        telemetry.addData("Current state: ", currentState);
         telemetry.update();
     }
 
