@@ -7,8 +7,11 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
@@ -16,6 +19,8 @@ import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.teamcode.inputs.PSButtons;
+
+import java.util.List;
 
 @TeleOp(name = "TeleOp", group = "teleop-test")
 public class GenericTeleOp extends OpMode {
@@ -52,6 +57,11 @@ public class GenericTeleOp extends OpMode {
     private MotorEx linearSlideMotor;
 
     private MecanumDrive mecanumDrive;
+
+    private ElapsedTime time1;
+    private ElapsedTime time2;
+
+    private List<LynxModule> allHubs;
 
     public static final double DEAD_ZONE_CONSTANT = 0.05;
 
@@ -92,10 +102,24 @@ public class GenericTeleOp extends OpMode {
         player2Gamepad.getGamepadButton(TOGGLE_GRABBER_BUTTON).whenPressed(grabber::toggle);
         player2Gamepad.getGamepadButton(TOGGLE_ARM_BUTTON).whenPressed(arm::toggle);
         player2Gamepad.getGamepadButton(TOGGLE_LINEAR_SLIDE_BUTTON).whenPressed(linearSlide::toggle);
+        time1 = new ElapsedTime();
+        time2 = new ElapsedTime();
+
+        allHubs = hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
     }
 
     @Override
     public void loop() {
+        for (LynxModule module : allHubs) {
+            module.clearBulkCache();
+        }
+
+        linearSlide.read();
+
         double leftY = player1Gamepad.getLeftY();
         double leftX = player1Gamepad.getLeftX();
         double rightX = player1Gamepad.getRightX();
@@ -116,6 +140,32 @@ public class GenericTeleOp extends OpMode {
 
         if (player1Gamepad.getButton(DRONE_LAUNCH_1_BUTTON) || player1Gamepad.getButton(DRONE_LAUNCH_2_BUTTON)) {
             droneLauncher.launch();
+        }
+
+        // prank lol lmao
+        // saku don't remove this thanks
+        // why is the ide showing your name as a error
+        if (time1.seconds() > 20){
+            gamepad1.rumble(1, 1, 100);
+            gamepad2.rumble(1, 1, 100);
+
+            if (time2.seconds() > 1) {
+                Gamepad.LedEffect effect = new Gamepad.LedEffect.Builder()
+                        .addStep(1, 0, 0, 100)
+                        .addStep(0, 1, 0, 100)
+                        .addStep(0, 0, 1, 100)
+                        .addStep(1, 1, 1, 100)
+                        .addStep(1, 0, 0, 100)
+                        .addStep(1, 1, 0, 100)
+                        .addStep(0, 1, 1, 100)
+                        .addStep(1, 0, 1, 100)
+                        .addStep(0, 0, 0, 100)
+                        .addStep(1, 1, 0, 100)
+                        .build();
+                gamepad1.runLedEffect(effect);
+                gamepad2.runLedEffect(effect);
+                time2.reset();
+            }
         }
 
         arm.moveToSetPoint();
