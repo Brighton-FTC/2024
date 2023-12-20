@@ -5,6 +5,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
  * Linear slide component. <br />
+ *
+ * Call {@link #read()} every loop or the getters will break.
  * Call {@link #lift()} or {@link #lower()} to set the linear slide to be lifted/lowered. <br />
  * Call {@link #moveToSetPoint()} continuously to move the linear slide to be lifted/lowered.
  */
@@ -15,6 +17,10 @@ public class LinearSlideComponent {
 
     private final MotorEx linearSlideMotor;
     private final PIDFController pidf;
+
+    private double currentVelocity;
+
+    private double currentPosition;
 
     private boolean isLifted = false;
 
@@ -65,7 +71,7 @@ public class LinearSlideComponent {
      * Move the linear slide to the specified set point.
      */
     public void moveToSetPoint() {
-        linearSlideMotor.set(pidf.calculate(linearSlideMotor.getCurrentPosition()));
+        linearSlideMotor.set(pidf.calculate(currentPosition));
 
         if (pidf.atSetPoint()){
             linearSlideMotor.set(0.05);
@@ -101,7 +107,7 @@ public class LinearSlideComponent {
      * @return The position of the linear slide motor, in ticks.
      */
     public double getPosition() {
-        return linearSlideMotor.getCurrentPosition();
+        return currentPosition;
     }
 
     /**
@@ -109,7 +115,16 @@ public class LinearSlideComponent {
      * @return The velocity of the linear slide motor, in ticks per second.
      */
     public double getVelocity() {
-        return linearSlideMotor.getVelocity();
+        return currentVelocity;
+    }
+
+    /**
+     * Read from the motor.
+     * MUST be called every loop, or getters won't work at all.
+     */
+    public void read(){
+        currentVelocity = linearSlideMotor.getVelocity();
+        currentPosition = linearSlideMotor.getCurrentPosition();
     }
 
     /**
