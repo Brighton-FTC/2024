@@ -35,6 +35,7 @@ public class ArmFunctionalityTester extends OpMode {
 
     @Override
     public void loop() {
+        armComponent.read();
         armComponent.moveToSetPoint();
 
         telemetry.addData("Is arm lifted? ", armComponent.isLifted());

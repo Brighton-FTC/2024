@@ -24,6 +24,10 @@ public class ArmComponent {
     // TODO: Tune this
     private final PIDFController pidf = new PIDFController(0, 0, 0, 0);
 
+    private double currentVelocity;
+
+    private double currentPosition;
+
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
      *
@@ -42,8 +46,6 @@ public class ArmComponent {
         isArmLifted = true;
 
         setTargetPosition(ARM_LIFTED_POSITION);
-
-        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
     }
 
     /**
@@ -54,8 +56,6 @@ public class ArmComponent {
         isArmLifted = false;
 
         setTargetPosition(ARM_LOWERED_POSITION);
-
-        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
     }
 
     /**
@@ -96,7 +96,7 @@ public class ArmComponent {
      * @return The position of the arm.
      */
     public double getArmPosition() {
-        return armMotor.getCurrentPosition();
+        return currentPosition;
     }
 
     /**
@@ -105,14 +105,14 @@ public class ArmComponent {
      * @return The velocity of the arm motor.
      */
     public double getArmVelocity() {
-        return armMotor.getVelocity();
+        return currentVelocity;
     }
 
     /**
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        armMotor.set(pidf.calculate(armMotor.getCurrentPosition()));
+        armMotor.set(pidf.calculate(currentPosition));
     }
 
     /**
@@ -130,5 +130,11 @@ public class ArmComponent {
      */
     private void setTargetPosition(int position) {
         pidf.setSetPoint(position);
+    }
+
+
+    public void read(){
+        currentPosition = armMotor.getCurrentPosition();
+        currentVelocity = armMotor.getVelocity();
     }
 }
