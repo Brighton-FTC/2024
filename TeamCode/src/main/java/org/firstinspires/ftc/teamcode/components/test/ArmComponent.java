@@ -124,6 +124,15 @@ public class ArmComponent {
     }
 
     /**
+     * Get if the motor is at the setpoint.
+     * @return a boolean for if the motor is at the setpoint.
+     */
+    public boolean atSetPoint(){
+        return pidf.atSetPoint();
+    }
+
+
+    /**
      * Set PID and feedforward to desired position
      *
      * @param position The desired final position of the arm
