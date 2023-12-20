@@ -112,7 +112,7 @@ public class BasicAutonomousGeneric extends OpMode {
             motor.setInverted(!motor.getInverted());
         }
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "grabber_rotator_servo", 0, 360));
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
         linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
         grabber = new GrabberComponent(new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360),
                 new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
@@ -145,6 +145,8 @@ public class BasicAutonomousGeneric extends OpMode {
 
     @Override
     public void loop() {
+        arm.read();
+        linearSlide.read();
         switch (currentState) {
             case DRIVING_TO_SPIKE_MARKS:
                 List<Recognition> recognitions = getTfodDetections();

@@ -1,32 +1,38 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
  * Linear slide component. <br />
+ *
+ * Call {@link #read()} every loop or the getters will break.
  * Call {@link #lift()} or {@link #lower()} to set the linear slide to be lifted/lowered. <br />
  * Call {@link #moveToSetPoint()} continuously to move the linear slide to be lifted/lowered.
  */
 public class LinearSlideComponent {
-    public static final int ERROR = 10;
-    public static final double VELOCITY = 0.5;
-
     // TODO: fill in
     public static final int LINEAR_SLIDE_LIFTED_POSITION = -1800;
     public static final int LINEAR_SLIDE_LOWERED_POSITION = -100;
 
     private final MotorEx linearSlideMotor;
+    private final PIDFController pidf;
 
-    private int target = LINEAR_SLIDE_LOWERED_POSITION;
+    private double currentVelocity;
+
+    private double currentPosition;
+
     private boolean isLifted = false;
 
     /**
      * Linear slide component.
-     *
      * @param linearSlideMotor The motor that controls the linear slide.
      */
     public LinearSlideComponent(MotorEx linearSlideMotor) {
         this.linearSlideMotor = linearSlideMotor;
+
+        pidf = new PIDFController(0.1, 0.01, 0.01, 0);
+        pidf.setTolerance(3);
     }
 
     /**
@@ -34,7 +40,7 @@ public class LinearSlideComponent {
      * You need to call {@link #moveToSetPoint()} for the linear slide to actually move.
      */
     public void lift() {
-        target = LINEAR_SLIDE_LIFTED_POSITION;
+        pidf.setSetPoint(LINEAR_SLIDE_LIFTED_POSITION);
 
         isLifted = true;
     }
@@ -44,7 +50,7 @@ public class LinearSlideComponent {
      * You need to call {@link #moveToSetPoint()} for the linear slide to actually move.
      */
     public void lower() {
-        target = LINEAR_SLIDE_LIFTED_POSITION;
+        pidf.setSetPoint(LINEAR_SLIDE_LOWERED_POSITION);
 
         isLifted = false;
     }
@@ -65,18 +71,15 @@ public class LinearSlideComponent {
      * Move the linear slide to the specified set point.
      */
     public void moveToSetPoint() {
-        if (!atSetPoint()) {
-            if (linearSlideMotor.getCurrentPosition() < target) {
-                linearSlideMotor.set(VELOCITY);
-            } else {
-                linearSlideMotor.set(-VELOCITY);
-            }
+        linearSlideMotor.set(pidf.calculate(currentPosition));
+
+        if (pidf.atSetPoint()){
+            linearSlideMotor.set(0.05);
         }
     }
 
     /**
      * Directly control the movement of the linear slide.
-     *
      * @param velocity The velocity (-1 to 1) that the motor is set to.
      */
     public void setVelocity(double velocity) {
@@ -85,7 +88,6 @@ public class LinearSlideComponent {
 
     /**
      * Get the position of the linear slide.
-     *
      * @return If the linear slide is lowered or not.
      */
     public boolean isLifted() {
@@ -94,37 +96,42 @@ public class LinearSlideComponent {
 
     /**
      * Get if the linear slide is at its set point.
-     *
      * @return If the linear slide is at its set point.
      */
     public boolean atSetPoint() {
-        return Math.abs(target - linearSlideMotor.getCurrentPosition()) <= ERROR;
+        return pidf.atSetPoint();
     }
 
     /**
      * Get the position of the linear slide motor.
-     *
      * @return The position of the linear slide motor, in ticks.
      */
     public double getPosition() {
-        return linearSlideMotor.getCurrentPosition();
+        return currentPosition;
     }
 
     /**
      * Get the velocity of the linear slide motor.
-     *
      * @return The velocity of the linear slide motor, in ticks per second.
      */
     public double getVelocity() {
-        return linearSlideMotor.getVelocity();
+        return currentVelocity;
+    }
+
+    /**
+     * Read from the motor.
+     * MUST be called every loop, or getters won't work at all.
+     */
+    public void read(){
+        currentVelocity = linearSlideMotor.getVelocity();
+        currentPosition = linearSlideMotor.getCurrentPosition();
     }
 
     /**
      * Get the setpoint of the PID controller.
-     *
-     * @return The setpoint of the motor, in ticks.
+     * @return The setpoint of the PID Controller, in ticks.
      */
-    public double getSetPoint() {
-        return target;
+    public double getSetPoint(){
+        return pidf.getSetPoint();
     }
 }
