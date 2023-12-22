@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opMode.test.withDistanceSensor;
+package org.firstinspires.ftc.teamcode.opMode.test;
 
 import android.util.Size;
 
@@ -88,7 +88,7 @@ public class BasicAutonomousGeneric extends OpMode {
     protected SensorDistanceEx distanceSensor;
     protected GyroEx gyro;
 
-    protected State currentState = State.DRIVING_TO_SPIKE_MARKS;
+    protected Runnable currentState = this::driveToSpikeMarks;
     protected CorrectSpikeMark correctSpikeMark = null;
 
     protected TeamColor teamColor = null; // fill this in in the color specific opmode
@@ -148,152 +148,173 @@ public class BasicAutonomousGeneric extends OpMode {
         arm.read();
         linearSlide.read();
 
-        switch (currentState) {
-            case DRIVING_TO_SPIKE_MARKS:
-                List<Recognition> recognitions = getTfodDetections();
+        currentState.run();
 
-                if (recognitions.size() > 0) {
-                    Recognition currentRecognition = recognitions.stream()
-                            .min(Comparator.comparingDouble(Recognition::getTop))
-                            .get();
+        telemetry.update();
+    }
 
-                    boolean isDone = driveToTfodObject(currentRecognition, (int) (cameraSize.getHeight() * CAMERA_Y_POS));
+    private void driveToSpikeMarks() {
+        telemetry.addLine("Driving to spike marks.");
 
-                    if (isDone) {
-                        if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
-                            correctSpikeMark = CorrectSpikeMark.LEFT;
-                        } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * CAMERA_Y_POS) {
-                            correctSpikeMark = CorrectSpikeMark.RIGHT;
-                        } else {
-                            correctSpikeMark = CorrectSpikeMark.CENTER;
-                        }
+        List<Recognition> recognitions = getTfodDetections();
 
-                        currentState = State.PLACING_PURPLE_PIXEL;
-                    }
+        if (recognitions.size() > 0) {
+            Recognition currentRecognition = recognitions.stream()
+                    .min(Comparator.comparingDouble(Recognition::getTop))
+                    .get();
+
+            boolean isDone = driveToTfodObject(currentRecognition, (int) (cameraSize.getHeight() * CAMERA_Y_POS));
+
+            if (isDone) {
+                if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
+                    correctSpikeMark = CorrectSpikeMark.LEFT;
+                } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * CAMERA_Y_POS) {
+                    correctSpikeMark = CorrectSpikeMark.RIGHT;
                 } else {
-                    if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
-                        mecanum.driveRobotCentric(0, 1, 0);
-                    }
+                    correctSpikeMark = CorrectSpikeMark.CENTER;
                 }
 
-                break;
-
-            case STRAFING_FOR_PURPLE_PIXEL_PLACEMENT:
-                recognitions = getTfodDetections();
-
-                if (recognitions.size() > 0) {
-                    Recognition currentRecognition = recognitions.stream()
-                            .min(Comparator.comparingDouble(Recognition::getTop))
-                            .get();
-
-                    // get the pixel centered to between 2/5 and 3/5 of the camera width
-                    if (currentRecognition.getRight() > cameraSize.getWidth() * 3.0 / 5.0) {
-                        mecanum.driveRobotCentric(0.5, 0, 0);
-
-                    } else if (currentRecognition.getLeft() < cameraSize.getWidth() * 2.0 / 5.0) {
-                        mecanum.driveRobotCentric(-0.5, 0, 0);
-
-                    } else {
-                        arm.lower();
-                        linearSlide.lower();
-
-                        currentState = State.PLACING_PURPLE_PIXEL;
-                    }
-                }
-
-                break;
-
-            case PLACING_PURPLE_PIXEL:
-                arm.moveToSetPoint();
-                linearSlide.moveToSetPoint();
-
-                if (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                    grabber.open();
-                    currentState = State.TURNING_TO_BACKDROP;
-                    gyro.reset();
-                }
-
-            case TURNING_TO_BACKDROP:
-                boolean isDone = turnToAngle(backdropTurningAngle);
-
-                if (isDone) {
-                    currentState = State.DRIVING_TO_BACKDROP;
-                }
-
-            case DRIVING_TO_BACKDROP:
-                if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
-                    mecanum.driveRobotCentric(0, 1, 0);
-                } else {
-                    arm.lift();
-                    linearSlide.lift();
-
-                    currentState = State.PREPARING_FOR_SHIFTING;
-                }
-
-            case PREPARING_FOR_SHIFTING:
-                arm.moveToSetPoint();
-                linearSlide.moveToSetPoint();
-
-                if (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                    currentState = State.SHIFTING_TO_BACKDROP;
-                }
-
-                break;
-
-            case SHIFTING_TO_BACKDROP:
-                AprilTagDetection currentDetection = null;
-                try {
-                    if (teamColor == TeamColor.RED) {
-                        currentDetection = getAprilTagDetections().stream()
-                                .filter((detection) -> detection.id == correctSpikeMark.getRedAprilTagId())
-                                .collect(Collectors.toList())
-                                .get(0);
-
-                    } else if (teamColor == TeamColor.BLUE) {
-                        currentDetection = getAprilTagDetections().stream()
-                                .filter((detection) -> detection.id == correctSpikeMark.getBlueAprilTagId())
-                                .collect(Collectors.toList())
-                                .get(0);
-                    }
-
-                    assert currentDetection != null;
-                    boolean hasShifted = shiftToAprilTag(currentDetection);
-
-                    if (hasShifted) {
-                        currentState = State.PLACING_YELLOW_PIXEL;
-                    }
-
-                } catch (IndexOutOfBoundsException e) {
-                    currentState = State.STRAFING_TO_PARK;
-
-                    break;
-                }
-
-            case PLACING_YELLOW_PIXEL:
-                grabber.open();
-
-                currentState = State.STRAFING_TO_PARK;
-                gyro.reset();
-                break;
-
-            case STRAFING_TO_PARK:
-                mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? 0.5 : -0.5, 0);
-
-                if (distanceSensor.getDistance(DistanceUnit.INCH) > SHIFTING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
-                    currentState = State.PARKING;
-                }
-                break;
-
-            case PARKING:
-                if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
-                    mecanum.driveRobotCentric(0, 0.5, 0);
-                } else {
-                    currentState = State.DONE;
-                }
+                currentState = this::strafeForPurplePixelPlacement;
+            }
+        } else {
+            if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
+                mecanum.driveRobotCentric(0, 1, 0);
+            }
         }
 
-        telemetry.addData("Current state: ", currentState);
-        telemetry.update();
+    }
+
+    private void strafeForPurplePixelPlacement() {
+        telemetry.addLine("Strafing to place purple pixel.");
+
+        List<Recognition> recognitions = getTfodDetections();
+
+        if (recognitions.size() > 0) {
+            Recognition currentRecognition = recognitions.stream()
+                    .min(Comparator.comparingDouble(Recognition::getTop))
+                    .get();
+
+            // get the pixel centered to between 2/5 and 3/5 of the camera width
+            if (currentRecognition.getRight() > cameraSize.getWidth() * 3.0 / 5.0) {
+                mecanum.driveRobotCentric(0.5, 0, 0);
+
+            } else if (currentRecognition.getLeft() < cameraSize.getWidth() * 2.0 / 5.0) {
+                mecanum.driveRobotCentric(-0.5, 0, 0);
+
+            } else {
+                arm.lower();
+                linearSlide.lower();
+
+                currentState = this::placePurplePixel;
+            }
+        }
+    }
+
+    private void placePurplePixel() {
+        telemetry.addLine("Placing purple pixel");
+
+        arm.moveToSetPoint();
+        linearSlide.moveToSetPoint();
+
+        if (arm.atSetPoint() && linearSlide.atSetPoint()) {
+            grabber.open();
+            currentState = this::turnToBackdrop;
+            gyro.reset();
+        }
+    }
+
+    private void turnToBackdrop() {
+        telemetry.addLine("Turning to backdrop. ");
+
+        boolean isDone = turnToAngle(backdropTurningAngle);
+
+        if (isDone) {
+            currentState = this::driveToBackdrop;
+        }
+    }
+
+    private void driveToBackdrop() {
+        telemetry.addLine("Driving to backdrop");
+
+        if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
+            mecanum.driveRobotCentric(0, 1, 0);
+        } else {
+            arm.lift();
+            linearSlide.lift();
+
+            currentState = this::prepareForShifting;
+        }
+    }
+
+    private void prepareForShifting() {
+        telemetry.addLine("Preparing to shift to backdrop. ");
+
+        arm.moveToSetPoint();
+        linearSlide.moveToSetPoint();
+
+        if (arm.atSetPoint() && linearSlide.atSetPoint()) {
+            currentState = this::shiftToBackdrop;
+        }
+    }
+
+    private void shiftToBackdrop() {
+        telemetry.addLine("Shifting to backdrop. ");
+
+        AprilTagDetection currentDetection = null;
+        try {
+            if (teamColor == TeamColor.RED) {
+                currentDetection = getAprilTagDetections().stream()
+                        .filter((detection) -> detection.id == correctSpikeMark.getRedAprilTagId())
+                        .collect(Collectors.toList())
+                        .get(0);
+
+            } else if (teamColor == TeamColor.BLUE) {
+                currentDetection = getAprilTagDetections().stream()
+                        .filter((detection) -> detection.id == correctSpikeMark.getBlueAprilTagId())
+                        .collect(Collectors.toList())
+                        .get(0);
+            }
+
+            assert currentDetection != null;
+            boolean hasShifted = shiftToAprilTag(currentDetection);
+
+            if (hasShifted) {
+                currentState = this::placeYellowPixel;
+            }
+
+        } catch (IndexOutOfBoundsException e) {
+            currentState = this::strafeToPark;
+        }
+
+    }
+
+    private void placeYellowPixel() {
+        telemetry.addLine("Placing yellow pixel. ");
+
+        grabber.open();
+
+        currentState = this::strafeToPark;
+        gyro.reset();
+    }
+
+    private void strafeToPark() {
+        telemetry.addLine("Strafing to park. ");
+
+        mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? 0.5 : -0.5, 0);
+
+        if (distanceSensor.getDistance(DistanceUnit.INCH) > SHIFTING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
+            currentState = this::park;
+        }
+    }
+
+    private void park() {
+        telemetry.addLine("Parking. ");
+
+        if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
+            mecanum.driveRobotCentric(0, 0.5, 0);
+        } else {
+            currentState = () -> {};
+        }
     }
 
     /**
@@ -381,20 +402,6 @@ public class BasicAutonomousGeneric extends OpMode {
             mecanum.driveRobotCentric(0, detection.ftcPose.y / DRIVE_DIVISOR, detection.ftcPose.x / STRAFE_DIVISOR);
             return false;
         }
-    }
-
-    public enum State {
-        DRIVING_TO_SPIKE_MARKS,
-        STRAFING_FOR_PURPLE_PIXEL_PLACEMENT,
-        PLACING_PURPLE_PIXEL,
-        TURNING_TO_BACKDROP,
-        DRIVING_TO_BACKDROP,
-        PREPARING_FOR_SHIFTING,
-        SHIFTING_TO_BACKDROP,
-        PLACING_YELLOW_PIXEL,
-        STRAFING_TO_PARK,
-        PARKING,
-        DONE
     }
 
     public enum CorrectSpikeMark {
