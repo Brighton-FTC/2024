@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 /**
  * Component class for automatic pixel placement. <br />
- * To place a pixel, call {@link #place()} once, and then call {@link #runCurrentAction()} continuously.
+ * To place a pixel, call {@link #placeOnBackdrop()} or {@link #placeOnGround()} once, and then call {@link #run()} continuously.
  */
 public class AutomaticPixelPlacement {
     public static final double DISTANCE_FROM_APRIL_TAG = 6;
@@ -39,18 +39,20 @@ public class AutomaticPixelPlacement {
 
     private final IMU imu;
 
-    private Runnable currentAction = () -> {};
+    private Runnable currentState = () -> {
+    };
 
     private boolean isDone = true;
 
     /**
      * Component class for automatic pixel placement.
-     * @param arm The arm component.
+     *
+     * @param arm         The arm component.
      * @param linearSlide The linear slide component.
-     * @param grabber The grabber component.
-     * @param mecanum The mecanum drive.
-     * @param aprilTag The april tag processor.
-     * @param imu The imu.
+     * @param grabber     The grabber component.
+     * @param mecanum     The mecanum drive.
+     * @param aprilTag    The april tag processor.
+     * @param imu         The imu.
      */
     public AutomaticPixelPlacement(ArmComponent arm,
                                    LinearSlideComponent linearSlide,
@@ -69,24 +71,34 @@ public class AutomaticPixelPlacement {
     }
 
     /**
-     * Setup the opmode for pixel placement. <br />
-     * You need to call {@link #runCurrentAction()} continuously for the robot to actually do stuff.
+     * Setup the opmode to place a pixel on a backdrop. <br />
+     * You need to call {@link #run()} continuously for the robot to actually do stuff.
      */
-    public void place() {
+    public void placeOnBackdrop() {
         isDone = false;
-        currentAction = this::driveToBackdrop;
+        currentState = this::driveToBackdrop;
+    }
+
+    /**
+     * Setup the opmode to place a pixel on the ground <br />
+     * You need to call {@link #run()} continuously for the robot to actually do stuff.
+     */
+    public void placeOnGround() {
+        isDone = false;
+        currentState = this::lowerArm;
     }
 
     /**
      * Run the current action. <br />
-     * This won't do anything unless you have already called {@link #place()}.
+     * This won't do anything unless you have already called {@link #placeOnBackdrop()} or {@link #placeOnGround()}.
      */
-    public void runCurrentAction() {
-        currentAction.run();
+    public void run() {
+        currentState.run();
     }
 
     /**
      * Get if the component class is active.
+     *
      * @return If a pixel is being placed.
      */
     public boolean isPlacingPixel() {
@@ -95,7 +107,7 @@ public class AutomaticPixelPlacement {
 
     /**
      * Drive the robot to the backdrop. <br />
-     * Once done, it sets currentAction to {@link #turnToPlacePixel()}.
+     * Once done, it sets currentState to {@link #turnToPlacePixel()}.
      */
     private void driveToBackdrop() {
         List<AprilTagDetection> detections = getAprilTagDetections();
@@ -104,7 +116,7 @@ public class AutomaticPixelPlacement {
             boolean isDone = driveToAprilTag(detections.get(0), DISTANCE_FROM_APRIL_TAG);
             if (isDone) {
                 imu.resetYaw();
-                currentAction = this::turnToPlacePixel;
+                currentState = this::turnToPlacePixel;
             }
         } else {
             mecanum.driveRobotCentric(0, DRIVE_SPEED, 0);
@@ -113,19 +125,20 @@ public class AutomaticPixelPlacement {
 
     /**
      * Turn the robot 180 degrees, so it is pointing backwards and it can place a pixel. <br />
-     * Once done, it sets currentAction to {@link #placePixel()}.
+     * Once done, it sets currentState to {@link #liftArm()}.
      */
     private void turnToPlacePixel() {
         boolean isDone = turnToAngle(180);
         if (isDone) {
-            currentAction = this::placePixel;
+            currentState = this::liftArm;
         }
     }
 
     /**
-     * Places the pixel onto the backdrop.
+     * Places the pixel onto the backdrop. <br />
+     * Once done, it sets currentState to {@link #openGrabber()}.
      */
-    private void placePixel() {
+    private void liftArm() {
         arm.lift();
         linearSlide.lift();
 
@@ -133,14 +146,40 @@ public class AutomaticPixelPlacement {
             arm.moveToSetPoint();
             linearSlide.moveToSetPoint();
         } else {
-            grabber.open();
-            currentAction = () -> {};
-            isDone = true;
+            currentState = this::openGrabber;
         }
     }
 
     /**
+     * Places the pixel onto the ground. <br />
+     * Once done, it sets currentState to {@link #openGrabber()}.
+     */
+    private void lowerArm() {
+        arm.lower();
+        linearSlide.lift();
+
+        if (!(arm.atSetPoint() && linearSlide.atSetPoint())) {
+            arm.moveToSetPoint();
+            linearSlide.moveToSetPoint();
+        } else {
+            currentState = this::openGrabber;
+        }
+    }
+
+    /**
+     * Open the grabber.
+     */
+    private void openGrabber() {
+        grabber.open();
+
+        currentState = () -> {
+        };
+        isDone = true;
+    }
+
+    /**
      * Get all april tag detections with metadata.
+     *
      * @return The april tag detections.
      */
     private List<AprilTagDetection> getAprilTagDetections() {
