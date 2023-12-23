@@ -5,23 +5,24 @@ import android.util.Size;
 import androidx.annotation.NonNull;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.hardware.GyroEx;
-import com.arcrobotics.ftclib.hardware.RevIMU;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
 import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
+import org.firstinspires.ftc.teamcode.components.test.AutomaticPixelPlacement;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
@@ -58,12 +59,9 @@ public class BasicAutonomousGeneric extends OpMode {
     public final double ANGLE_ERROR = 20;
     public final int VISION_ERROR = 20;
 
-    public final double DRIVING_TO_BACKDROP_DIST = 12;
     public final double SHIFTING_TO_BACKDROP_DIST = 3;
 
-    public final double DRIVE_DIVISOR = 12;
     public final double ANGLE_DIVISOR = 90;
-    public final double STRAFE_DIVISOR = 24;
 
     public final double MIN_DISTANCE_FROM_OBJECT = 6;
 
@@ -85,8 +83,10 @@ public class BasicAutonomousGeneric extends OpMode {
     protected LinearSlideComponent linearSlide;
     protected GrabberComponent grabber;
 
+    protected AutomaticPixelPlacement automaticPixelPlacement;
+
     protected SensorDistanceEx distanceSensor;
-    protected GyroEx gyro;
+    protected IMU imu;
 
     protected Runnable currentState = this::driveToSpikeMarks;
     protected CorrectSpikeMark correctSpikeMark = null;
@@ -118,7 +118,17 @@ public class BasicAutonomousGeneric extends OpMode {
                 new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
-        gyro = new RevIMU(hardwareMap, "gyro");
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(
+                new IMU.Parameters(
+                        new RevHubOrientationOnRobot(
+                                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                                RevHubOrientationOnRobot.UsbFacingDirection.UP
+                        )
+                )
+        );
+
+        automaticPixelPlacement = new AutomaticPixelPlacement(arm, linearSlide, grabber, mecanum, aprilTag, imu);
 
         // vision stuff
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -128,7 +138,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 .setModelLabels(LABELS)
                 .setIsModelTensorFlow2(true)
                 .setIsModelQuantized(true)
-                // I have no idea what the following two statements do; find that out asap
+                // TODO: I have no idea what the following two statements do; find that out asap
                 .setModelInputSize(300)
                 .setModelAspectRatio(16.0 / 9.0)
                 .build();
@@ -153,7 +163,7 @@ public class BasicAutonomousGeneric extends OpMode {
         telemetry.update();
     }
 
-    private void driveToSpikeMarks() {
+    protected void driveToSpikeMarks() {
         telemetry.addLine("Driving to spike marks.");
 
         List<Recognition> recognitions = getTfodDetections();
@@ -184,7 +194,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
     }
 
-    private void strafeForPurplePixelPlacement() {
+    protected void strafeForPurplePixelPlacement() {
         telemetry.addLine("Strafing to place purple pixel.");
 
         List<Recognition> recognitions = getTfodDetections();
@@ -210,94 +220,39 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    private void placePurplePixel() {
+    protected void placePurplePixel() {
         telemetry.addLine("Placing purple pixel");
 
-        arm.moveToSetPoint();
-        linearSlide.moveToSetPoint();
+        automaticPixelPlacement.placeOnGround();
 
-        if (arm.atSetPoint() && linearSlide.atSetPoint()) {
-            grabber.open();
+        if (!automaticPixelPlacement.isPlacingPixel()) {
             currentState = this::turnToBackdrop;
-            gyro.reset();
+            imu.resetYaw();
         }
     }
 
-    private void turnToBackdrop() {
+    protected void turnToBackdrop() {
         telemetry.addLine("Turning to backdrop. ");
 
         boolean isDone = turnToAngle(backdropTurningAngle);
 
         if (isDone) {
-            currentState = this::driveToBackdrop;
+            currentState = this::placeYellowPixel;
+            automaticPixelPlacement.placeOnBackdrop();
         }
     }
 
-    private void driveToBackdrop() {
-        telemetry.addLine("Driving to backdrop");
-
-        if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST) {
-            mecanum.driveRobotCentric(0, 1, 0);
-        } else {
-            arm.lift();
-            linearSlide.lift();
-
-            currentState = this::prepareForShifting;
-        }
-    }
-
-    private void prepareForShifting() {
-        telemetry.addLine("Preparing to shift to backdrop. ");
-
-        arm.moveToSetPoint();
-        linearSlide.moveToSetPoint();
-
-        if (arm.atSetPoint() && linearSlide.atSetPoint()) {
-            currentState = this::shiftToBackdrop;
-        }
-    }
-
-    private void shiftToBackdrop() {
-        telemetry.addLine("Shifting to backdrop. ");
-
-        AprilTagDetection currentDetection = null;
-        try {
-            if (teamColor == TeamColor.RED) {
-                currentDetection = getAprilTagDetections().stream()
-                        .filter((detection) -> detection.id == correctSpikeMark.getRedAprilTagId())
-                        .collect(Collectors.toList())
-                        .get(0);
-
-            } else if (teamColor == TeamColor.BLUE) {
-                currentDetection = getAprilTagDetections().stream()
-                        .filter((detection) -> detection.id == correctSpikeMark.getBlueAprilTagId())
-                        .collect(Collectors.toList())
-                        .get(0);
-            }
-
-            assert currentDetection != null;
-            boolean hasShifted = shiftToAprilTag(currentDetection);
-
-            if (hasShifted) {
-                currentState = this::placeYellowPixel;
-            }
-
-        } catch (IndexOutOfBoundsException e) {
-            currentState = this::strafeToPark;
-        }
-
-    }
-
-    private void placeYellowPixel() {
+    protected void placeYellowPixel() {
         telemetry.addLine("Placing yellow pixel. ");
 
-        grabber.open();
+        automaticPixelPlacement.run();
 
-        currentState = this::strafeToPark;
-        gyro.reset();
+        if (!automaticPixelPlacement.isPlacingPixel()) {
+            currentState = this::strafeToPark;
+        }
     }
 
-    private void strafeToPark() {
+    protected void strafeToPark() {
         telemetry.addLine("Strafing to park. ");
 
         mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? 0.5 : -0.5, 0);
@@ -307,7 +262,7 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    private void park() {
+    protected void park() {
         telemetry.addLine("Parking. ");
 
         if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
@@ -335,30 +290,13 @@ public class BasicAutonomousGeneric extends OpMode {
     }
 
     /**
-     * Gets April Tags.
-     *
-     * @return all April Tags with metadata
-     */
-    @NonNull
-    protected List<AprilTagDetection> getAprilTagDetections() {
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        telemetry.addLine(currentDetections.size() + " AprilTags Detected. ");
-
-        currentDetections = currentDetections.stream()
-                .filter((detection) -> detection.metadata != null)
-                .collect(Collectors.toList());
-
-        return currentDetections;
-    }
-
-    /**
      * Turns the robot.
      *
-     * @param angle angle from 0 to 360
-     * @return whether the robot is finished turning
+     * @param angle angle from -180 to 180.
+     * @return whether the robot is finished turning.
      */
     protected boolean turnToAngle(double angle) {
-        double heading = gyro.getHeading() > 180 ? gyro.getHeading() - 360 : gyro.getHeading();
+        double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
         if (Math.abs(angle - heading) <= ANGLE_ERROR) {
             return true;
@@ -389,41 +327,10 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    /**
-     * Shifts to the April Tag (strafes horizontally to line up with the April Tag)
-     *
-     * @param detection the April Tag that the robot is shifting to
-     * @return if the robot has finished shifting.
-     */
-    protected boolean shiftToAprilTag(@NonNull AprilTagDetection detection) {
-        if (Math.abs(detection.ftcPose.range) <= SHIFTING_TO_BACKDROP_DIST) {
-            return true;
-        } else {
-            mecanum.driveRobotCentric(0, detection.ftcPose.y / DRIVE_DIVISOR, detection.ftcPose.x / STRAFE_DIVISOR);
-            return false;
-        }
-    }
-
     public enum CorrectSpikeMark {
-        LEFT(1, 4),
-        CENTER(2, 5),
-        RIGHT(3, 6);
-
-        private final int blueAprilTagId;
-        private final int redAprilTagId;
-
-        CorrectSpikeMark(int blueAprilTagId, int redAprilTagId) {
-            this.blueAprilTagId = blueAprilTagId;
-            this.redAprilTagId = redAprilTagId;
-        }
-
-        public int getBlueAprilTagId() {
-            return blueAprilTagId;
-        }
-
-        public int getRedAprilTagId() {
-            return redAprilTagId;
-        }
+        LEFT,
+        CENTER,
+        RIGHT
     }
 
     public enum TeamColor {
