@@ -236,21 +236,30 @@ public class AutomaticAlignmentToPixelsComponent {
                 arm.lift();
                 grabber.open();
 
-                linearSlide.moveToSetPosition();
-                arm.moveToSetPosition();
+                linearSlide.moveToSetPoint();
+                arm.moveToSetPoint();
 
-                if (linearSlide.atSetPosition() && arm.atSetPosition()) {
+                if (linearSlide.atSetPoint() && arm.atSetPoint()) {
                     currentState = State.PICKING_UP_PIXEL;
                 }
 
                 break;
 
             case PICKING_UP_PIXEL:
-                if (grabber.isTouchSensorTriggered()) {
+                // TODO: do this in a better way once we have more information about the grabber.
+
+                arm.lower();
+                linearSlide.lift();
+
+                arm.moveToSetPoint();
+                linearSlide.moveToSetPoint();
+
+                arm.read();
+                linearSlide.read();
+
+                if (arm.atSetPoint() && linearSlide.atSetPoint()) {
                     grabber.close();
                     currentState = State.MOVING_BACK_FROM_PIXELS;
-                } else {
-                    linearSlide.setVelocity(LINEAR_SLIDE_LOWERING_SPEED);
                 }
 
                 break;
