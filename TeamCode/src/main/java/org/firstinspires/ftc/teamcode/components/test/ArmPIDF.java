@@ -27,7 +27,11 @@ public class ArmPIDF extends OpMode {
     // alternate between 0 and 2000
     public static int target = 0;
 
-    private final double ticks_in_degrees = 560.0 / 360.0;
+    // TODO: MAKE SURE THIS IS CORRECT.
+    // learnroadrunner.com tells me HD REV has 560 ticks per rev, but according to Mo we use CORE REV.
+    // CORE REV doesn't have much info on it - I found a google doc saying CORE is 288.
+    // However, past me left this value as 560, so either my original source was wrong, CORE uses 560, or we aren't using CORE.
+    private final double ticks_in_degrees = 288.0 / 360.0;
 
     private DcMotorEx arm_motor;
 
