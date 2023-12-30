@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
@@ -16,7 +17,7 @@ public class LinearSlideComponent {
     public static final int LINEAR_SLIDE_LOWERED_POSITION = -100;
 
     private final MotorEx linearSlideMotor;
-    private final PIDFController pidf;
+    private final PIDFController pid;
 
     private double currentVelocity;
 
@@ -24,15 +25,21 @@ public class LinearSlideComponent {
 
     private boolean isLifted = false;
 
+    private final ArmComponent arm;
+    private static final double f = 0;
+
+    private final double slide_ticks_in_degrees = 288.0 / 360.0;
+
     /**
      * Linear slide component.
      * @param linearSlideMotor The motor that controls the linear slide.
      */
-    public LinearSlideComponent(MotorEx linearSlideMotor) {
+    public LinearSlideComponent(MotorEx linearSlideMotor, ArmComponent arm) {
         this.linearSlideMotor = linearSlideMotor;
+        this.arm = arm;
 
-        pidf = new PIDFController(0.1, 0.01, 0.01, 0);
-        pidf.setTolerance(3);
+        pid = new PIDController(0.1, 0.01, 0.01);
+        pid.setTolerance(3);
     }
 
     /**
@@ -40,7 +47,7 @@ public class LinearSlideComponent {
      * You need to call {@link #moveToSetPoint()} for the linear slide to actually move.
      */
     public void lift() {
-        pidf.setSetPoint(LINEAR_SLIDE_LIFTED_POSITION);
+        pid.setSetPoint(LINEAR_SLIDE_LIFTED_POSITION);
 
         isLifted = true;
     }
@@ -50,7 +57,7 @@ public class LinearSlideComponent {
      * You need to call {@link #moveToSetPoint()} for the linear slide to actually move.
      */
     public void lower() {
-        pidf.setSetPoint(LINEAR_SLIDE_LOWERED_POSITION);
+        pid.setSetPoint(LINEAR_SLIDE_LOWERED_POSITION);
 
         isLifted = false;
     }
@@ -71,9 +78,10 @@ public class LinearSlideComponent {
      * Move the linear slide to the specified set point.
      */
     public void moveToSetPoint() {
-        linearSlideMotor.set(pidf.calculate(currentPosition));
+        double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.arm_ticks_in_degrees)) * f;
+        linearSlideMotor.set(pid.calculate(currentPosition) + ff);
 
-        if (pidf.atSetPoint()){
+        if (pid.atSetPoint()){
             linearSlideMotor.set(0.05);
         }
     }
@@ -99,7 +107,7 @@ public class LinearSlideComponent {
      * @return If the linear slide is at its set point.
      */
     public boolean atSetPoint() {
-        return pidf.atSetPoint();
+        return pid.atSetPoint();
     }
 
     /**
@@ -132,6 +140,6 @@ public class LinearSlideComponent {
      * @return The setpoint of the PID Controller, in ticks.
      */
     public double getSetPoint(){
-        return pidf.getSetPoint();
+        return pid.getSetPoint();
     }
 }

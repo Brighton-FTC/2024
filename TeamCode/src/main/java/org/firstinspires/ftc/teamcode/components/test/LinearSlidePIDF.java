@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -28,18 +28,19 @@ public class LinearSlidePIDF extends OpMode {
     public static double f = 0;
 
     public static int target = 0;
-
-    private final double ticks_in_degrees = 700.0 / 360.0;
-
     private DcMotorEx slide_motor;
 
     public static boolean atsetpoint = false;
+
+    private ArmComponent arm;
 
 
     @Override
     public void init() {
         controller = new PIDController(p, i, d);
         controller.setTolerance(3);
+
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -52,7 +53,7 @@ public class LinearSlidePIDF extends OpMode {
 
         controller.setPID(p, i, d);
         double pid = controller.calculate(slidePos, target);
-        double ff = Math.cos(Math.toRadians(target / ticks_in_degrees)) * f;
+        double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.arm_ticks_in_degrees)) * f;
 
         double power = pid + ff;
 
@@ -68,5 +69,6 @@ public class LinearSlidePIDF extends OpMode {
         telemetry.addData("pos ", slidePos);
         telemetry.addData("target ", target);
         telemetry.update();
+        arm.read();
     }
 }

@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode.components.test;
 import androidx.annotation.NonNull;
 
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.controller.PIDFController;
-import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
@@ -19,7 +17,7 @@ public class ArmComponent {
     public static final int ARM_LIFTED_POSITION = 0;
     public static final int ARM_LOWERED_POSITION = 2000;
 
-    private static final int f = 0;
+    private static final double f = 0;
 
     private final MotorEx armMotor;
     private boolean isArmLifted = false;
@@ -27,11 +25,7 @@ public class ArmComponent {
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
 
-    // TODO: MAKE SURE THIS IS CORRECT.
-    // learnroadrunner.com tells me HD REV has 560 ticks per rev, but according to Mo we use CORE REV.
-    // CORE REV doesn't have much info on it - I found a google doc saying CORE is 288.
-    // However, past me left this value as 560, so either my original source was wrong, CORE uses 560, or we aren't using CORE.
-    private final double ticks_in_degrees = 288.0 / 360.0;
+    public final double arm_ticks_in_degrees = 288.0 / 360.0;
 
     private double currentVelocity;
 
@@ -121,7 +115,7 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * f;
+        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / arm_ticks_in_degrees)) * f;
         armMotor.set(pid.calculate(currentPosition) + ff);
     }
 

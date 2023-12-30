@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -20,11 +19,14 @@ import org.firstinspires.ftc.teamcode.PSButtons;
 public class LinearSlideFunctionalityTester extends OpMode {
     private LinearSlideComponent linearSlide;
 
+    private ArmComponent arm;
+
     private GamepadEx gamepad;
 
     @Override
     public void init() {
-        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
+        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"), arm);
 
         gamepad = new GamepadEx(gamepad1);
 
@@ -49,5 +51,7 @@ public class LinearSlideFunctionalityTester extends OpMode {
         }
 
         CommandScheduler.getInstance().run();
+        gamepad.readButtons();
+        arm.read();
     }
 }
