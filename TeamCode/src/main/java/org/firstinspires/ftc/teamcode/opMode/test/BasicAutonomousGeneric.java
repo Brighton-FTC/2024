@@ -113,7 +113,7 @@ public class BasicAutonomousGeneric extends OpMode {
         }
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
-        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"));
+        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"), arm);
         grabber = new GrabberComponent(new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360),
                 new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
 

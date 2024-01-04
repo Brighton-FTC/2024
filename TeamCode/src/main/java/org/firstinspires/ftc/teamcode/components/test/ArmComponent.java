@@ -2,8 +2,7 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
-import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
@@ -18,11 +17,15 @@ public class ArmComponent {
     public static final int ARM_LIFTED_POSITION = 0;
     public static final int ARM_LOWERED_POSITION = 2000;
 
+    private static final double f = 0;
+
     private final MotorEx armMotor;
     private boolean isArmLifted = false;
 
     // TODO: Tune this
-    private final PIDFController pidf = new PIDFController(0, 0, 0, 0);
+    private final PIDController pid = new PIDController(0, 0, 0);
+
+    public final double arm_ticks_in_degrees = 288.0 / 360.0;
 
     private double currentVelocity;
 
@@ -112,7 +115,8 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        armMotor.set(pidf.calculate(currentPosition));
+        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / arm_ticks_in_degrees)) * f;
+        armMotor.set(pid.calculate(currentPosition) + ff);
     }
 
     /**
@@ -120,7 +124,7 @@ public class ArmComponent {
      * @return The setpoint of the PID Controller, in ticks.
      */
     public double getSetPoint(){
-        return pidf.getSetPoint();
+        return pid.getSetPoint();
     }
 
     /**
@@ -128,7 +132,7 @@ public class ArmComponent {
      * @return a boolean for if the motor is at the setpoint.
      */
     public boolean atSetPoint(){
-        return pidf.atSetPoint();
+        return pid.atSetPoint();
     }
 
 
@@ -138,10 +142,13 @@ public class ArmComponent {
      * @param position The desired final position of the arm
      */
     private void setTargetPosition(int position) {
-        pidf.setSetPoint(position);
+        pid.setSetPoint(position);
     }
 
-
+    /**
+     * Reads from motors and stores data in ArmComponent.
+     * Call in every loop or encoders break.
+     */
     public void read(){
         currentPosition = armMotor.getCurrentPosition();
         currentVelocity = armMotor.getVelocity();
