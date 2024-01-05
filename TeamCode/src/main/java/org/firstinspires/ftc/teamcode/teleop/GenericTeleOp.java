@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
+import androidx.annotation.NonNull;
+
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
@@ -9,7 +11,6 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -18,26 +19,33 @@ import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
-import org.firstinspires.ftc.teamcode.inputs.PSButtons;
 
 import java.util.List;
 
-@TeleOp(name = "TeleOp", group = "teleop-test")
-public class GenericTeleOp extends OpMode {
+public abstract class GenericTeleOp extends OpMode {
 
-    // P1 Controls
-    public static final GamepadKeys.Button DPAD_STRAFE_LEFT = GamepadKeys.Button.DPAD_LEFT;
-    public static final GamepadKeys.Button DPAD_STRAFE_RIGHT = GamepadKeys.Button.DPAD_RIGHT;
-    public static final GamepadKeys.Button DPAD_FORWARD = GamepadKeys.Button.DPAD_UP;
-    public static final GamepadKeys.Button DPAD_BACKWARDS = GamepadKeys.Button.DPAD_DOWN;
+    // Override this in subclass or will crash
+    public enum ButtonMapping{
+        DPAD_STRAFE_LEFT(null),
+        DPAD_STRAFE_RIGHT(null),
+        DPAD_FORWARD(null),
+        DPAD_BACKWARDS(null),
+        TOGGLE_ARM_BUTTON(null),
+        TOGGLE_GRABBER_BUTTON(null),
+        TOGGLE_LINEAR_SLIDE_BUTTON(null),
+        DRONE_LAUNCH_1_BUTTON(null),
+        DRONE_LAUNCH_2_BUTTON(null);
 
+        private final PlayerButton button;
 
-    // P2 Controls
-    public static final GamepadKeys.Button TOGGLE_ARM_BUTTON = PSButtons.CROSS;
-    public static final GamepadKeys.Button TOGGLE_GRABBER_BUTTON = PSButtons.CIRCLE;
-    public static final GamepadKeys.Button TOGGLE_LINEAR_SLIDE_BUTTON = PSButtons.SQUARE;
-    public static final GamepadKeys.Button DRONE_LAUNCH_1_BUTTON = GamepadKeys.Button.LEFT_BUMPER;
-    public static final GamepadKeys.Button DRONE_LAUNCH_2_BUTTON = GamepadKeys.Button.RIGHT_BUMPER;
+        ButtonMapping(PlayerButton button){
+            this.button = button;
+        }
+
+        public PlayerButton getButton(){
+            return this.button;
+        }
+    }
 
 
     private GamepadEx player1Gamepad;
@@ -63,7 +71,8 @@ public class GenericTeleOp extends OpMode {
 
     private List<LynxModule> allHubs;
 
-    public static final double DEAD_ZONE_CONSTANT = 0.05;
+    public static final double DEAD_ZONE_CONSTANT = 0.15;
+
 
 
     @Override
@@ -96,12 +105,13 @@ public class GenericTeleOp extends OpMode {
         arm = new ArmComponent(armMotor);
         grabber = new GrabberComponent(grabberServo1, grabberServo2);
         droneLauncher = new DroneLauncherComponent(droneServo);
-        linearSlide = new LinearSlideComponent(linearSlideMotor);
+        linearSlide = new LinearSlideComponent(linearSlideMotor, arm);
 
 
-        player2Gamepad.getGamepadButton(TOGGLE_GRABBER_BUTTON).whenPressed(grabber::toggle);
-        player2Gamepad.getGamepadButton(TOGGLE_ARM_BUTTON).whenPressed(arm::toggle);
-        player2Gamepad.getGamepadButton(TOGGLE_LINEAR_SLIDE_BUTTON).whenPressed(linearSlide::toggle);
+        ButtonMapping.TOGGLE_GRABBER_BUTTON.getButton().whenPressed(grabber::toggle);
+        ButtonMapping.TOGGLE_ARM_BUTTON.getButton().whenPressed(arm::toggle);
+        ButtonMapping.TOGGLE_LINEAR_SLIDE_BUTTON.getButton().whenPressed(linearSlide::toggle);
+
         time1 = new ElapsedTime();
         time2 = new ElapsedTime();
 
@@ -125,12 +135,12 @@ public class GenericTeleOp extends OpMode {
         double leftX = player1Gamepad.getLeftX();
         double rightX = player1Gamepad.getRightX();
 
-        leftX += player1Gamepad.getButton(DPAD_STRAFE_LEFT) ? 0.75 : 0;
-        leftX -= player1Gamepad.getButton(DPAD_STRAFE_RIGHT) ? 0.75 : 0;
+        leftX += ButtonMapping.DPAD_STRAFE_LEFT.getButton().isButtonPressed() ? 0.75 : 0;
+        leftX -= ButtonMapping.DPAD_STRAFE_RIGHT.getButton().isButtonPressed() ? 0.75 : 0;
         leftX = Range.clip(leftX, -1, 1);
 
-        leftY += player1Gamepad.getButton(DPAD_FORWARD) ? 0.75 : 0;
-        leftY -= player1Gamepad.getButton(DPAD_BACKWARDS) ? 0.75 : 0;
+        leftY += ButtonMapping.DPAD_FORWARD.getButton().isButtonPressed() ? 0.75 : 0;
+        leftY -= ButtonMapping.DPAD_BACKWARDS.getButton().isButtonPressed() ? 0.75 : 0;
         leftY = Range.clip(leftY, -1, 1);
 
         mecanumDrive.driveRobotCentric(
@@ -139,7 +149,8 @@ public class GenericTeleOp extends OpMode {
                 Math.abs(rightX) > DEAD_ZONE_CONSTANT ? rightX : 0,
                 false);
 
-        if (player1Gamepad.getButton(DRONE_LAUNCH_1_BUTTON) || player1Gamepad.getButton(DRONE_LAUNCH_2_BUTTON)) {
+        if (ButtonMapping.DPAD_FORWARD.getButton().isButtonPressed() ||
+                ButtonMapping.DPAD_BACKWARDS.getButton().isButtonPressed()) {
             droneLauncher.launch();
         }
 
@@ -180,4 +191,36 @@ public class GenericTeleOp extends OpMode {
         telemetry.addData("Linear slide position", linearSlide.getPosition());
         telemetry.update();
     }
+
+    public enum PlayerCount{
+        P1,
+        P2
+    }
+
+    public class PlayerButton {
+        private final GamepadEx gamepad;
+        private final GamepadKeys.Button button;
+
+        /**
+         * Creates a gamepad button for triggering commands.
+         */
+        public PlayerButton(PlayerCount players, @NonNull GamepadKeys.Button button) {
+            if (players == PlayerCount.P1){
+                this.gamepad = player1Gamepad;
+            }
+            else {
+                this.gamepad = player2Gamepad;
+            }
+            this.button = button;
+        }
+
+        public void whenPressed(final Runnable runnable){
+            gamepad.getGamepadButton(button).whenPressed(runnable);
+        }
+
+        public boolean isButtonPressed(){
+            return gamepad.getButton(button);
+        }
+    }
+
 }
