@@ -1,10 +1,7 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
-import androidx.annotation.NonNull;
-
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
@@ -19,33 +16,25 @@ import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
+import org.firstinspires.ftc.teamcode.teleop.util.PlayerButton;
 
 import java.util.List;
 
 public abstract class GenericTeleOp extends OpMode {
 
     // Override this in subclass or will crash
-    public enum ButtonMapping{
-        DPAD_STRAFE_LEFT(null),
-        DPAD_STRAFE_RIGHT(null),
-        DPAD_FORWARD(null),
-        DPAD_BACKWARDS(null),
-        TOGGLE_ARM_BUTTON(null),
-        TOGGLE_GRABBER_BUTTON(null),
-        TOGGLE_LINEAR_SLIDE_BUTTON(null),
-        DRONE_LAUNCH_1_BUTTON(null),
-        DRONE_LAUNCH_2_BUTTON(null);
+    public final PlayerButton DPAD_STRAFE_LEFT;
+    public final PlayerButton DPAD_STRAFE_RIGHT;
+    public final PlayerButton DPAD_FORWARD;
+    public final PlayerButton DPAD_BACKWARDS;
 
-        private final PlayerButton button;
 
-        ButtonMapping(PlayerButton button){
-            this.button = button;
-        }
-
-        public PlayerButton getButton(){
-            return this.button;
-        }
-    }
+    // P2 Controls
+    public final PlayerButton TOGGLE_ARM_BUTTON;
+    public final PlayerButton TOGGLE_GRABBER_BUTTON;
+    public final PlayerButton TOGGLE_LINEAR_SLIDE_BUTTON;
+    public final PlayerButton DRONE_LAUNCH_1_BUTTON;
+    public final PlayerButton DRONE_LAUNCH_2_BUTTON;
 
 
     private GamepadEx player1Gamepad;
@@ -73,7 +62,42 @@ public abstract class GenericTeleOp extends OpMode {
 
     public static final double DEAD_ZONE_CONSTANT = 0.15;
 
+    public static final double DPAD_DRIVE_CONSTANT = 0.75;
 
+    /**
+     * Call this in subclasses with your preferred control scheme.
+     * Just copy the constructor from one of the existing subclasses.
+     *
+     * @param DPAD_STRAFE_LEFT Strafing left at DPAD_DRIVE_CONSTANT power to motors.
+     * @param DPAD_STRAFE_RIGHT Strafing right at DPAD_DRIVE_CONSTANT power to motors.
+     * @param DPAD_FORWARD Going forward at DPAD_DRIVE_CONSTANT power to motors.
+     * @param DPAD_BACKWARDS Going backwards at DPAD_DRIVE_CONSTANT power to motors.
+     * @param TOGGLE_ARM_BUTTON Lowers arm if lifted, lifts if not
+     * @param TOGGLE_GRABBER_BUTTON Closes grabber if 
+     * @param TOGGLE_LINEAR_SLIDE_BUTTON
+     * @param DRONE_LAUNCH_1_BUTTON
+     * @param DRONE_LAUNCH_2_BUTTON
+     */
+    protected GenericTeleOp(PlayerButton DPAD_STRAFE_LEFT,
+                            PlayerButton DPAD_STRAFE_RIGHT,
+                            PlayerButton DPAD_FORWARD,
+                            PlayerButton DPAD_BACKWARDS,
+                            PlayerButton TOGGLE_ARM_BUTTON,
+                            PlayerButton TOGGLE_GRABBER_BUTTON,
+                            PlayerButton TOGGLE_LINEAR_SLIDE_BUTTON,
+                            PlayerButton DRONE_LAUNCH_1_BUTTON,
+                            PlayerButton DRONE_LAUNCH_2_BUTTON){
+
+        this.DPAD_STRAFE_LEFT = DPAD_STRAFE_LEFT;
+        this.DPAD_STRAFE_RIGHT = DPAD_STRAFE_RIGHT;
+        this.DPAD_FORWARD = DPAD_FORWARD;
+        this.DPAD_BACKWARDS = DPAD_BACKWARDS;
+        this.TOGGLE_ARM_BUTTON = TOGGLE_ARM_BUTTON ;
+        this.TOGGLE_GRABBER_BUTTON = TOGGLE_GRABBER_BUTTON ;
+        this.TOGGLE_LINEAR_SLIDE_BUTTON = TOGGLE_LINEAR_SLIDE_BUTTON ;
+        this.DRONE_LAUNCH_1_BUTTON = DRONE_LAUNCH_1_BUTTON ;
+        this.DRONE_LAUNCH_2_BUTTON = DRONE_LAUNCH_2_BUTTON;
+    }
 
     @Override
     public void init() {
@@ -108,9 +132,9 @@ public abstract class GenericTeleOp extends OpMode {
         linearSlide = new LinearSlideComponent(linearSlideMotor, arm);
 
 
-        ButtonMapping.TOGGLE_GRABBER_BUTTON.getButton().whenPressed(grabber::toggle);
-        ButtonMapping.TOGGLE_ARM_BUTTON.getButton().whenPressed(arm::toggle);
-        ButtonMapping.TOGGLE_LINEAR_SLIDE_BUTTON.getButton().whenPressed(linearSlide::toggle);
+        TOGGLE_GRABBER_BUTTON.whenPressed(grabber::toggle);
+        TOGGLE_ARM_BUTTON.whenPressed(arm::toggle);
+        TOGGLE_LINEAR_SLIDE_BUTTON.whenPressed(linearSlide::toggle);
 
         time1 = new ElapsedTime();
         time2 = new ElapsedTime();
@@ -135,12 +159,12 @@ public abstract class GenericTeleOp extends OpMode {
         double leftX = player1Gamepad.getLeftX();
         double rightX = player1Gamepad.getRightX();
 
-        leftX += ButtonMapping.DPAD_STRAFE_LEFT.getButton().isButtonPressed() ? 0.75 : 0;
-        leftX -= ButtonMapping.DPAD_STRAFE_RIGHT.getButton().isButtonPressed() ? 0.75 : 0;
+        leftX += DPAD_STRAFE_LEFT.isButtonPressed() ? DPAD_DRIVE_CONSTANT : 0;
+        leftX -= DPAD_STRAFE_RIGHT.isButtonPressed() ? DPAD_DRIVE_CONSTANT : 0;
         leftX = Range.clip(leftX, -1, 1);
 
-        leftY += ButtonMapping.DPAD_FORWARD.getButton().isButtonPressed() ? 0.75 : 0;
-        leftY -= ButtonMapping.DPAD_BACKWARDS.getButton().isButtonPressed() ? 0.75 : 0;
+        leftY += DPAD_FORWARD.isButtonPressed() ? DPAD_DRIVE_CONSTANT : 0;
+        leftY -= DPAD_BACKWARDS.isButtonPressed() ? DPAD_DRIVE_CONSTANT : 0;
         leftY = Range.clip(leftY, -1, 1);
 
         mecanumDrive.driveRobotCentric(
@@ -149,8 +173,8 @@ public abstract class GenericTeleOp extends OpMode {
                 Math.abs(rightX) > DEAD_ZONE_CONSTANT ? rightX : 0,
                 false);
 
-        if (ButtonMapping.DPAD_FORWARD.getButton().isButtonPressed() ||
-                ButtonMapping.DPAD_BACKWARDS.getButton().isButtonPressed()) {
+        if (DRONE_LAUNCH_1_BUTTON.isButtonPressed() ||
+                DRONE_LAUNCH_2_BUTTON.isButtonPressed()) {
             droneLauncher.launch();
         }
 
@@ -190,37 +214,6 @@ public abstract class GenericTeleOp extends OpMode {
         telemetry.addData("Grabber closed?", grabber.isClosed());
         telemetry.addData("Linear slide position", linearSlide.getPosition());
         telemetry.update();
-    }
-
-    public enum PlayerCount{
-        P1,
-        P2
-    }
-
-    public class PlayerButton {
-        private final GamepadEx gamepad;
-        private final GamepadKeys.Button button;
-
-        /**
-         * Creates a gamepad button for triggering commands.
-         */
-        public PlayerButton(PlayerCount players, @NonNull GamepadKeys.Button button) {
-            if (players == PlayerCount.P1){
-                this.gamepad = player1Gamepad;
-            }
-            else {
-                this.gamepad = player2Gamepad;
-            }
-            this.button = button;
-        }
-
-        public void whenPressed(final Runnable runnable){
-            gamepad.getGamepadButton(button).whenPressed(runnable);
-        }
-
-        public boolean isButtonPressed(){
-            return gamepad.getButton(button);
-        }
     }
 
 }
