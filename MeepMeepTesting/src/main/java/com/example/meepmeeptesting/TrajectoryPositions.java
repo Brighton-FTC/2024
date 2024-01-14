@@ -36,6 +36,9 @@ public final class TrajectoryPositions {
     public static final Pose2d BACKDROP_BLUE_CENTER = new Pose2d(60, 35, Math.toRadians(180));
     public static final Pose2d BACKDROP_BLUE_RIGHT = new Pose2d(60, 40, Math.toRadians(180));
 
+    public static final Pose2d BACKSTAGE_RED = new Pose2d(60, -60, Math.toRadians(180));
+    public static final Pose2d BACKSTAGE_BLUE = new Pose2d(60, 60, Math.toRadians(180));
+
     public static final Pose2d PIXEL_STACK_LEFT_0 = new Pose2d(-60, 35, Math.toRadians(180));
     public static final Pose2d PIXEL_STACK_LEFT_1 = new Pose2d(-60, 23, Math.toRadians(180));
     public static final Pose2d PIXEL_STACK_LEFT_2 = new Pose2d(-60, 10, Math.toRadians(180));

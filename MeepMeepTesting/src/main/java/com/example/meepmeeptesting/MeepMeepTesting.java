@@ -4,6 +4,7 @@ import static com.example.meepmeeptesting.TrajectoryPositions.*;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.noahbres.meepmeep.MeepMeep;
+import com.noahbres.meepmeep.roadrunner.Constraints;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.DriveShim;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
@@ -16,13 +17,12 @@ public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(750);
 
-
         for (int i = 0; i < 12; i++) {
             int finalI = i;
             RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
                     .setDimensions(15, 15)
 //                    .setConstraints(new Constraints()) // TODO: set constraints
-                    .followTrajectorySequence(drive -> buildTrajectory(drive, finalI, 1));
+                    .followTrajectorySequence(drive -> buildTrajectory(drive, finalI, 2));
             meepMeep.addEntity(bot);
         }
 
@@ -127,12 +127,12 @@ public class MeepMeepTesting {
         }
 
         trajectory.splineTo(spikeMarkPose.vec(), spikeMarkPose.getHeading());
+        trajectory.addDisplacementMarker(() -> {/* place pixel onto spike mark */});
 
-        Pose2d pixelStackPose = robotId >= 6 ? PIXEL_STACK_LEFT_1 : PIXEL_STACK_RIGHT_1;
-
+        Pose2d pixelStackPose = robotId >= 6 ? PIXEL_STACK_LEFT_0 : PIXEL_STACK_RIGHT_0;
 
         if ((robotId < 3) || (robotId >= 6 && robotId < 9)) {
-            trajectory.lineToLinearHeading(pixelStackPose);
+            trajectory.splineTo(pixelStackPose.vec(), pixelStackPose.getHeading());
             trajectory.addDisplacementMarker(() -> {/* pick up pixel */});
         }
 
@@ -144,6 +144,10 @@ public class MeepMeepTesting {
             trajectory.addDisplacementMarker(() -> {/* pick up pixel */});
             trajectory.lineToLinearHeading(backdropPose);
         }
+
+        Pose2d parkPose = robotId >= 6 ? BACKSTAGE_BLUE : BACKSTAGE_RED;
+
+        trajectory.lineToLinearHeading(parkPose);
 
         return trajectory.build();
     }
