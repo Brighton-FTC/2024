@@ -1,16 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
-public class PaperAeroplane {
+public class DroneLauncherCompnenet {
     private GamepadEx driverOp = new GamepadEx(gamepad1);
     Motor aeroplaneMotor;
-    public PaperAeroplane(MotorEx paperAeroplaneMotor) {
+    public DroneLauncherCompnenet(MotorEx paperAeroplaneMotor) {
         aeroplaneMotor = paperAeroplaneMotor;
 
     }
