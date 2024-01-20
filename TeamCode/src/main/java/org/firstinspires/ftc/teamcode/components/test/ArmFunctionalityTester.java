@@ -6,7 +6,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.PSButtons;
+import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
+import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 
 /**
  * Code to test the functionality of the arm. <br />
@@ -25,7 +26,7 @@ public class ArmFunctionalityTester extends OpMode {
     @Override
     public void init() {
         armComponent = new ArmComponent(
-                new MotorEx(hardwareMap, "arm_motor")
+                new FTCLibCachingMotorEx(hardwareMap, "arm_motor")
         );
 
         gamepad = new GamepadEx(gamepad1);

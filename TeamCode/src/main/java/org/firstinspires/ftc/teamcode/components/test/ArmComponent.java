@@ -7,6 +7,8 @@ import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
+import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
+
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
  */
@@ -21,17 +23,15 @@ public class ArmComponent {
 
     private static final int f = 0;
 
-    private final MotorEx armMotor;
+    private final FTCLibCachingMotorEx armMotor;
     private boolean isArmLifted = false;
 
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
 
-    // TODO: MAKE SURE THIS IS CORRECT.
-    // learnroadrunner.com tells me HD REV has 560 ticks per rev, but according to Mo we use CORE REV.
-    // CORE REV doesn't have much info on it - I found a google doc saying CORE is 288.
-    // However, past me left this value as 560, so either my original source was wrong, CORE uses 560, or we aren't using CORE.
-    private final double ticks_in_degrees = 288.0 / 360.0;
+    // we are using hd on arm yes
+    // got this from LRR driveconstants page
+    private final double ticks_in_degrees = 560.0 / 360.0;
 
     private double currentVelocity;
 
@@ -42,7 +42,7 @@ public class ArmComponent {
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor) {
+    public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor) {
         this.armMotor = armMotor;
         setTargetPosition(ARM_LOWERED_POSITION);
     }
