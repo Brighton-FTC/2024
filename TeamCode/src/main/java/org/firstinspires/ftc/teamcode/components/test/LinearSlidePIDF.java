@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
+
 /**
  * Class for tuning the PIDF Controller in {@link LinearSlideComponent}.
  * Must be used with FTC Dashboard.
@@ -40,7 +42,7 @@ public class LinearSlidePIDF extends OpMode {
         controller = new PIDController(p, i, d);
         controller.setTolerance(3);
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
+        arm = new ArmComponent(new FTCLibCachingMotorEx(hardwareMap, "arm_motor"));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -53,7 +55,7 @@ public class LinearSlidePIDF extends OpMode {
 
         controller.setPID(p, i, d);
         double pid = controller.calculate(slidePos, target);
-        double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.arm_ticks_in_degrees)) * f;
+        double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.ticks_in_degrees)) * f;
 
         double power = pid + ff;
 

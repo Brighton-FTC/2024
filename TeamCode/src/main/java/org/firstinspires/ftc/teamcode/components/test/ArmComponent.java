@@ -31,7 +31,7 @@ public class ArmComponent {
 
     // we are using hd on arm yes
     // got this from LRR driveconstants page
-    private final double ticks_in_degrees = 560.0 / 360.0;
+    public final double ticks_in_degrees = 560.0 / 360.0;
 
     private double currentVelocity;
 

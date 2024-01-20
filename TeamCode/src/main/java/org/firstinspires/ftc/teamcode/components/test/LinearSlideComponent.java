@@ -4,6 +4,8 @@ import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
+import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
+
 /**
  * Linear slide component. <br />
  *
@@ -16,7 +18,7 @@ public class LinearSlideComponent {
     public static final int LINEAR_SLIDE_LIFTED_POSITION = -1800;
     public static final int LINEAR_SLIDE_LOWERED_POSITION = -100;
 
-    private final MotorEx linearSlideMotor;
+    private final FTCLibCachingMotorEx linearSlideMotor;
     private final PIDFController pid;
 
     private double currentVelocity;
@@ -28,13 +30,13 @@ public class LinearSlideComponent {
     private final ArmComponent arm;
     private static final double f = 0;
 
-    private final double slide_ticks_in_degrees = 288.0 / 360.0;
+    public final double ticks_in_degrees = 288.0 / 360.0;
 
     /**
      * Linear slide component.
      * @param linearSlideMotor The motor that controls the linear slide.
      */
-    public LinearSlideComponent(MotorEx linearSlideMotor, ArmComponent arm) {
+    public LinearSlideComponent(FTCLibCachingMotorEx linearSlideMotor, ArmComponent arm) {
         this.linearSlideMotor = linearSlideMotor;
         this.arm = arm;
 
@@ -78,7 +80,7 @@ public class LinearSlideComponent {
      * Move the linear slide to the specified set point.
      */
     public void moveToSetPoint() {
-        double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.arm_ticks_in_degrees)) * f;
+        double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.ticks_in_degrees)) * f;
         linearSlideMotor.set(pid.calculate(currentPosition) + ff);
 
         if (pid.atSetPoint()){

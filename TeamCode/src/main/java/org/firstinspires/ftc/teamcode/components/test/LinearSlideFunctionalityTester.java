@@ -6,7 +6,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.PSButtons;
+import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
+import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 
 /**
  * Code to test the functionality of the {@link LinearSlideComponent class}. <br />
@@ -25,8 +26,8 @@ public class LinearSlideFunctionalityTester extends OpMode {
 
     @Override
     public void init() {
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
-        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"), arm);
+        arm = new ArmComponent(new FTCLibCachingMotorEx(hardwareMap, "arm_motor"));
+        linearSlide = new LinearSlideComponent(new FTCLibCachingMotorEx(hardwareMap, "linear_slide_motor"), arm);
 
         gamepad = new GamepadEx(gamepad1);
 
