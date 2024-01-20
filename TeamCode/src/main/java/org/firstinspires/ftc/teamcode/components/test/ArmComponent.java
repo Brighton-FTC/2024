@@ -3,7 +3,11 @@ package org.firstinspires.ftc.teamcode.components.test;
 import androidx.annotation.NonNull;
 
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.controller.PIDFController;
+import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+
+import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
 
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
@@ -17,15 +21,17 @@ public class ArmComponent {
     public static final int ARM_LIFTED_POSITION = 0;
     public static final int ARM_LOWERED_POSITION = 2000;
 
-    private static final double f = 0;
+    private static final int f = 0;
 
-    private final MotorEx armMotor;
+    private final FTCLibCachingMotorEx armMotor;
     private boolean isArmLifted = false;
 
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
 
-    public final double arm_ticks_in_degrees = 288.0 / 360.0;
+    // we are using hd on arm yes
+    // got this from LRR driveconstants page
+    private final double ticks_in_degrees = 560.0 / 360.0;
 
     private double currentVelocity;
 
@@ -36,7 +42,7 @@ public class ArmComponent {
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor) {
+    public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor) {
         this.armMotor = armMotor;
         setTargetPosition(ARM_LOWERED_POSITION);
     }
@@ -115,7 +121,7 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / arm_ticks_in_degrees)) * f;
+        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * f;
         armMotor.set(pid.calculate(currentPosition) + ff);
     }
 
