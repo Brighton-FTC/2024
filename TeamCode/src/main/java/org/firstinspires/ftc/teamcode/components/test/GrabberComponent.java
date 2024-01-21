@@ -63,7 +63,19 @@ public class GrabberComponent {
         isGrabberClosed = !isGrabberClosed;
     }
 
+    /**
+     * Get whether the grabber is closed.
+     * @return True if the grabber is closed, false if it is open.
+     */
     public boolean isClosed() {
         return isGrabberClosed;
+    }
+
+    /**
+     * Get the servos.
+     * @return An array of two {@link ServoEx} objects that the grabber uses.
+     */
+    public ServoEx[] getServos() {
+        return new ServoEx[]{grabberServo1, grabberServo2};
     }
 }
