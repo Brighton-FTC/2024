@@ -44,7 +44,7 @@ public class KalmanFilter {
     private INDArray errors;
 
 
-    KalmanFilter(INDArray x0, INDArray P0, INDArray A, INDArray B, INDArray C, INDArray Q, INDArray R, double h) {
+    public KalmanFilter(INDArray x0, INDArray P0, INDArray A, INDArray B, INDArray C, INDArray Q, INDArray R, double h) {
         this.A = A;
         this.x0 = x0;
         this.B = B;
