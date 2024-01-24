@@ -22,6 +22,7 @@ public class MeepMeepTesting {
             RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
                     .setDimensions(15, 15)
 //                    .setConstraints(new Constraints()) // TODO: set constraints
+                    .setColorScheme(new RobotColorScheme())
                     .followTrajectorySequence(drive -> buildTrajectory(drive, finalI, 2));
             meepMeep.addEntity(bot);
         }
@@ -126,13 +127,13 @@ public class MeepMeepTesting {
                 backdropPose = BACKDROP_BLUE_RIGHT;
         }
 
-        trajectory.splineTo(spikeMarkPose.vec(), spikeMarkPose.getHeading());
+        trajectory.lineToSplineHeading(spikeMarkPose);
         trajectory.addDisplacementMarker(() -> {/* place pixel onto spike mark */});
 
         Pose2d pixelStackPose = robotId >= 6 ? PIXEL_STACK_LEFT_0 : PIXEL_STACK_RIGHT_0;
 
         if ((robotId < 3) || (robotId >= 6 && robotId < 9)) {
-            trajectory.splineTo(pixelStackPose.vec(), pixelStackPose.getHeading());
+            trajectory.lineToSplineHeading(pixelStackPose);
             trajectory.addDisplacementMarker(() -> {/* pick up pixel */});
         }
 
@@ -140,9 +141,9 @@ public class MeepMeepTesting {
 
         for (int i = 0; i < pixelCollectTimes; i++) {
             trajectory.addDisplacementMarker(() -> {/* place pixel */});
-            trajectory.lineToLinearHeading(pixelStackPose);
+            trajectory.lineToSplineHeading(pixelStackPose);
             trajectory.addDisplacementMarker(() -> {/* pick up pixel */});
-            trajectory.lineToLinearHeading(backdropPose);
+            trajectory.lineToSplineHeading(backdropPose);
         }
 
         Pose2d parkPose = robotId >= 6 ? BACKSTAGE_BLUE : BACKSTAGE_RED;
