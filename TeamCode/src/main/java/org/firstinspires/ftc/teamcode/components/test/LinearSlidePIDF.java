@@ -5,11 +5,15 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
+
+import java.util.List;
 
 /**
  * Class for tuning the PIDF Controller in {@link LinearSlideComponent}.
@@ -42,7 +46,14 @@ public class LinearSlidePIDF extends OpMode {
         controller = new PIDController(p, i, d);
         controller.setTolerance(3);
 
-        arm = new ArmComponent(new FTCLibCachingMotorEx(hardwareMap, "arm_motor"));
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+
+        arm = new ArmComponent(new FTCLibCachingMotorEx(hardwareMap, "arm_motor"),
+                allHubs.get(0).getInputVoltage(VoltageUnit.VOLTS));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 

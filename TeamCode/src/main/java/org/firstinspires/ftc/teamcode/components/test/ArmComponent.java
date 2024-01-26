@@ -37,12 +37,18 @@ public class ArmComponent {
 
     private double currentPosition;
 
+    // TODO: Replace this with the voltage that we tuned the arm at.
+    private final double tuningVoltage = 12.;
+
+    private final double voltageNormalization;
+
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor) {
+    public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor, double currentVoltage) {
+        voltageNormalization = currentVoltage / tuningVoltage;
         this.armMotor = armMotor;
         setTargetPosition(ARM_LOWERED_POSITION);
     }
@@ -122,7 +128,9 @@ public class ArmComponent {
      */
     public void moveToSetPoint() {
         double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * f;
-        armMotor.set(pid.calculate(currentPosition) + ff);
+
+        // essentially, voltage normalization is adjusting the motor input for the current voltage supplied by the battery
+        armMotor.set((pid.calculate(currentPosition) + ff) / voltageNormalization);
     }
 
     /**

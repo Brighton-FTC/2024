@@ -32,11 +32,16 @@ public class LinearSlideComponent {
 
     public final double ticks_in_degrees = 288.0 / 360.0;
 
+    // TODO: replace with the voltage during tuning
+    private final double tuningVoltage = 12.;
+    private final double voltageNormalization;
+
     /**
      * Linear slide component.
      * @param linearSlideMotor The motor that controls the linear slide.
      */
-    public LinearSlideComponent(FTCLibCachingMotorEx linearSlideMotor, ArmComponent arm) {
+    public LinearSlideComponent(FTCLibCachingMotorEx linearSlideMotor, ArmComponent arm, double currentVoltage) {
+        voltageNormalization = currentVoltage / tuningVoltage;
         this.linearSlideMotor = linearSlideMotor;
         this.arm = arm;
 
@@ -81,7 +86,10 @@ public class LinearSlideComponent {
      */
     public void moveToSetPoint() {
         double ff = Math.sin(Math.toRadians(arm.getArmPosition() / arm.ticks_in_degrees)) * f;
-        linearSlideMotor.set(pid.calculate(currentPosition) + ff);
+
+        // voltage normalization is essentially adjusting motor input according to current voltage
+        // current voltage can be different to tuning votlage, causes problems
+        linearSlideMotor.set((pid.calculate(currentPosition) + ff) / voltageNormalization);
 
         if (pid.atSetPoint()){
             linearSlideMotor.set(0.05);
