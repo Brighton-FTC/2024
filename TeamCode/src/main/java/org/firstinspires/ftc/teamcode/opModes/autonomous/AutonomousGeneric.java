@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.opModes.autonomous;
 
+import android.util.Pair;
 import android.util.Size;
+
+import androidx.annotation.NonNull;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
@@ -15,6 +18,7 @@ import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.teamcode.util.roadRunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import org.jetbrains.annotations.Contract;
 
 /**
  * Generic autonomous.
@@ -37,19 +41,23 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
     private TfodProcessor tfod;
 
+    private SampleMecanumDrive drive;
+
+    private ArmComponent arm;
+    private LinearSlideComponent linearSlide;
+    private GrabberComponent grabber;
+
     @Override
     public void runOpMode() throws InterruptedException {
         // initialize hardware
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        drive = new SampleMecanumDrive(hardwareMap);
 
-        ArmComponent arm = new ArmComponent(new MotorEx(hardwareMap, "armMotor"));
-        LinearSlideComponent linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linearSlideMotor"), arm);
-        GrabberComponent grabber = new GrabberComponent(
+        arm = new ArmComponent(new MotorEx(hardwareMap, "armMotor"));
+        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linearSlideMotor"), arm);
+        grabber = new GrabberComponent(
                 new SimpleServo(hardwareMap, "grabberServo1", 0, 360),
                 new SimpleServo(hardwareMap, "grabberServo2", 0, 360)
         );
-
-        waitForStart();
 
         // initialize vision
         VisionPortal visionPortal = new VisionPortal.Builder()
@@ -65,11 +73,30 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
         waitForStart();
 
-        // go to spike marks and place the purple pixel.
-        Pose2d correctSpikeMarkPose = getCorrectSpikeMarkPose();
+        Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
 
+        placePurplePixel(correctPoses.first);
+
+        if (goesToPixelStackFirst) {
+            pickUpPixel(posesContainer.pixelStackPose);
+        }
+
+        while (opModeIsActive()) {
+            placePixel(correctPoses.second);
+            pickUpPixel(posesContainer.pixelStackPose);
+        }
+
+        visionPortal.close();
+    }
+
+    /**
+     * Get the robot to place a purple pixel on the correct spike mark
+     *
+     * @param endPose The pose where the robot needs to be to place the pixel.
+     */
+    private void placePurplePixel(Pose2d endPose) {
         drive.followTrajectory(
-                drive.trajectoryBuilder(posesContainer.getStartingPose())
+                drive.trajectoryBuilder(drive.getPoseEstimate())
                         .addTemporalMarker(0, () -> {
                             arm.lower();
                             linearSlide.lower();
@@ -79,105 +106,94 @@ public abstract class AutonomousGeneric extends LinearOpMode {
                                 linearSlide.moveToSetPoint();
                             }
                         })
-                        .lineToLinearHeading(correctSpikeMarkPose)
+                        .lineToLinearHeading(endPose)
                         .build()
         );
 
         grabber.open();
+    }
 
-        if (goesToPixelStackFirst) {
-            // go from spike marks to pixel stack and pick up white pixel
-            drive.followTrajectory(
-                    drive.trajectoryBuilder(correctSpikeMarkPose)
-                            .addTemporalMarker(0, () -> {
-                                arm.lift();
-                                linearSlide.lower();
+    /**
+     * Pick up a pixel from a pixel stack.
+     *
+     * @param endPose The pose where the robot needs to be to pick up the pixel.
+     */
+    private void pickUpPixel(Pose2d endPose) {
+        drive.followTrajectory(
+                drive.trajectoryBuilder(drive.getPoseEstimate())
+                        .addTemporalMarker(0, () -> {
+                            arm.lift();
+                            linearSlide.lower();
 
-                                while (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                                    arm.moveToSetPoint();
-                                    linearSlide.moveToSetPoint();
-                                }
-                            })
-                            .lineToLinearHeading(posesContainer.getPixelStackPose())
-                            .build()
-            );
+                            while (arm.atSetPoint() && linearSlide.atSetPoint()) {
+                                arm.moveToSetPoint();
+                                linearSlide.moveToSetPoint();
+                            }
+                        })
+                        .lineToLinearHeading(endPose)
+                        .build()
+        );
 
-            grabber.close(); // TODO: find more accurate way of picking up pixel
-        }
+        grabber.close(); // TODO: find more accurate way of picking up pixel
+    }
 
-        // go to backdrop and place yellow (and purple if goesToPixelStackFirst is true) pixels,
-        // then go and pick up another pixel, repeat
-        Pose2d correctBackdropPose;
+    /**
+     * Place a pixel on the backdrop.
+     *
+     * @param endPose The pose where the robot needs to be to place the pixel.
+     */
+    private void placePixel(Pose2d endPose) {
+        drive.followTrajectory(
+                drive.trajectoryBuilder(drive.getPoseEstimate())
+                        .addTemporalMarker(0, () -> {
+                            arm.lift();
+                            linearSlide.lift();
 
-        if (correctSpikeMarkPose.equals(posesContainer.getLeftSpikeMarkPose())) {
-            correctBackdropPose = posesContainer.getLeftBackdropPose();
+                            while (arm.atSetPoint() && linearSlide.atSetPoint()) {
+                                arm.moveToSetPoint();
+                                linearSlide.moveToSetPoint();
+                            }
+                        })
+                        .lineToLinearHeading(endPose)
+                        .build()
+        );
 
-        } else if (correctSpikeMarkPose.equals(posesContainer.getRightBackdropPose())) {
-            correctBackdropPose = posesContainer.getRightBackdropPose();
+        grabber.open(); // TODO: find more accurate way of placing pixel
+    }
 
-        } else {
-            correctBackdropPose = posesContainer.getCenterBackdropPose();
-        }
-
-        while (opModeIsActive()) {
-            // go to backdrop
-            drive.followTrajectory(
-                    drive.trajectoryBuilder(goesToPixelStackFirst ? posesContainer.getPixelStackPose() : correctSpikeMarkPose)
-                            .addTemporalMarker(0, () -> {
-                                arm.lift();
-                                linearSlide.lift();
-
-                                while (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                                    arm.moveToSetPoint();
-                                    linearSlide.moveToSetPoint();
-                                }
-                            })
-                            .lineToLinearHeading(correctBackdropPose)
-                            .build()
-            );
-
-            grabber.open(); // TODO: find more accurate way of placing pixel
-
-            // go from spike marks to pixel stack and pick up white pixel
-            drive.followTrajectory(
-                    drive.trajectoryBuilder(correctSpikeMarkPose)
-                            .addTemporalMarker(0, () -> {
-                                arm.lift();
-                                linearSlide.lower();
-
-                                while (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                                    arm.moveToSetPoint();
-                                    linearSlide.moveToSetPoint();
-                                }
-                            })
-                            .lineToLinearHeading(posesContainer.getPixelStackPose())
-                            .build()
-            );
-
-            grabber.close(); // TODO: find more accurate way of picking up pixel
-        }
-
-        visionPortal.close();
+    /**
+     * Park the robot in the backstage area.
+     *
+     * @param endPose The place for the robot to be parked.
+     */
+    private void park(Pose2d endPose) {
+        drive.followTrajectory(
+                drive.trajectoryBuilder(drive.getPoseEstimate())
+                        .lineToLinearHeading(endPose)
+                        .build()
+        );
     }
 
     /**
      * Determine which spike mark the white pixel/team prop is on.
      *
-     * @return The pose of that spike mark.
+     * @return The poses for the correct spike mark, and the correct backdrop side.
      */
-    private Pose2d getCorrectSpikeMarkPose() {
+    @NonNull
+    @Contract(" -> new")
+    private Pair<Pose2d, Pose2d> getCorrectPoses() {
         Recognition recognition = tfod.getRecognitions().get(0);
         int recognitionX = (int) (recognition.getLeft() + recognition.getRight()) / 2;
 
         // check which third of the screen the object is in
         if (recognitionX < CAMERA_RESOLUTION.getWidth() / 3) {
-            return posesContainer.getLeftSpikeMarkPose();
+            return new Pair<>(posesContainer.leftSpikeMarkPose, posesContainer.leftBackdropPose);
 
         } else if (recognitionX > CAMERA_RESOLUTION.getWidth() * 2 / 3) {
-            return posesContainer.getRightSpikeMarkPose();
+            return new Pair<>(posesContainer.rightSpikeMarkPose, posesContainer.rightBackdropPose);
 
         } else {
-            return posesContainer.getCenterSpikeMarkPose();
+            return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.centerBackdropPose);
         }
     }
 }

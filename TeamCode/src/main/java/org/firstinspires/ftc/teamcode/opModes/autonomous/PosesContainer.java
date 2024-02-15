@@ -6,15 +6,15 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
  * A class to house trajectories and poses.
  */
 public class PosesContainer {
-    private final Pose2d startingPose;
-    private final Pose2d leftSpikeMarkPose;
-    private final Pose2d rightSpikeMarkPose;
-    private final Pose2d centerSpikeMarkPose;
-    private final Pose2d leftBackdropPose;
-    private final Pose2d rightBackdropPose;
-    private final Pose2d centerBackdropPose;
-    private final Pose2d pixelStackPose;
-    private final Pose2d parkPose;
+    public final Pose2d startingPose;
+    public final Pose2d leftSpikeMarkPose;
+    public final Pose2d rightSpikeMarkPose;
+    public final Pose2d centerSpikeMarkPose;
+    public final Pose2d leftBackdropPose;
+    public final Pose2d rightBackdropPose;
+    public final Pose2d centerBackdropPose;
+    public final Pose2d pixelStackPose;
+    public final Pose2d parkPose;
 
     public PosesContainer(Pose2d startingPose,
                           Pose2d leftSpikeMarkPose,
@@ -34,41 +34,5 @@ public class PosesContainer {
         this.centerBackdropPose = centerBackdropPose;
         this.pixelStackPose = pixelStackPose;
         this.parkPose = parkPose;
-    }
-
-    public Pose2d getStartingPose() {
-        return startingPose;
-    }
-
-    public Pose2d getLeftSpikeMarkPose() {
-        return leftSpikeMarkPose;
-    }
-
-    public Pose2d getRightSpikeMarkPose() {
-        return rightSpikeMarkPose;
-    }
-
-    public Pose2d getCenterSpikeMarkPose() {
-        return centerSpikeMarkPose;
-    }
-
-    public Pose2d getLeftBackdropPose() {
-        return leftBackdropPose;
-    }
-
-    public Pose2d getRightBackdropPose() {
-        return rightBackdropPose;
-    }
-
-    public Pose2d getCenterBackdropPose() {
-        return centerBackdropPose;
-    }
-
-    public Pose2d getPixelStackPose() {
-        return pixelStackPose;
-    }
-
-    public Pose2d getParkPose() {
-        return parkPose;
     }
 }
