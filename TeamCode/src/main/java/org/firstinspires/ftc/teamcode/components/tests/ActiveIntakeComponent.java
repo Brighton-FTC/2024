@@ -4,12 +4,12 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 public class ActiveIntakeComponent {
-    private boolean motorState = false;
-    private double motorSpeed = 0.9;
+    private boolean isMotorOn = false;
+    private final double MOTOR_SPEED = 0.9;
     private int servoAngle = 0;
-    MotorEx motor;
-    ServoEx leftServo;
-    ServoEx rightServo;
+    private MotorEx motor;
+    private ServoEx leftServo;
+    private ServoEx rightServo;
 
     public ActiveIntakeComponent(MotorEx motor, ServoEx leftServo, ServoEx rightServo) {
         this.motor = motor;
@@ -17,19 +17,22 @@ public class ActiveIntakeComponent {
         this.rightServo = rightServo;
     }
 
+    public boolean isMotorOn() {
+        return isMotorOn;
+    }
 
     public void turnMotorOn() {
-        motorState = true;
-        motor.set(motorSpeed);
+        isMotorOn = true;
+        motor.set(MOTOR_SPEED);
     }
 
     public void turnMotorOff() {
-        motorState = false;
+        isMotorOn = false;
         motor.set(0);
     }
 
     public void toggleMotor() {
-        if (motorState) {
+        if (isMotorOn) {
             turnMotorOff();
         } else {
             turnMotorOn();
@@ -37,9 +40,8 @@ public class ActiveIntakeComponent {
     }
 
     public void rotateServosForStack(int pixels) {
-        servoAngle = 180 * pixels;
-        leftServo.rotateByAngle(180);
-        rightServo.rotateByAngle(-180);
+        leftServo.rotateByAngle(180 * pixels);
+        rightServo.rotateByAngle(-180 * pixels);
     }
 
     public void rotateServosManually() {
