@@ -45,6 +45,7 @@ public class ActiveIntakeComponent {
     }
 
     public void rotateServosManually() {
-        servoAngle += 180;
+        leftServo.rotateByAngle(180);
+        rightServo.rotateByAngle(-180);
     }
 }
