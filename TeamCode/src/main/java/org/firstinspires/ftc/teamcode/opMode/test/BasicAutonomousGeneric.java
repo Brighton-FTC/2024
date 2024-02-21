@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opMode.test;
 
+import static org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor.PropPositions.UNFOUND;
+
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -10,9 +12,11 @@ import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.kinematics.wpilibkinematics.MecanumDriveOdometry;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -22,9 +26,11 @@ import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.AutomaticPixelPlacement;
 import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
+import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import org.opencv.core.Scalar;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -41,19 +47,7 @@ import java.util.stream.Collectors;
  * </b>
  */
 public class BasicAutonomousGeneric extends OpMode {
-    // TODO: once the custom model exists, replace this with the custom model name
-    public final String TFOD_MODEL_ASSET = "CenterStage.tflite";
-
-    // TODO: once the custom model exists, modify this
-    public final String[] LABELS = {
-            "Pixel",
-            "red_cone",
-            "blue_cone"
-    };
-
-    public String[] WANTED_LABELS = {
-            "Pixel"
-    };
+    private ColourMassDetectionProcessor colourMassDetectionProcessor;
 
     // TODO: fine tune these values
     public final double ANGLE_ERROR = 20;
@@ -89,10 +83,18 @@ public class BasicAutonomousGeneric extends OpMode {
     protected IMU imu;
 
     protected Runnable currentState = this::driveToSpikeMarks;
-    protected CorrectSpikeMark correctSpikeMark = null;
 
     protected TeamColor teamColor = null; // fill this in in the color specific opmode
     protected double backdropTurningAngle = 0; // fill this in as well
+
+    protected ColourMassDetectionProcessor.PropPositions recordedPropPosition;
+
+    protected ElapsedTime time;
+
+    // TODO: fill in constants
+    protected double YELLOW_INITIAL_FORWARDS_MILLISECONDS = 0;
+    protected double YELLOW_MIDDLE_FORWARDS_MILLISECONDS = 0;
+    protected double YELLOW_STRAFE_MILLISECONDS = 0;
 
     @Override
     public void init() {
@@ -133,24 +135,54 @@ public class BasicAutonomousGeneric extends OpMode {
         // vision stuff
         aprilTag = new AprilTagProcessor.Builder().build();
 
-        tfod = new TfodProcessor.Builder()
-                .setModelAssetName(TFOD_MODEL_ASSET)
-                .setModelLabels(LABELS)
-                .setIsModelTensorFlow2(true)
-                .setIsModelQuantized(true)
-                // TODO: I have no idea what the following two statements do; find that out asap
-                .setModelInputSize(300)
-                .setModelAspectRatio(16.0 / 9.0)
-                .build();
 
-        tfod.setMinResultConfidence(0.75F);
+        Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
+        Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
+        double minArea = 100; // the minimum area for the detection to consider for your prop
+
+        colourMassDetectionProcessor = new ColourMassDetectionProcessor(
+                lower,
+                upper,
+                () -> minArea, // these are lambda methods, in case we want to change them while the match is running, for us to tune them or something
+                () -> 213, // the left dividing line, in this case the left third of the frame
+                () -> 426 // the left dividing line, in this case the right third of the frame
+        );
 
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "webcam_name"))
                 .setCameraResolution(cameraSize)
                 .enableLiveView(true)
-                .addProcessors(tfod, aprilTag)
+                .addProcessors(tfod, colourMassDetectionProcessor)
                 .build();
+    }
+
+    /**
+     * User-defined start method
+     * <p>
+     * This method will be called once, when the play button is pressed.
+     * <p>
+     * This method is optional. By default, this method takes no action.
+     * <p>
+     * Example usage: Starting another thread.
+     */
+    @Override
+    public void start() {
+        // shuts down the camera once the match starts, we dont need to look any more
+        if (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING) {
+            visionPortal.stopLiveView();
+            visionPortal.stopStreaming();
+        }
+
+        // gets the recorded prop position
+        recordedPropPosition = colourMassDetectionProcessor.getRecordedPropPosition();
+
+        // now we can use recordedPropPosition to determine where the prop is! if we never saw a prop, your recorded position will be UNFOUND.
+        // if it is UNFOUND, you can manually set it to any of the other positions to guess
+        if (recordedPropPosition == UNFOUND) {
+            recordedPropPosition = ColourMassDetectionProcessor.PropPositions.MIDDLE;
+        }
+
+        time = new ElapsedTime();
     }
 
     @Override
@@ -166,57 +198,52 @@ public class BasicAutonomousGeneric extends OpMode {
     protected void driveToSpikeMarks() {
         telemetry.addLine("Driving to spike marks.");
 
-        List<Recognition> recognitions = getTfodDetections();
-
-        if (recognitions.size() > 0) {
-            Recognition currentRecognition = recognitions.stream()
-                    .min(Comparator.comparingDouble(Recognition::getTop))
-                    .get();
-
-            boolean isDone = driveToTfodObject(currentRecognition, (int) (cameraSize.getHeight() * CAMERA_Y_POS));
-
-            if (isDone) {
-                if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 < cameraSize.getWidth() / 3.0) {
-                    correctSpikeMark = CorrectSpikeMark.LEFT;
-                } else if ((currentRecognition.getLeft() + currentRecognition.getRight()) / 2 > cameraSize.getWidth() * CAMERA_Y_POS) {
-                    correctSpikeMark = CorrectSpikeMark.RIGHT;
-                } else {
-                    correctSpikeMark = CorrectSpikeMark.CENTER;
-                }
-
-                currentState = this::strafeForPurplePixelPlacement;
-            }
-        } else {
-            if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
-                mecanum.driveRobotCentric(0, 1, 0);
-            }
+        if (time.time() < YELLOW_INITIAL_FORWARDS_MILLISECONDS){
+            mecanum.driveRobotCentric(0, 0.8, 0);
         }
-
+        else {
+            currentState = this::strafeForPurplePixelPlacement;
+        }
     }
 
     protected void strafeForPurplePixelPlacement() {
         telemetry.addLine("Strafing to place purple pixel.");
 
-        List<Recognition> recognitions = getTfodDetections();
-
-        if (recognitions.size() > 0) {
-            Recognition currentRecognition = recognitions.stream()
-                    .min(Comparator.comparingDouble(Recognition::getTop))
-                    .get();
-
-            // get the pixel centered to between 2/5 and 3/5 of the camera width
-            if (currentRecognition.getRight() > cameraSize.getWidth() * 3.0 / 5.0) {
-                mecanum.driveRobotCentric(0.5, 0, 0);
-
-            } else if (currentRecognition.getLeft() < cameraSize.getWidth() * 2.0 / 5.0) {
-                mecanum.driveRobotCentric(-0.5, 0, 0);
-
-            } else {
-                arm.lower();
-                linearSlide.lower();
-
-                currentState = this::placePurplePixel;
-            }
+        // now we can use recordedPropPosition in our auto code to modify where we place the purple and yellow pixels
+        switch (recordedPropPosition) {
+            case LEFT:
+                // code to do if we saw the prop on the left
+                if (time.time() < YELLOW_STRAFE_MILLISECONDS){
+                    mecanum.driveRobotCentric(-0.8, 0, 0);
+                }
+                else {
+                    arm.lower();
+                    linearSlide.lower();
+                    currentState = this::placePurplePixel;
+                }
+                break;
+            case MIDDLE:
+                // code to do if we saw the prop on the middle
+                if (time.time() < YELLOW_MIDDLE_FORWARDS_MILLISECONDS){
+                    mecanum.driveRobotCentric(0, 0.8, 0);
+                }
+                else {
+                    arm.lower();
+                    linearSlide.lower();
+                    currentState = this::placePurplePixel;
+                }
+                break;
+            case RIGHT:
+                // code to do if we saw the prop on the right
+                if (time.time() < YELLOW_STRAFE_MILLISECONDS){
+                    mecanum.driveRobotCentric(0.8, 0, 0);
+                }
+                else {
+                    arm.lower();
+                    linearSlide.lower();
+                    currentState = this::placePurplePixel;
+                }
+                break;
         }
     }
 
@@ -272,22 +299,6 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    /**
-     * Gets TFOD recognitions.
-     *
-     * @return the TFOD recognitions that are in WANTED_LABELS
-     */
-    @NonNull
-    protected List<Recognition> getTfodDetections() {
-        List<Recognition> currentRecognitions = tfod.getRecognitions();
-        telemetry.addLine(currentRecognitions.size() + " Objects Detected. ");
-
-        currentRecognitions = currentRecognitions.stream()
-                .filter((recognition) -> Arrays.asList(WANTED_LABELS).contains(recognition.getLabel()))
-                .collect(Collectors.toList());
-
-        return currentRecognitions;
-    }
 
     /**
      * Turns the robot.
@@ -304,33 +315,6 @@ public class BasicAutonomousGeneric extends OpMode {
             mecanum.driveRobotCentric(0, 0, heading / ANGLE_DIVISOR);
             return false;
         }
-    }
-
-    /**
-     * Drives to the TFOD object.
-     * Uses the y position of the object and the distance sensor to determine if it is close enough.
-     *
-     * @param object the TFOD recognition
-     * @param yPos   The y position that the TFOD object should be at.
-     * @return if the robot has finished driving yet
-     */
-    protected boolean driveToTfodObject(@NonNull Recognition object, int yPos) {
-        if (Math.abs((object.getTop() + object.getBottom()) / 2 - yPos) <= VISION_ERROR) {
-            if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
-                mecanum.driveRobotCentric(0, (object.getTop() + object.getBottom() / (2 * cameraSize.getHeight())), 0);
-            }
-
-            return false;
-
-        } else {
-            return true;
-        }
-    }
-
-    public enum CorrectSpikeMark {
-        LEFT,
-        CENTER,
-        RIGHT
     }
 
     public enum TeamColor {

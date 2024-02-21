@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 public class BasicAutonomousRed extends BasicAutonomousGeneric {
     @Override
     public void init() {
-        WANTED_LABELS = new String[]{"Pixel", "red_cone"};
         teamColor = TeamColor.RED;
         super.init();
     }
