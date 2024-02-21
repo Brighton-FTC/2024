@@ -44,7 +44,7 @@ public class KalmanFilter {
     private INDArray errors;
 
 
-    public KalmanFilter(INDArray x0, INDArray P0, INDArray A, INDArray B, INDArray C, INDArray Q, INDArray R, double h) {
+    public KalmanFilter(INDArray x0, INDArray P0, INDArray A, INDArray B, INDArray C, INDArray Q, INDArray R) {
         this.A = A;
         this.x0 = x0;
         this.B = B;
@@ -63,6 +63,10 @@ public class KalmanFilter {
         this.estimates_apriori.add(xk_minus);
         this.estimationErrorCovarianceMatricesApriori.add(pk_minus);
         this.currentTimeStep = currentTimeStep + 1;
+    }
+
+    public INDArray getEstimates_aposteriori() {
+        return estimates_aposteriori;
     }
 
     public void computeAposterioriEstimate(INDArray currentMeasurements) {
