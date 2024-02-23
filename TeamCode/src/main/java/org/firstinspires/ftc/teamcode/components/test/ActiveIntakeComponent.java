@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.components.tests;
+package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -6,10 +6,9 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 public class ActiveIntakeComponent {
     private boolean isMotorOn = false;
     private final double MOTOR_SPEED = 0.9;
-    private int servoAngle = 0;
-    private MotorEx motor;
-    private ServoEx leftServo;
-    private ServoEx rightServo;
+    private final MotorEx motor;
+    private final ServoEx leftServo;
+    private final ServoEx rightServo;
 
     public ActiveIntakeComponent(MotorEx motor, ServoEx leftServo, ServoEx rightServo) {
         this.motor = motor;
