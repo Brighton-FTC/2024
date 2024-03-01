@@ -12,9 +12,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
+import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.util.roadRunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
@@ -45,7 +46,8 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
     private ArmComponent arm;
     private LinearSlideComponent linearSlide;
-    private GrabberComponent grabber;
+    private ActiveIntakeComponent activeIntake;
+    private OuttakeComponent outtake;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -54,10 +56,8 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "armMotor"));
         linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linearSlideMotor"), arm);
-        grabber = new GrabberComponent(
-                new SimpleServo(hardwareMap, "grabberServo1", 0, 360),
-                new SimpleServo(hardwareMap, "grabberServo2", 0, 360)
-        );
+        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "activeIntakeMotor"));
+        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtakeServo", 0, 360));
 
         // initialize vision
         VisionPortal visionPortal = new VisionPortal.Builder()
@@ -110,7 +110,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
                         .build()
         );
 
-        grabber.open();
+        outtake.releasePixel();
     }
 
     /**
@@ -134,7 +134,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
                         .build()
         );
 
-        grabber.close(); // TODO: find more accurate way of picking up pixel
+        activeIntake.turnManually();
     }
 
     /**
@@ -158,7 +158,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
                         .build()
         );
 
-        grabber.open(); // TODO: find more accurate way of placing pixel
+        activeIntake.turnManually();
     }
 
     /**
