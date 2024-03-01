@@ -6,6 +6,12 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
  * A class to house trajectories and poses.
  */
 public class PosesContainer {
+    // TODO: fill in
+    public static final PosesContainer RED_AUDIENCE_POSES = null;
+    public static final PosesContainer RED_FAR_SIDE_POSES = null;
+    public static final PosesContainer BLUE_AUDIENCE_POSES = null;
+    public static final PosesContainer BLUE_FAR_SIDE_POSES = null;
+
     public final Pose2d startingPose;
     public final Pose2d leftSpikeMarkPose;
     public final Pose2d rightSpikeMarkPose;

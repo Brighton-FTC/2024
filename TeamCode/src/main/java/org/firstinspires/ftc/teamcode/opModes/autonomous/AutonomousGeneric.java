@@ -6,8 +6,10 @@ import android.util.Size;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -27,14 +29,17 @@ import org.jetbrains.annotations.Contract;
  * To use, extend and overwrite <code>posesContainer</code> and <code>goesToPixelStackFirst</code> with the necessary values,
  * and add annotate the class with <code>@Autonomous</code>.
  * <br />
- * TODO: this code is written using the grabber, but once active intake code is written, replace with that.
  */
-public abstract class AutonomousGeneric extends LinearOpMode {
+
+@Autonomous(name = "Autonomous Generic", group = "autonomous-test")
+public class AutonomousGeneric extends LinearOpMode {
     // TODO: replace with custom tfod values if needed
     public static final String TFOD_PROCESSOR_NAME = "CenterStage.tflite";
     public static final String[] TFOD_LABELS = {"Pixel"};
 
     public static final Size CAMERA_RESOLUTION = new Size(640, 480);
+
+    public static final double STARTING_POSE_ERROR = 0.2;
 
     // overwrite in subclasses
     protected PosesContainer posesContainer;
@@ -51,6 +56,8 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        posesContainer = getPosesContainer();
+
         // initialize hardware
         drive = new SampleMecanumDrive(hardwareMap);
 
@@ -87,6 +94,37 @@ public abstract class AutonomousGeneric extends LinearOpMode {
         }
 
         visionPortal.close();
+    }
+
+    /**
+     * Determine the starting point and get the corresponding {@link PosesContainer} object.
+     *
+     * @return The corresponding poses container.
+     */
+    private PosesContainer getPosesContainer() {
+        // TODO: fill in positions
+        Vector2d redAudience = new Vector2d();
+        Vector2d redFarSide = new Vector2d();
+        Vector2d blueAudience = new Vector2d();
+        Vector2d blueFarSide = new Vector2d();
+
+        Vector2d currentPosition = drive.getPoseEstimate().vec();
+
+        if (currentPosition.distTo(redAudience) <= STARTING_POSE_ERROR) {
+            return PosesContainer.RED_AUDIENCE_POSES;
+
+        } else if (currentPosition.distTo(redFarSide) <= STARTING_POSE_ERROR) {
+            return PosesContainer.RED_FAR_SIDE_POSES;
+
+        } else if (currentPosition.distTo(blueAudience) <= STARTING_POSE_ERROR) {
+            return PosesContainer.BLUE_AUDIENCE_POSES;
+
+        } else if (currentPosition.distTo(blueFarSide) <= STARTING_POSE_ERROR) {
+            return PosesContainer.BLUE_FAR_SIDE_POSES;
+
+        } else {
+            return null;
+        }
     }
 
     /**
