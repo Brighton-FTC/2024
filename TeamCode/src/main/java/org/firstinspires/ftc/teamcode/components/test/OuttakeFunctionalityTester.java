@@ -11,31 +11,27 @@ import org.firstinspires.ftc.teamcode.PSButtons;
  * OpMode to test the functionality of the grabber.
  */
 @TeleOp(name = "Grabber Functionality Tester", group = "grabber-test")
-public class GrabberFunctionalityTester extends OpMode {
-    GrabberComponent grabberComponent;
+public class OuttakeFunctionalityTester extends OpMode {
+    OuttakeComponent outtakeComponent;
 
     GamepadEx gamepad;
 
     @Override
     public void init() {
-        grabberComponent = new GrabberComponent(
+        outtakeComponent = new OuttakeComponent(
                 new SimpleServo(hardwareMap, "grabber_servo1",
-                        GrabberComponent.GRABBER_CLOSED_POSITION,
-                        GrabberComponent.GRABBER_OPEN_POSITION),
-                new SimpleServo(hardwareMap, "grabber_servo_2",
-                        GrabberComponent.GRABBER_CLOSED_POSITION,
-                        GrabberComponent.GRABBER_CLOSED_POSITION)
+                        0, 360)
         );
 
         gamepad = new GamepadEx(gamepad1);
 
-        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(grabberComponent::toggle);
-
-        telemetry.addLine(grabberComponent.isClosed() ? "Grabber Closed" : "Grabber Open");
+        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(outtakeComponent::releasePixel);
     }
 
     @Override
     public void loop() {
+        gamepad.readButtons();
 
+        telemetry.addLine(outtakeComponent.isClosed() ? "Outtake Closed" : "Outtake Open");
     }
 }
