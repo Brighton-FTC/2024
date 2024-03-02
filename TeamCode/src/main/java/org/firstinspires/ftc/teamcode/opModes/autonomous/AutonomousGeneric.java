@@ -13,15 +13,16 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
+import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
+import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor.PropPositions;
 import org.firstinspires.ftc.teamcode.util.roadRunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import org.jetbrains.annotations.Contract;
+import org.opencv.core.Scalar;
 
 /**
  * Generic autonomous.
@@ -34,10 +35,11 @@ import org.jetbrains.annotations.Contract;
 @Autonomous(name = "Autonomous Generic", group = "autonomous-test")
 public class AutonomousGeneric extends LinearOpMode {
     // TODO: replace with custom tfod values if needed
-    public static final String TFOD_PROCESSOR_NAME = "CenterStage.tflite";
-    public static final String[] TFOD_LABELS = {"Pixel"};
-
     public static final Size CAMERA_RESOLUTION = new Size(640, 480);
+
+    public static final Scalar LOWER_DETECTION_BOUND = new Scalar(150, 100, 100);
+    public static final Scalar UPPER_DETECTION_BOUND = new Scalar(180, 255, 255);
+    public static final double MIN_DETECTION_AREA = 100;
 
     public static final double STARTING_POSE_ERROR = 0.2;
 
@@ -45,7 +47,7 @@ public class AutonomousGeneric extends LinearOpMode {
     protected PosesContainer posesContainer;
     protected boolean goesToPixelStackFirst;
 
-    private TfodProcessor tfod;
+    private ColourMassDetectionProcessor colorMassDetectionProcessor;
 
     private SampleMecanumDrive drive;
 
@@ -67,15 +69,18 @@ public class AutonomousGeneric extends LinearOpMode {
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtakeServo", 0, 360));
 
         // initialize vision
+        colorMassDetectionProcessor = new ColourMassDetectionProcessor(
+                LOWER_DETECTION_BOUND,
+                UPPER_DETECTION_BOUND,
+                () -> MIN_DETECTION_AREA,
+                () -> CAMERA_RESOLUTION.getWidth() / 3.0,
+                () -> CAMERA_RESOLUTION.getWidth() * 2.0 / 3.0
+        );
+
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "webcam"))
-                .addProcessor(tfod)
+                .addProcessor(colorMassDetectionProcessor)
                 .setCameraResolution(CAMERA_RESOLUTION)
-                .build();
-
-        tfod = new TfodProcessor.Builder()
-                .setModelAssetName(TFOD_PROCESSOR_NAME)
-                .setModelLabels(TFOD_LABELS)
                 .build();
 
         waitForStart();
@@ -220,17 +225,16 @@ public class AutonomousGeneric extends LinearOpMode {
     @NonNull
     @Contract(" -> new")
     private Pair<Pose2d, Pose2d> getCorrectPoses() {
-        Recognition recognition = tfod.getRecognitions().get(0);
-        int recognitionX = (int) (recognition.getLeft() + recognition.getRight()) / 2;
+        PropPositions propPosition = colorMassDetectionProcessor.getRecordedPropPosition();
 
         // check which third of the screen the object is in
-        if (recognitionX < CAMERA_RESOLUTION.getWidth() / 3) {
+        if (propPosition == PropPositions.LEFT) {
             return new Pair<>(posesContainer.leftSpikeMarkPose, posesContainer.leftBackdropPose);
 
-        } else if (recognitionX > CAMERA_RESOLUTION.getWidth() * 2 / 3) {
+        } else if (propPosition == PropPositions.RIGHT) {
             return new Pair<>(posesContainer.rightSpikeMarkPose, posesContainer.rightBackdropPose);
 
-        } else {
+        } else { // middle or not found
             return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.centerBackdropPose);
         }
     }
