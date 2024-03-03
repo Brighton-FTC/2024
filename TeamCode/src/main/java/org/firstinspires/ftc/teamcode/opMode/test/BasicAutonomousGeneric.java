@@ -62,7 +62,6 @@ public class BasicAutonomousGeneric extends OpMode {
     protected MecanumDrive mecanum;
 
     protected ArmComponent arm;
-    protected ActiveIntakeComponent activeIntake;
     protected OuttakeComponent outtake;
 
     protected SensorDistanceEx distanceSensor;
@@ -100,7 +99,6 @@ public class BasicAutonomousGeneric extends OpMode {
         }
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
-        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo", 0, 360));
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
