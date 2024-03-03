@@ -30,9 +30,13 @@ public class MecanumDriveTrain extends OpMode {
 
         drive = new MecanumDrive(frontleft, frontright, backleft, backright);
 
-        for (Motor motor : new Motor[]{frontleft, backleft, backright}) {
+
+        for (Motor motor : new Motor[]{frontleft, frontright, backleft, backright}) {
+            motor.setRunMode(Motor.RunMode.VelocityControl);
             motor.setInverted(!motor.getInverted());
         }
+
+        frontright.setInverted(!frontright.getInverted());
 
         player1Gamepad = new GamepadEx(gamepad1);
     }
