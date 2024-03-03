@@ -17,8 +17,8 @@ public class ActiveIntakeFunctionalityTester extends OpMode {
         gamepad = new GamepadEx(gamepad1);
 
         activeIntake = new ActiveIntakeComponent(
-                new MotorEx(hardwareMap, "active_intake_motor_1"),
-                new MotorEx(hardwareMap, "active_intake_motor_2")
+                new MotorEx(hardwareMap, "active_intake_motor_left"),
+                new MotorEx(hardwareMap, "active_intake_motor_right")
         );
     }
 

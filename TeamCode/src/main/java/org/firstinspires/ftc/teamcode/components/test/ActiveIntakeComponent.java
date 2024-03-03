@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
@@ -9,7 +10,10 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  * Call {@link #turnContinually()} or {@link #turnManually()} once and then call {@link #moveMotor()} continuously to move the motor.
  */
 public class ActiveIntakeComponent {
-    private State state;
+    public static final double MOTOR_SPEED = 0.5;
+    public static final int TURN_MANUALLY_DEGREES = 270;
+
+    private State state = State.OFF;
     private final double DEGREES_PER_TICK = 360.0 / 560.0;
     private final MotorEx motor1, motor2;
 
@@ -19,6 +23,9 @@ public class ActiveIntakeComponent {
     public ActiveIntakeComponent(MotorEx motor1, MotorEx motor2) {
         this.motor1 = motor1;
         this.motor2 = motor2;
+
+        this.motor1.setRunMode(Motor.RunMode.VelocityControl);
+        this.motor2.setRunMode(Motor.RunMode.VelocityControl);
 
         this.motor2.setInverted(true);
     }
@@ -53,21 +60,28 @@ public class ActiveIntakeComponent {
      */
     public void moveMotor() {
         if (state == State.TURNING_MANUALLY) {
-            if (motor1.getCurrentPosition() >= 180 / DEGREES_PER_TICK
-                    && motor2.getCurrentPosition() >= 180 / DEGREES_PER_TICK) {
+            if (motor1.getCurrentPosition() >= TURN_MANUALLY_DEGREES / DEGREES_PER_TICK
+                    && motor2.getCurrentPosition() >= TURN_MANUALLY_DEGREES / DEGREES_PER_TICK) {
                 state = State.OFF;
             } else {
-                motor1.set(1);
-                motor2.set(1);
+                motor1.set(MOTOR_SPEED);
+                motor2.set(MOTOR_SPEED);
             }
         } else if (state == State.TURNING_CONTINUOUSLY) {
-            motor1.set(1);
-            motor2.set(1);
+            motor1.set(MOTOR_SPEED);
+            motor2.set(MOTOR_SPEED);
+        } else {
+            motor1.set(0);
+            motor2.set(0);
         }
     }
 
     public State getState() {
         return state;
+    }
+
+    public MotorEx[] getMotors() {
+        return new MotorEx[] {motor1, motor2};
     }
 
     /**
