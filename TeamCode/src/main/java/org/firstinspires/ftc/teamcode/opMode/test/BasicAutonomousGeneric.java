@@ -4,15 +4,12 @@ import static org.firstinspires.ftc.teamcode.components.vision.ColourMassDetecti
 
 import android.util.Size;
 
-import androidx.annotation.NonNull;
-
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
 import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.arcrobotics.ftclib.kinematics.wpilibkinematics.MecanumDriveOdometry;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -21,21 +18,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.test.AutomaticPixelPlacement;
-import org.firstinspires.ftc.teamcode.components.test.GrabberComponent;
-import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
+import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import org.opencv.core.Scalar;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Rudimentary autonomous code. <br />
@@ -51,7 +41,6 @@ public class BasicAutonomousGeneric extends OpMode {
 
     // TODO: fine tune these values
     public final double ANGLE_ERROR = 20;
-    public final int VISION_ERROR = 20;
 
     public final double SHIFTING_TO_BACKDROP_DIST = 3;
 
@@ -61,7 +50,6 @@ public class BasicAutonomousGeneric extends OpMode {
 
     public final double PARKING_DIST_ERROR = 3;
 
-    public final double CAMERA_Y_POS = 2.0 / 3.0;
 
     protected VisionPortal visionPortal;
 
@@ -74,10 +62,8 @@ public class BasicAutonomousGeneric extends OpMode {
     protected MecanumDrive mecanum;
 
     protected ArmComponent arm;
-    protected LinearSlideComponent linearSlide;
-    protected GrabberComponent grabber;
-
-    protected AutomaticPixelPlacement automaticPixelPlacement;
+    protected ActiveIntakeComponent activeIntake;
+    protected OuttakeComponent outtake;
 
     protected SensorDistanceEx distanceSensor;
     protected IMU imu;
@@ -94,7 +80,6 @@ public class BasicAutonomousGeneric extends OpMode {
     // TODO: fill in constants
     protected double YELLOW_INITIAL_FORWARDS_MILLISECONDS = 0;
     protected double YELLOW_MIDDLE_FORWARDS_MILLISECONDS = 0;
-    protected double YELLOW_STRAFE_MILLISECONDS = 0;
 
     @Override
     public void init() {
@@ -109,15 +94,14 @@ public class BasicAutonomousGeneric extends OpMode {
 
         mecanum = new MecanumDrive(motors[0], motors[1], motors[2], motors[3]);
 
-        // invert motors (because of hardware)
-        for (Motor motor : motors) {
+        // invert some motors (because hardware is weird)
+        for (Motor motor : new Motor[]{motors[0], motors[2], motors[3]}) {
             motor.setInverted(!motor.getInverted());
         }
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
-        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linear_slide_motor"), arm);
-        grabber = new GrabberComponent(new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360),
-                new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360));
+        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor"));
+        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo", 0, 360));
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
         imu = hardwareMap.get(IMU.class, "imu");
@@ -129,8 +113,6 @@ public class BasicAutonomousGeneric extends OpMode {
                         )
                 )
         );
-
-        automaticPixelPlacement = new AutomaticPixelPlacement(arm, linearSlide, grabber, mecanum, aprilTag, imu);
 
         // vision stuff
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -156,15 +138,6 @@ public class BasicAutonomousGeneric extends OpMode {
                 .build();
     }
 
-    /**
-     * User-defined start method
-     * <p>
-     * This method will be called once, when the play button is pressed.
-     * <p>
-     * This method is optional. By default, this method takes no action.
-     * <p>
-     * Example usage: Starting another thread.
-     */
     @Override
     public void start() {
         // shuts down the camera once the match starts, we dont need to look any more
@@ -188,7 +161,6 @@ public class BasicAutonomousGeneric extends OpMode {
     @Override
     public void loop() {
         arm.read();
-        linearSlide.read();
 
         currentState.run();
 
@@ -202,45 +174,41 @@ public class BasicAutonomousGeneric extends OpMode {
             mecanum.driveRobotCentric(0, 0.8, 0);
         }
         else {
-            currentState = this::strafeForPurplePixelPlacement;
+            imu.resetYaw();
+            currentState = this::movingForPurplePixelPlacement;
+            time.reset();
         }
     }
 
-    protected void strafeForPurplePixelPlacement() {
+    protected void movingForPurplePixelPlacement() {
         telemetry.addLine("Strafing to place purple pixel.");
+
+        boolean isDone;
 
         // now we can use recordedPropPosition in our auto code to modify where we place the purple and yellow pixels
         switch (recordedPropPosition) {
             case LEFT:
-                // code to do if we saw the prop on the left
-                if (time.time() < YELLOW_STRAFE_MILLISECONDS){
-                    mecanum.driveRobotCentric(-0.8, 0, 0);
-                }
-                else {
+                isDone = turnToAngle(-90);
+                if (isDone) {
                     arm.lower();
-                    linearSlide.lower();
                     currentState = this::placePurplePixel;
                 }
                 break;
             case MIDDLE:
-                // code to do if we saw the prop on the middle
                 if (time.time() < YELLOW_MIDDLE_FORWARDS_MILLISECONDS){
                     mecanum.driveRobotCentric(0, 0.8, 0);
                 }
                 else {
                     arm.lower();
-                    linearSlide.lower();
+
                     currentState = this::placePurplePixel;
                 }
                 break;
             case RIGHT:
-                // code to do if we saw the prop on the right
-                if (time.time() < YELLOW_STRAFE_MILLISECONDS){
-                    mecanum.driveRobotCentric(0.8, 0, 0);
-                }
-                else {
+                isDone = turnToAngle(90);
+
+                if (isDone) {
                     arm.lower();
-                    linearSlide.lower();
                     currentState = this::placePurplePixel;
                 }
                 break;
@@ -250,12 +218,10 @@ public class BasicAutonomousGeneric extends OpMode {
     protected void placePurplePixel() {
         telemetry.addLine("Placing purple pixel");
 
-        automaticPixelPlacement.placeOnGround();
+        outtake.releasePixel();
 
-        if (!automaticPixelPlacement.isPlacingPixel()) {
-            currentState = this::turnToBackdrop;
-            imu.resetYaw();
-        }
+        currentState = this::turnToBackdrop;
+        imu.resetYaw();
     }
 
     protected void turnToBackdrop() {
@@ -265,24 +231,22 @@ public class BasicAutonomousGeneric extends OpMode {
 
         if (isDone) {
             currentState = this::placeYellowPixel;
-            automaticPixelPlacement.placeOnBackdrop();
+            outtake.releasePixel();
         }
     }
 
     protected void placeYellowPixel() {
         telemetry.addLine("Placing yellow pixel. ");
 
-        automaticPixelPlacement.run();
+        outtake.releasePixel();
 
-        if (!automaticPixelPlacement.isPlacingPixel()) {
-            currentState = this::strafeToPark;
-        }
+        currentState = this::strafeToPark;
     }
 
     protected void strafeToPark() {
         telemetry.addLine("Strafing to park. ");
 
-        mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? 0.5 : -0.5, 0);
+        mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? -0.25 : 0.25, 0);
 
         if (distanceSensor.getDistance(DistanceUnit.INCH) > SHIFTING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
             currentState = this::park;
@@ -293,7 +257,7 @@ public class BasicAutonomousGeneric extends OpMode {
         telemetry.addLine("Parking. ");
 
         if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
-            mecanum.driveRobotCentric(0, 0.5, 0);
+            mecanum.driveRobotCentric(0, 0.25, 0);
         } else {
             currentState = () -> {};
         }
@@ -312,7 +276,7 @@ public class BasicAutonomousGeneric extends OpMode {
         if (Math.abs(angle - heading) <= ANGLE_ERROR) {
             return true;
         } else {
-            mecanum.driveRobotCentric(0, 0, heading / ANGLE_DIVISOR);
+            mecanum.driveRobotCentric(0, 0, -heading / ANGLE_DIVISOR);
             return false;
         }
     }
