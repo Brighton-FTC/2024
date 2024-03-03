@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.PSButtons;
 /**
  * OpMode to test the functionality of the grabber.
  */
-@TeleOp(name = "Grabber Functionality Tester", group = "grabber-test")
+@TeleOp(name = "Outtake Functionality Tester", group = "outtake-test")
 public class OuttakeFunctionalityTester extends OpMode {
     OuttakeComponent outtakeComponent;
 
@@ -19,19 +19,20 @@ public class OuttakeFunctionalityTester extends OpMode {
     @Override
     public void init() {
         outtakeComponent = new OuttakeComponent(
-                new SimpleServo(hardwareMap, "grabber_servo1",
+                new SimpleServo(hardwareMap, "outtake_servo",
                         0, 360)
         );
 
         gamepad = new GamepadEx(gamepad1);
-
-        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(outtakeComponent::releasePixel);
     }
 
     @Override
     public void loop() {
         gamepad.readButtons();
 
+        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
+            outtakeComponent.releasePixel();
+        }
         telemetry.addLine(outtakeComponent.isClosed() ? "Outtake Closed" : "Outtake Open");
     }
 }
