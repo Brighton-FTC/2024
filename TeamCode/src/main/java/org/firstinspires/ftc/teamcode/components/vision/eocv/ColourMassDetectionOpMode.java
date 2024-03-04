@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.components.vision;
+package org.firstinspires.ftc.teamcode.components.vision.eocv;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -8,7 +8,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.opencv.core.Scalar;
 
 //@Disabled // remove this line to have this show up on your robot
-@Autonomous
+@Autonomous(name = "Colour Detector (USE THIS)", group = "idk")
 public class ColourMassDetectionOpMode extends OpMode {
 	private VisionPortal visionPortal;
 	private ColourMassDetectionProcessor colourMassDetectionProcessor;
@@ -26,8 +26,19 @@ public class ColourMassDetectionOpMode extends OpMode {
 		// the domains are: ([0, 180], [0, 255], [0, 255])
 		// this is tuned to detect red, so you will need to experiment to fine tune it for your robot
 		// and experiment to fine tune it for blue
-		Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
-		Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
+//		Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
+//		Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
+
+
+		// Steve here: Ignore the above values.
+//		// These are very tight ranges for the blue indicator
+//		Scalar lower = new Scalar(80, 10, 150); // the lower hsv threshold for your detection
+//		Scalar upper = new Scalar(110, 100, 255); // the upper hsv threshold for your detection
+
+		// These are very tight ranges for the red indicator
+		Scalar lower = new Scalar(350, 160, 90); // the lower hsv threshold for your detection
+		Scalar upper = new Scalar(20, 245, 255); // the upper hsv threshold for your detection
+
 		double minArea = 100; // the minimum area for the detection to consider for your prop
 		
 		colourMassDetectionProcessor = new ColourMassDetectionProcessor(
@@ -38,7 +49,7 @@ public class ColourMassDetectionOpMode extends OpMode {
 				() -> 426 // the left dividing line, in this case the right third of the frame
 		);
 		visionPortal = new VisionPortal.Builder()
-				.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1")) // the camera on your robot is named "Webcam 1" by default
+				.setCamera(hardwareMap.get(WebcamName.class, "webcam")) // the camera on your robot is named "Webcam 1" by default
 				.addProcessor(colourMassDetectionProcessor)
 				.build();
 		
