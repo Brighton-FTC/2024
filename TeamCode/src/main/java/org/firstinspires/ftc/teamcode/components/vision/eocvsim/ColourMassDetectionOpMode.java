@@ -1,17 +1,18 @@
-package org.firstinspires.ftc.teamcode.components.vision;
+package org.firstinspires.ftc.teamcode.components.vision.eocvsim;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.opencv.core.Scalar;
 
-//@Disabled // remove this line to have this show up on your robot
-@Autonomous
+@Disabled // remove this line to have this show up on your robot
+@Autonomous(name = "Colour Detector for EOCV", group = "idk")
 public class ColourMassDetectionOpMode extends OpMode {
 	private VisionPortal visionPortal;
-	private ColourMassDetectionProcessor colourMassDetectionProcessor;
+	private ColourMassDetectionProcessorEOCV colourMassDetectionProcessor;
 	
 	/**
 	 * User-defined init method
@@ -30,13 +31,7 @@ public class ColourMassDetectionOpMode extends OpMode {
 		Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
 		double minArea = 100; // the minimum area for the detection to consider for your prop
 		
-		colourMassDetectionProcessor = new ColourMassDetectionProcessor(
-				lower,
-				upper,
-				() -> minArea, // these are lambda methods, in case we want to change them while the match is running, for us to tune them or something
-				() -> 213, // the left dividing line, in this case the left third of the frame
-				() -> 426 // the left dividing line, in this case the right third of the frame
-		);
+		colourMassDetectionProcessor = new ColourMassDetectionProcessorEOCV(telemetry);
 		visionPortal = new VisionPortal.Builder()
 				.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1")) // the camera on your robot is named "Webcam 1" by default
 				.addProcessor(colourMassDetectionProcessor)
@@ -84,12 +79,12 @@ public class ColourMassDetectionOpMode extends OpMode {
 		}
 		
 		// gets the recorded prop position
-		ColourMassDetectionProcessor.PropPositions recordedPropPosition = colourMassDetectionProcessor.getRecordedPropPosition();
+		ColourMassDetectionProcessorEOCV.PropPositions recordedPropPosition = colourMassDetectionProcessor.getRecordedPropPosition();
 		
 		// now we can use recordedPropPosition to determine where the prop is! if we never saw a prop, your recorded position will be UNFOUND.
 		// if it is UNFOUND, you can manually set it to any of the other positions to guess
-		if (recordedPropPosition == ColourMassDetectionProcessor.PropPositions.UNFOUND) {
-			recordedPropPosition = ColourMassDetectionProcessor.PropPositions.MIDDLE;
+		if (recordedPropPosition == ColourMassDetectionProcessorEOCV.PropPositions.UNFOUND) {
+			recordedPropPosition = ColourMassDetectionProcessorEOCV.PropPositions.MIDDLE;
 		}
 		
 		// now we can use recordedPropPosition in our auto code to modify where we place the purple and yellow pixels
