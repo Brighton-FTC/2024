@@ -10,7 +10,7 @@ import org.opencv.core.Scalar;
 
 @Disabled // remove this line to have this show up on your robot
 @Autonomous(name = "Colour Detector for EOCV", group = "idk")
-public class ColourMassDetectionOpMode extends OpMode {
+public class ColourMassDetectionOpModeEOCV extends OpMode {
 	private VisionPortal visionPortal;
 	private ColourMassDetectionProcessorEOCV colourMassDetectionProcessor;
 	

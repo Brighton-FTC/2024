@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.components.vision.eocv;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.opencv.core.Scalar;
+
 
 //@Disabled // remove this line to have this show up on your robot
 @Autonomous(name = "Colour Detector (USE THIS)", group = "idk")
