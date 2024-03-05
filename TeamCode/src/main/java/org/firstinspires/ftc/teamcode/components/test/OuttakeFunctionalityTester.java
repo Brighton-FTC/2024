@@ -33,6 +33,11 @@ public class OuttakeFunctionalityTester extends OpMode {
         if (gamepad.wasJustPressed(PSButtons.CROSS)) {
             outtakeComponent.releasePixel();
         }
+
+        if (gamepad.wasJustPressed(PSButtons.CIRCLE)) {
+            outtakeComponent.releaseAllPixels();
+        }
+
         telemetry.addLine(outtakeComponent.isClosed() ? "Outtake Closed" : "Outtake Open");
     }
 }

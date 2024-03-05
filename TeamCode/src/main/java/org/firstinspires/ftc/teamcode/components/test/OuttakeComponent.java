@@ -10,7 +10,8 @@ public class OuttakeComponent {
     // TODO: fill in these values
     public static final int OUTTAKE_CLOSED_POSITION = 0;
     public static final int OUTTAKE_OPEN_POSITION = 90;
-    public static final long RELEASE_TIME = 500;
+    public static final int RELEASE_TIME = 500;
+    public static final int RELEASE_ALL_TIME = 1000;
 
     private final ServoEx outtakeServo;
 
@@ -42,12 +43,20 @@ public class OuttakeComponent {
         isOuttakeClosed = true;
     }
 
-    public void releasePixel() {
+    public void release(int waitTime) {
         open();
         try {
-            Thread.sleep(RELEASE_TIME);
+            Thread.sleep(waitTime);
         } catch (InterruptedException ignored) {}
         close();
+    }
+
+    public void releasePixel() {
+        release(RELEASE_TIME);
+    }
+
+    public void releaseAllPixels() {
+        release(RELEASE_ALL_TIME);
     }
 
     /**
