@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.inputs;
+package org.firstinspires.ftc.teamcode.util.inputs;
 
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 
