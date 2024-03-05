@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -27,6 +28,8 @@ public class ArmFunctionalityTester extends OpMode {
     private ArmComponent armComponent;
     private GamepadEx gamepad;
 
+    private ArmComponent.State selectedState;
+
     @Override
     public void init() {
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -43,16 +46,45 @@ public class ArmFunctionalityTester extends OpMode {
         );
 
         gamepad = new GamepadEx(gamepad1);
-
-        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(armComponent::toggle);
     }
 
     @Override
     public void loop() {
+        gamepad.readButtons();
+
         armComponent.read();
         armComponent.moveToSetPoint();
 
-        telemetry.addData("Is arm lifted? ", armComponent.isLifted());
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            if (selectedState == ArmComponent.State.LOW) {
+                selectedState = ArmComponent.State.MIDDLE;
+            } else if (selectedState == ArmComponent.State.MIDDLE) {
+                selectedState = ArmComponent.State.HIGH;
+            } else {
+                selectedState = ArmComponent.State.LOW;
+            }
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            if (selectedState == ArmComponent.State.LOW) {
+                selectedState = ArmComponent.State.HIGH;
+            } else if (selectedState == ArmComponent.State.MIDDLE) {
+                selectedState = ArmComponent.State.LOW;
+            } else {
+                selectedState = ArmComponent.State.MIDDLE;
+            }
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+            armComponent.setState(selectedState);
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+            armComponent.setState(ArmComponent.State.GROUND);
+        }
+
+        telemetry.addData("Arm state:", armComponent.getState());
+        telemetry.addData("Selected state:", selectedState);
         telemetry.addData("Setpoint: ", armComponent.getSetPoint());
         telemetry.update();
     }

@@ -3,9 +3,6 @@ package org.firstinspires.ftc.teamcode.components.test;
 import androidx.annotation.NonNull;
 
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.controller.PIDFController;
-import com.arcrobotics.ftclib.hardware.ServoEx;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
 
@@ -13,24 +10,17 @@ import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.F
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
  */
 public class ArmComponent {
-
-//    public static final int GRABBER_ROTATE_DOWN_POSITION = -60;
-//    public static final int GRABBER_ROTATE_UP_POSITION = 220;
-
     // TODO: fill in these values
-    public static final int ARM_LIFTED_POSITION = 0;
-    public static final int ARM_LOWERED_POSITION = 2000;
-
     private static final int f = 0;
 
     private final FTCLibCachingMotorEx armMotor;
-    private boolean isArmLifted = false;
+    private State state = State.GROUND;
 
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
 
     // we are using hd on arm yes
-    // got this from LRR driveconstants page
+    // got this from LRR drive constants page
     public final double ticks_in_degrees = 560.0 / 360.0;
 
     private double currentVelocity;
@@ -50,27 +40,17 @@ public class ArmComponent {
     public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor, double currentVoltage) {
         voltageNormalization = currentVoltage / tuningVoltage;
         this.armMotor = armMotor;
-        setTargetPosition(ARM_LOWERED_POSITION);
+        setTargetPosition(State.GROUND.position);
     }
 
     /**
-     * Call once to set the arm to be lifted. <br />
+     * Call once to set the arm to a certain state. <br />
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
-    public void lift() {
-        isArmLifted = true;
+    public void setState(State newState) {
+        state = newState;
 
-        setTargetPosition(ARM_LIFTED_POSITION);
-    }
-
-    /**
-     * Call once to set the arm to be lowered. <br />
-     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
-     */
-    public void lower() {
-        isArmLifted = false;
-
-        setTargetPosition(ARM_LOWERED_POSITION);
+        setTargetPosition(state.position);
     }
 
     /**
@@ -78,18 +58,18 @@ public class ArmComponent {
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void toggle() {
-        if (isArmLifted) {
-            lower();
-        } else {
-            lift();
-        }
+        if (state == State.GROUND) {
+            setState(State.HIGH);
 
-        isArmLifted = !isArmLifted;
+        } else {
+            setState(State.GROUND);
+        }
     }
 
 
     /**
      * Directly control the movement of the arm.
+     *
      * @param velocity The velocity (-1 to 1) that the motor is set to.
      */
     public void setVelocity(double velocity) {
@@ -101,8 +81,8 @@ public class ArmComponent {
      *
      * @return If the arm is lifted or not.
      */
-    public boolean isLifted() {
-        return isArmLifted;
+    public State getState() {
+        return state;
     }
 
     /**
@@ -135,17 +115,19 @@ public class ArmComponent {
 
     /**
      * Get the setpoint of the PID controller.
+     *
      * @return The setpoint of the PID Controller, in ticks.
      */
-    public double getSetPoint(){
+    public double getSetPoint() {
         return pid.getSetPoint();
     }
 
     /**
      * Get if the motor is at the setpoint.
+     *
      * @return a boolean for if the motor is at the setpoint.
      */
-    public boolean atSetPoint(){
+    public boolean atSetPoint() {
         return pid.atSetPoint();
     }
 
@@ -163,8 +145,38 @@ public class ArmComponent {
      * Reads from motors and stores data in ArmComponent.
      * Call in every loop or encoders break.
      */
-    public void read(){
+    public void read() {
         currentPosition = armMotor.getCurrentPosition();
         currentVelocity = armMotor.getVelocity();
+    }
+
+    public enum State {
+        GROUND(2000),
+        LOW(-500),
+        MIDDLE(-1000),
+        HIGH(0);
+
+        public final int position;
+
+        State(int position) {
+            this.position = position;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            switch (this) {
+                case GROUND:
+                    return "GROUND";
+                case LOW:
+                    return "LOW";
+                case MIDDLE:
+                    return "MIDDLE";
+                case HIGH:
+                    return "HIGH";
+                default:
+                    return "UNKNOWN";
+            }
+        }
     }
 }
