@@ -26,16 +26,23 @@ import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
  * <ul>
  *     <li>Left joystick y: move robot forwards/backwards</li>
  *     <li>Left joystick x: move robot left/right</li>
+ *
  *     <li>Right joystick x: turn robot</li>
+ *
  *     <li>Right/left bumper: toggle slow mode</li>
  * </ul>
- *
+ * <p>
  * Player 2:
  * <ul>
- *     <li>Circle: toggle arm</li>
- *     <li>Cross: toggle linear slide (and lower arm if intake is active)</li>
- *     <li>Triangle: release pixel</li>
+ *     <li>Dpad left: turn active intake continuously (and lower arm if arm is not lowered)</li>
+ *     <li>Dpad right: turn active intake to take one pixel</li>
+ *
+ *     <li>Cross: toggle arm</li>
+ *
  *     <li>Square: release drone</li>
+ *
+ *     <li>Triangle: release one pixels</li>
+ *     <li>Circle: release all pixels.</li>
  * </ul>
  */
 @TeleOp(name = "2 Driver TeleOp", group = "teleop-test")
@@ -119,11 +126,7 @@ public class TeleOp2Driver extends OpMode {
             activeIntake.moveMotor();
         }
 
-        if (gamepadEx2.wasJustPressed(PSButtons.CIRCLE)) {
-            arm.toggle();
-        }
-
-        if (gamepadEx2.wasJustPressed(PSButtons.CROSS)) {
+        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
             if (activeIntake.getState() == ActiveIntakeComponent.State.OFF) {
                 arm.lower();
                 activeIntake.turnContinually();
@@ -132,8 +135,21 @@ public class TeleOp2Driver extends OpMode {
             }
         }
 
+        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            activeIntake.turnManually();
+        }
+
+        if (gamepadEx2.wasJustPressed(PSButtons.CROSS)) {
+            arm.toggle();
+        }
+
+
         if (gamepadEx2.wasJustPressed(PSButtons.TRIANGLE)) {
             outtake.releasePixel();
+        }
+
+        if (gamepadEx2.wasJustPressed(PSButtons.CIRCLE)) {
+            outtake.releaseAllPixels();
         }
 
         if (gamepadEx2.wasJustPressed(PSButtons.SQUARE)) {
