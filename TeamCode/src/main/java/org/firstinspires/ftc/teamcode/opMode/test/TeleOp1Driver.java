@@ -6,11 +6,13 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
@@ -26,17 +28,21 @@ import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
  *     <li>Left joystick x: move robot left/right</li>
  *     <li>Right joystick x: turn robot</li>
  *
- *     <li>Right/left bumper: toggle slow mode</li>
+ *     <li>Left bumper: toggle slow mode</li>
  *
+ *     <li>Dpad left/right: change selected arm state. </li>
+ *     <li>Dpad up: move arm to selected arm state</li>
+ *     <li>Dpad down: move arm to ground</li>
+ *
+ *     <li>Cross: turn active intake to take in one pixel</li>
+ *     <li>Square: toggle active intake (turning continuously/off)</li>
+ *
+ *     <li>Triangle: release one pixel</li>
+ *     <li>Circle: release all pixels</li>
+ *
+ *     <li>Right bumper: launch drone</li>
  *     <li>Dpad left: turn active intake continuously (and lower arm if arm is not lowered)</li>
  *     <li>Dpad right: turn active intake to take one pixel</li>
- *
- *     <li>Cross: toggle arm</li>
- *
- *     <li>Square: release drone</li>
- *
- *     <li>Triangle: release one pixels</li>
- *     <li>Circle: release all pixels.</li>
  * </ul>
  */
 @TeleOp(name = "2 Driver TeleOp", group = "teleop-test")
@@ -54,12 +60,16 @@ public class TeleOp1Driver extends OpMode {
     private final double SLOW_DRIVE_MULTIPLIER = 0.25;
     private final double DEAD_ZONE_SIZE = 0.2;
     private boolean isSlowMode;
+    private ArmComponent.State selectedState;
 
     @Override
     public void init() {
         gamepad = new GamepadEx(gamepad1);
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
+        LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
+        lynxModule.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), lynxModule.getInputVoltage(VoltageUnit.VOLTS));
         droneLauncher = new DroneLauncherComponent(new SimpleServo(hardwareMap, "drone_launcher_servo", 0, 360));
         activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"), new MotorEx(hardwareMap, "active_intake_motor_right"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo", 0, 360));
@@ -83,13 +93,15 @@ public class TeleOp1Driver extends OpMode {
 
     @Override
     public void start() {
-        // prank: don't remove until lawrence has experienced
+        // prank: uncomment if wanted
+        /*
         gamepad1.rumble(Integer.MAX_VALUE);
         gamepad1.runLedEffect(new Gamepad.LedEffect.Builder()
                 .addStep(255, 0, 0, 100)
                 .addStep(0, 0, 0, 100)
                 .setRepeating(true)
                 .build());
+         */
     }
 
     @Override
@@ -97,7 +109,7 @@ public class TeleOp1Driver extends OpMode {
         gamepad.readButtons();
 
         // drivetrain
-        if (gamepad.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+        if (gamepad.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)) {
             isSlowMode = !isSlowMode;
         }
 
@@ -109,28 +121,68 @@ public class TeleOp1Driver extends OpMode {
         }
         mecanum.driveRobotCentric(driveCoefficients[0], driveCoefficients[1], driveCoefficients[2]);
 
+        telemetry.addData("Forward speed", driveCoefficients[1]);
+        telemetry.addData("Strafe speed", driveCoefficients[0]);
+        telemetry.addData("Turn speed", driveCoefficients[2]);
+        telemetry.addLine(isSlowMode ? "Slow mode activated" : "Normal speed");
+        telemetry.addLine();
+
         // components
         arm.read();
         arm.moveToSetPoint();
-        activeIntake.moveMotor();
+
+        if (arm.getState() == ArmComponent.State.GROUND && arm.atSetPoint()) {
+            activeIntake.moveMotor();
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            if (selectedState == ArmComponent.State.LOW) {
+                selectedState = ArmComponent.State.MIDDLE;
+            } else if (selectedState == ArmComponent.State.MIDDLE) {
+                selectedState = ArmComponent.State.HIGH;
+            } else {
+                selectedState = ArmComponent.State.LOW;
+            }
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            if (selectedState == ArmComponent.State.LOW) {
+                selectedState = ArmComponent.State.HIGH;
+            } else if (selectedState == ArmComponent.State.MIDDLE) {
+                selectedState = ArmComponent.State.LOW;
+            } else {
+                selectedState = ArmComponent.State.MIDDLE;
+            }
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+            arm.setState(selectedState);
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+            arm.setState(ArmComponent.State.GROUND);
+        }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
             if (activeIntake.getState() == ActiveIntakeComponent.State.OFF) {
-                arm.lower();
+                arm.setState(ArmComponent.State.GROUND);
                 activeIntake.turnContinually();
             } else {
                 activeIntake.turnMotorOff();
             }
         }
 
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
             activeIntake.turnManually();
         }
 
-        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
-            arm.toggle();
+        if (gamepad.wasJustPressed(PSButtons.SQUARE)) {
+            if (activeIntake.getState() == ActiveIntakeComponent.State.OFF) {
+                activeIntake.turnContinually();
+            } else {
+                activeIntake.turnMotorOff();
+            }
         }
-
 
         if (gamepad.wasJustPressed(PSButtons.TRIANGLE)) {
             outtake.releasePixel();
@@ -140,8 +192,14 @@ public class TeleOp1Driver extends OpMode {
             outtake.releaseAllPixels();
         }
 
-        if (gamepad.wasJustPressed(PSButtons.SQUARE)) {
+        if (gamepad.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
             droneLauncher.launch();
         }
+
+        telemetry.addData("Arm state", arm.getState());
+        telemetry.addData("Selected arm state", selectedState);
+        telemetry.addData("Active intake state", activeIntake.getState());
+        telemetry.addLine(outtake.isClosed() ? "Outtake closed" : "Outtake open");
+        telemetry.addLine(droneLauncher.getDroneLaunched() ? "Drone launched" : "Drone not launched");
     }
 }
