@@ -18,13 +18,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import org.opencv.core.Scalar;
 
 /**
@@ -51,34 +48,37 @@ public class BasicAutonomousGeneric extends OpMode {
     public final double PARKING_DIST_ERROR = 3;
 
 
-    protected VisionPortal visionPortal;
-
-    protected TfodProcessor tfod;
-    protected AprilTagProcessor aprilTag;
+    private VisionPortal visionPortal;
 
     // TODO: set these values
-    protected Size cameraSize = new Size(640, 480);
+    private final Size cameraSize = new Size(640, 480);
 
-    protected MecanumDrive mecanum;
+    private MecanumDrive mecanum;
 
-    protected ArmComponent arm;
-    protected OuttakeComponent outtake;
+    private ArmComponent arm;
+    private OuttakeComponent outtake;
 
-    protected SensorDistanceEx distanceSensor;
-    protected IMU imu;
+    private SensorDistanceEx distanceSensor;
+    private IMU imu;
 
-    protected Runnable currentState = this::driveToSpikeMarks;
+    private Runnable currentState = this::driveToSpikeMarks;
 
-    protected TeamColor teamColor = null; // fill this in in the color specific opmode
-    protected double backdropTurningAngle = 0; // fill this in as well
+    // fill these in in the color specific opmode
+    protected TeamColor teamColor = null;
+    protected double backdropTurningAngle = 0;
 
-    protected ColourMassDetectionProcessor.PropPositions recordedPropPosition;
+    protected Scalar cvLower;
+    protected Scalar cvUpper;
 
-    protected ElapsedTime time;
+    private final double CV_MIN_AREA = 100; // the minimum area for the detection to consider for your prop
+
+    private ColourMassDetectionProcessor.PropPositions recordedPropPosition;
+
+    private ElapsedTime time;
 
     // TODO: fill in constants
-    protected double YELLOW_INITIAL_FORWARDS_MILLISECONDS = 0;
-    protected double YELLOW_MIDDLE_FORWARDS_MILLISECONDS = 0;
+    private final double YELLOW_INITIAL_FORWARDS_MILLISECONDS = 0;
+    private final double YELLOW_MIDDLE_FORWARDS_MILLISECONDS = 0;
 
     @Override
     public void init() {
@@ -113,17 +113,11 @@ public class BasicAutonomousGeneric extends OpMode {
         );
 
         // vision stuff
-        aprilTag = new AprilTagProcessor.Builder().build();
-
-
-        Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
-        Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
-        double minArea = 100; // the minimum area for the detection to consider for your prop
 
         colourMassDetectionProcessor = new ColourMassDetectionProcessor(
-                lower,
-                upper,
-                () -> minArea, // these are lambda methods, in case we want to change them while the match is running, for us to tune them or something
+                cvLower,
+                cvUpper,
+                () -> CV_MIN_AREA, // these are lambda methods, in case we want to change them while the match is running, for us to tune them or something
                 () -> 213, // the left dividing line, in this case the left third of the frame
                 () -> 426 // the left dividing line, in this case the right third of the frame
         );
@@ -132,7 +126,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 .setCamera(hardwareMap.get(WebcamName.class, "webcam_name"))
                 .setCameraResolution(cameraSize)
                 .enableLiveView(true)
-                .addProcessors(tfod, colourMassDetectionProcessor)
+                .addProcessor(colourMassDetectionProcessor)
                 .build();
     }
 
@@ -165,20 +159,19 @@ public class BasicAutonomousGeneric extends OpMode {
         telemetry.update();
     }
 
-    protected void driveToSpikeMarks() {
+    private void driveToSpikeMarks() {
         telemetry.addLine("Driving to spike marks.");
 
-        if (time.time() < YELLOW_INITIAL_FORWARDS_MILLISECONDS){
+        if (time.time() < YELLOW_INITIAL_FORWARDS_MILLISECONDS) {
             mecanum.driveRobotCentric(0, 0.8, 0);
-        }
-        else {
+        } else {
             imu.resetYaw();
             currentState = this::movingForPurplePixelPlacement;
             time.reset();
         }
     }
 
-    protected void movingForPurplePixelPlacement() {
+    private void movingForPurplePixelPlacement() {
         telemetry.addLine("Strafing to place purple pixel.");
 
         boolean isDone;
@@ -193,10 +186,9 @@ public class BasicAutonomousGeneric extends OpMode {
                 }
                 break;
             case MIDDLE:
-                if (time.time() < YELLOW_MIDDLE_FORWARDS_MILLISECONDS){
+                if (time.time() < YELLOW_MIDDLE_FORWARDS_MILLISECONDS) {
                     mecanum.driveRobotCentric(0, 0.8, 0);
-                }
-                else {
+                } else {
                     arm.lower();
 
                     currentState = this::placePurplePixel;
@@ -213,7 +205,7 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    protected void placePurplePixel() {
+    private void placePurplePixel() {
         telemetry.addLine("Placing purple pixel");
 
         outtake.releasePixel();
@@ -222,7 +214,7 @@ public class BasicAutonomousGeneric extends OpMode {
         imu.resetYaw();
     }
 
-    protected void turnToBackdrop() {
+    private void turnToBackdrop() {
         telemetry.addLine("Turning to backdrop. ");
 
         boolean isDone = turnToAngle(backdropTurningAngle);
@@ -233,7 +225,7 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    protected void placeYellowPixel() {
+    private void placeYellowPixel() {
         telemetry.addLine("Placing yellow pixel. ");
 
         outtake.releasePixel();
@@ -241,7 +233,7 @@ public class BasicAutonomousGeneric extends OpMode {
         currentState = this::strafeToPark;
     }
 
-    protected void strafeToPark() {
+    private void strafeToPark() {
         telemetry.addLine("Strafing to park. ");
 
         mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? -0.25 : 0.25, 0);
@@ -251,13 +243,14 @@ public class BasicAutonomousGeneric extends OpMode {
         }
     }
 
-    protected void park() {
+    private void park() {
         telemetry.addLine("Parking. ");
 
         if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
             mecanum.driveRobotCentric(0, 0.25, 0);
         } else {
-            currentState = () -> {};
+            currentState = () -> {
+            };
         }
     }
 
@@ -268,7 +261,7 @@ public class BasicAutonomousGeneric extends OpMode {
      * @param angle angle from -180 to 180.
      * @return whether the robot is finished turning.
      */
-    protected boolean turnToAngle(double angle) {
+    private boolean turnToAngle(double angle) {
         double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
         if (Math.abs(angle - heading) <= ANGLE_ERROR) {
