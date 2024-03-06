@@ -77,8 +77,8 @@ public class BasicAutonomousGeneric extends OpMode {
     private ElapsedTime time;
 
     // TODO: fill in constants
-    private final double YELLOW_INITIAL_FORWARDS_MILLISECONDS = 0;
-    private final double YELLOW_MIDDLE_FORWARDS_MILLISECONDS = 0;
+    private final double PURPLE_INITIAL_FORWARDS_MILLISECONDS = 0;
+    private final double PURPLE_MIDDLE_FORWARDS_MILLISECONDS = 0;
 
     @Override
     public void init() {
@@ -162,7 +162,7 @@ public class BasicAutonomousGeneric extends OpMode {
     private void driveToSpikeMarks() {
         telemetry.addLine("Driving to spike marks.");
 
-        if (time.time() < YELLOW_INITIAL_FORWARDS_MILLISECONDS) {
+        if (time.time() < PURPLE_INITIAL_FORWARDS_MILLISECONDS) {
             mecanum.driveRobotCentric(0, 0.8, 0);
         } else {
             imu.resetYaw();
@@ -186,7 +186,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 }
                 break;
             case MIDDLE:
-                if (time.time() < YELLOW_MIDDLE_FORWARDS_MILLISECONDS) {
+                if (time.time() < PURPLE_MIDDLE_FORWARDS_MILLISECONDS) {
                     mecanum.driveRobotCentric(0, 0.8, 0);
                 } else {
                     arm.lower();
