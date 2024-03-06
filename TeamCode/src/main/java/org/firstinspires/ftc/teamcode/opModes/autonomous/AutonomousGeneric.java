@@ -4,6 +4,7 @@ import android.util.Pair;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -11,18 +12,26 @@ import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
-import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
-import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor.PropPositions;
+import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor;
+import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor.PropPositions;
+import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
 import org.firstinspires.ftc.teamcode.util.roadRunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.jetbrains.annotations.Contract;
 import org.opencv.core.Scalar;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Generic autonomous.
@@ -48,6 +57,7 @@ public class AutonomousGeneric extends LinearOpMode {
     protected boolean goesToPixelStackFirst;
 
     private ColourMassDetectionProcessor colorMassDetectionProcessor;
+    private AprilTagProcessor aprilTag;
 
     private SampleMecanumDrive drive;
 
@@ -55,6 +65,13 @@ public class AutonomousGeneric extends LinearOpMode {
     private LinearSlideComponent linearSlide;
     private ActiveIntakeComponent activeIntake;
     private OuttakeComponent outtake;
+
+    // these are filled in already, they're distance from camera to center of bot
+    public static final double cameraCenterXOffsetInches = 8.5;
+    public static final double cameraCenterYOffsetInches = 0;
+    public static final Vector2d deltaF = new Vector2d(8.5, 0);
+
+    private final BCGyro gyro = new BCGyro(hardwareMap);
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -77,9 +94,11 @@ public class AutonomousGeneric extends LinearOpMode {
                 () -> CAMERA_RESOLUTION.getWidth() * 2.0 / 3.0
         );
 
+        aprilTag = new AprilTagProcessor.Builder().build();
+
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "webcam"))
-                .addProcessor(colorMassDetectionProcessor)
+                .addProcessors(colorMassDetectionProcessor, aprilTag)
                 .setCameraResolution(CAMERA_RESOLUTION)
                 .build();
 
@@ -152,7 +171,7 @@ public class AutonomousGeneric extends LinearOpMode {
                         .lineToLinearHeading(endPose)
                         .build()
         );
-
+        setPoseAtag();
         outtake.releasePixel();
     }
 
@@ -176,7 +195,7 @@ public class AutonomousGeneric extends LinearOpMode {
                         .lineToLinearHeading(endPose)
                         .build()
         );
-
+        setPoseAtag();
         activeIntake.turnManually();
     }
 
@@ -200,7 +219,7 @@ public class AutonomousGeneric extends LinearOpMode {
                         .lineToLinearHeading(endPose)
                         .build()
         );
-
+        setPoseAtag();
         activeIntake.turnManually();
     }
 
@@ -236,6 +255,48 @@ public class AutonomousGeneric extends LinearOpMode {
 
         } else { // middle or not found
             return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.centerBackdropPose);
+        }
+    }
+
+    @Nullable
+    private Pose2d getPoseFromAtag(){
+        // get the detections and filter out the ones without metadata
+        List<AprilTagDetection> detections = aprilTag.getDetections()
+                .stream()
+                .filter(detection -> detection.metadata != null)
+                .collect(Collectors.toList());
+
+        if (detections == null || detections.isEmpty()) {
+            return null;
+        }
+        AprilTagDetection OurTag = detections.get(0);
+        for (AprilTagDetection d : detections) {
+            if (OurTag.ftcPose == null) {
+                OurTag = d;
+                continue;
+            }
+            if (d.ftcPose == null) { continue; }
+            if (Math.abs(d.ftcPose.x) < Math.abs(OurTag.ftcPose.x)) {
+                OurTag = d; }
+        }
+        if (OurTag.ftcPose == null) {
+            return null;
+        }
+        Vector2d cameraVector = new Vector2d(OurTag.ftcPose.y, -OurTag.ftcPose.x);
+        VectorF tagPosition = OurTag.metadata.fieldPosition;
+        Vector2d rTag = new Vector2d(tagPosition.get(0),tagPosition.get(1));
+        Vector2d returnVector = rTag.minus(deltaF);
+        returnVector = returnVector.minus(cameraVector);
+        Pose2d returnPose = new Pose2d(returnVector,
+                Math.toRadians(-OurTag.ftcPose.yaw));
+
+        return returnPose;
+    }
+
+    private void setPoseAtag(){
+        Pose2d pose = getPoseFromAtag();
+        if (pose != null){
+            drive.setPoseEstimate(pose);
         }
     }
 }
