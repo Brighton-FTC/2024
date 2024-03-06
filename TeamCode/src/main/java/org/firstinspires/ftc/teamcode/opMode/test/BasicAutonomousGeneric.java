@@ -10,6 +10,7 @@ import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -18,6 +19,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
@@ -98,7 +100,9 @@ public class BasicAutonomousGeneric extends OpMode {
             motor.setInverted(!motor.getInverted());
         }
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
+        LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
+
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), lynxModule.getInputVoltage(VoltageUnit.VOLTS));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo", 0, 360));
 
         distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
@@ -181,7 +185,7 @@ public class BasicAutonomousGeneric extends OpMode {
             case LEFT:
                 isDone = turnToAngle(-90);
                 if (isDone) {
-                    arm.lower();
+                    arm.setState(ArmComponent.State.GROUND);
                     currentState = this::placePurplePixel;
                 }
                 break;
@@ -189,7 +193,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 if (time.time() < PURPLE_MIDDLE_FORWARDS_MILLISECONDS) {
                     mecanum.driveRobotCentric(0, 0.8, 0);
                 } else {
-                    arm.lower();
+                    arm.setState(ArmComponent.State.GROUND);
 
                     currentState = this::placePurplePixel;
                 }
@@ -198,7 +202,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 isDone = turnToAngle(90);
 
                 if (isDone) {
-                    arm.lower();
+                    arm.setState(ArmComponent.State.GROUND);
                     currentState = this::placePurplePixel;
                 }
                 break;
