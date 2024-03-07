@@ -282,11 +282,16 @@ public class AutonomousGeneric extends LinearOpMode {
         if (OurTag.ftcPose == null) {
             return null;
         }
-        Vector2d cameraVector = new Vector2d(OurTag.ftcPose.y, -OurTag.ftcPose.x);
+
+        Vector2d newDeltaF= deltaF.rotated(-OurTag.ftcPose.yaw);
+        Vector2d cameraVector = new Vector2d(OurTag.ftcPose.y, -OurTag.ftcPose.x).rotated(-OurTag.ftcPose.yaw);
+
         VectorF tagPosition = OurTag.metadata.fieldPosition;
         Vector2d rTag = new Vector2d(tagPosition.get(0),tagPosition.get(1));
-        Vector2d returnVector = rTag.minus(deltaF);
+
+        Vector2d returnVector = rTag.minus(newDeltaF);
         returnVector = returnVector.minus(cameraVector);
+
         Pose2d returnPose = new Pose2d(returnVector,
                 Math.toRadians(-OurTag.ftcPose.yaw));
 
