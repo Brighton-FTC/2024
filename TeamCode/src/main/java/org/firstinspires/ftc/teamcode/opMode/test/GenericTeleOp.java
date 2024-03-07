@@ -8,14 +8,17 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
+import org.firstinspires.ftc.teamcode.components.test.HeadingPID;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.teleop.util.PlayerButton;
+import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
 
 /**
  * teleop
@@ -47,6 +50,12 @@ public abstract class GenericTeleOp extends OpMode {
     public PlayerButton OUTTAKE_RELEASE_ONE_PIXEL;
     public PlayerButton DRONE_LEFT_RELEASE;
 
+    private HeadingPID headingPID;
+
+    private BCGyro gyro;
+
+    private ElapsedTime time;
+
     public GenericTeleOp(){
     }
     protected void setButtons(
@@ -74,6 +83,11 @@ public abstract class GenericTeleOp extends OpMode {
     @Override
     public void init() {
         gamepadp1 = new GamepadEx(gamepad1);
+
+        gyro = new BCGyro(hardwareMap);
+        gyro.init();
+
+        headingPID = new HeadingPID(gyro);
 
         LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
         lynxModule.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
@@ -123,10 +137,14 @@ public abstract class GenericTeleOp extends OpMode {
             isSlowMode = !isSlowMode;
         }
 
+        double headingCorrection = headingPID.runPID(gamepadp1.getRightX(), time.milliseconds());
+
+        time.reset();
+
         double[] driveCoefficients = {
                 gamepadp1.getLeftX(),
                 gamepadp1.getLeftY(),
-                gamepadp1.getRightX()
+                gamepadp1.getRightX() + headingCorrection
         };
         for (int i = 0; i < driveCoefficients.length; i++) {
             driveCoefficients[i] = Math.abs(driveCoefficients[i]) > DEAD_ZONE_SIZE ? driveCoefficients[i] : 0;
