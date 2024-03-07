@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opMode.test;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -16,41 +15,14 @@ import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
-import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
+import org.firstinspires.ftc.teamcode.teleop.util.PlayerButton;
 
 /**
- * 2 driver teleop.
- * <hr />
- * Controls:
- * <br />
- * PLayer 1:
- * <ul>
- *     <li>Left joystick y: move robot forwards/backwards</li>
- *     <li>Left joystick x: move robot left/right</li>
- *
- *     <li>Right joystick x: turn robot</li>
- *
- *     <li>Right/left bumper: toggle slow mode</li>
- * </ul>
- * <p>
- * Player 2:
- * <ul>
- *     <li>Dpad left/right: change selected arm state. </li>
- *     <li>Dpad up: move arm to selected arm state</li>
- *     <li>Dpad down: move arm to ground</li>
- *
- *     <li>Cross: turn active intake to take in one pixel</li>
- *     <li>Square: toggle active intake (turning continuously/off)</li>
- *
- *     <li>Triangle: release one pixel</li>
- *     <li>Circle: release all pixels</li>
- *
- *     <li>Right/left bumper: launch drone</li>
- * </ul>
+ * teleop
  */
-@TeleOp(name = "2 Driver TeleOp", group = "teleop-test")
-public class TeleOp2Driver extends OpMode {
-    private GamepadEx gamepadEx1, gamepadEx2;
+public abstract class GenericTeleOp extends OpMode {
+    protected GamepadEx gamepadp1;
+    protected GamepadEx gamepadp2;
 
     private ArmComponent arm;
     private DroneLauncherComponent droneLauncher;
@@ -63,13 +35,45 @@ public class TeleOp2Driver extends OpMode {
     private final double SLOW_DRIVE_MULTIPLIER = 0.25;
     private final double DEAD_ZONE_SIZE = 0.2;
     private boolean isSlowMode;
-
     private ArmComponent.State selectedState;
+
+    public PlayerButton DRIVETRAIN_SLOW_MODE;
+    public PlayerButton ARM_STATE_FORWARD;
+    public PlayerButton ARM_STATE_BACKWARDS;
+    public PlayerButton ARM_STATE_DOWN;
+    public PlayerButton TURN_INTAKE_CONSTANT;
+    public PlayerButton TURN_INTAKE_MANUAL;
+    public PlayerButton OUTTAKE_RELEASE_ALL_PIXEL;
+    public PlayerButton OUTTAKE_RELEASE_ONE_PIXEL;
+    public PlayerButton DRONE_LEFT_RELEASE;
+
+    public GenericTeleOp(){
+    }
+    protected void setButtons(
+        PlayerButton DRIVETRAIN_SLOW_MODE,
+        PlayerButton ARM_STATE_FORWARD,
+        PlayerButton ARM_STATE_BACKWARDS,
+        PlayerButton ARM_STATE_DOWN,
+        PlayerButton TURN_INTAKE_CONSTANT,
+        PlayerButton TURN_INTAKE_MANUAL,
+        PlayerButton OUTTAKE_RELEASE_ALL_PIXEL,
+        PlayerButton OUTTAKE_RELEASE_ONE_PIXEL,
+        PlayerButton DRONE_LEFT_RELEASE
+    ){
+        this.DRIVETRAIN_SLOW_MODE = DRIVETRAIN_SLOW_MODE;
+        this.ARM_STATE_FORWARD = ARM_STATE_FORWARD;
+        this.ARM_STATE_BACKWARDS = ARM_STATE_BACKWARDS;
+        this.ARM_STATE_DOWN = ARM_STATE_DOWN;
+        this.TURN_INTAKE_CONSTANT = TURN_INTAKE_CONSTANT;
+        this.TURN_INTAKE_MANUAL = TURN_INTAKE_MANUAL;
+        this.OUTTAKE_RELEASE_ALL_PIXEL = OUTTAKE_RELEASE_ALL_PIXEL;
+        this.OUTTAKE_RELEASE_ONE_PIXEL = OUTTAKE_RELEASE_ONE_PIXEL;
+        this.DRONE_LEFT_RELEASE = DRONE_LEFT_RELEASE;
+    }
 
     @Override
     public void init() {
-        gamepadEx1 = new GamepadEx(gamepad1);
-        gamepadEx2 = new GamepadEx(gamepad2);
+        gamepadp1 = new GamepadEx(gamepad1);
 
         LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
         lynxModule.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
@@ -111,16 +115,19 @@ public class TeleOp2Driver extends OpMode {
 
     @Override
     public void loop() {
-        gamepadEx1.readButtons();
-        gamepadEx2.readButtons();
+        gamepadp1.readButtons();
+        gamepadp2.readButtons();
 
         // drivetrain
-        if (gamepadEx1.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)
-                || gamepadEx1.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+        if (DRIVETRAIN_SLOW_MODE.wasJustPressed()) {
             isSlowMode = !isSlowMode;
         }
 
-        double[] driveCoefficients = {gamepadEx1.getLeftX(), gamepadEx1.getLeftY(), gamepadEx1.getRightX()};
+        double[] driveCoefficients = {
+                gamepadp1.getLeftX(),
+                gamepadp1.getLeftY(),
+                gamepadp1.getRightX()
+        };
         for (int i = 0; i < driveCoefficients.length; i++) {
             driveCoefficients[i] = Math.abs(driveCoefficients[i]) > DEAD_ZONE_SIZE ? driveCoefficients[i] : 0;
             driveCoefficients[i] = isSlowMode ? driveCoefficients[i] * SLOW_DRIVE_MULTIPLIER : driveCoefficients[i] * NORMAL_DRIVE_MULTIPLIER;
@@ -142,35 +149,25 @@ public class TeleOp2Driver extends OpMode {
             activeIntake.moveMotor();
         }
 
-        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            if (selectedState == ArmComponent.State.LOW) {
-                selectedState = ArmComponent.State.MIDDLE;
-            } else if (selectedState == ArmComponent.State.MIDDLE) {
-                selectedState = ArmComponent.State.HIGH;
-            } else {
-                selectedState = ArmComponent.State.LOW;
-            }
+        if (ARM_STATE_FORWARD.wasJustPressed()) {
+            int newIndex = selectedState.index+1 <= ArmComponent.State.values().length ?
+                    selectedState.index+1 : 1;
+            selectedState = ArmComponent.State.values()[newIndex];
         }
 
-        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            if (selectedState == ArmComponent.State.LOW) {
-                selectedState = ArmComponent.State.HIGH;
-            } else if (selectedState == ArmComponent.State.MIDDLE) {
-                selectedState = ArmComponent.State.LOW;
-            } else {
-                selectedState = ArmComponent.State.MIDDLE;
-            }
+        if (ARM_STATE_BACKWARDS.wasJustPressed()) {
+            int newIndex = selectedState.index-1 >= 0 ?
+                    selectedState.index-1 : 3;
+            selectedState = ArmComponent.State.values()[newIndex];
         }
 
-        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            arm.setState(selectedState);
-        }
+        arm.setState(selectedState);
 
-        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+        if (ARM_STATE_DOWN.wasJustPressed()) {
             arm.setState(ArmComponent.State.GROUND);
         }
 
-        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+        if (TURN_INTAKE_CONSTANT.wasJustPressed()) {
             if (activeIntake.getState() == ActiveIntakeComponent.State.OFF) {
                 arm.setState(ArmComponent.State.GROUND);
                 activeIntake.turnContinually();
@@ -179,28 +176,19 @@ public class TeleOp2Driver extends OpMode {
             }
         }
 
-        if (gamepadEx2.wasJustPressed(PSButtons.CROSS)) {
+        if (TURN_INTAKE_MANUAL.wasJustPressed()) {
             activeIntake.turnManually();
         }
 
-        if (gamepadEx2.wasJustPressed(PSButtons.SQUARE)) {
-            if (activeIntake.getState() == ActiveIntakeComponent.State.OFF) {
-                activeIntake.turnContinually();
-            } else {
-                activeIntake.turnMotorOff();
-            }
-        }
-
-        if (gamepadEx2.wasJustPressed(PSButtons.TRIANGLE)) {
+        if (OUTTAKE_RELEASE_ONE_PIXEL.wasJustPressed()) {
             outtake.releasePixel();
         }
 
-        if (gamepadEx2.wasJustPressed(PSButtons.CIRCLE)) {
+        if (OUTTAKE_RELEASE_ALL_PIXEL.wasJustPressed()) {
             outtake.releaseAllPixels();
         }
 
-        if (gamepadEx2.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)
-                || gamepadEx2.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+        if (DRONE_LEFT_RELEASE.wasJustPressed()) {
             droneLauncher.launch();
         }
 

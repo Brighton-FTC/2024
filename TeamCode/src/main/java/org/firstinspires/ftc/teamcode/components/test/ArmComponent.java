@@ -151,15 +151,20 @@ public class ArmComponent {
     }
 
     public enum State {
-        GROUND(2000),
-        LOW(-500),
-        MIDDLE(-1000),
-        HIGH(0);
+        // TODO: TUNE THIS
+        // also this starts from 1 because yay
+        GROUND(2000, 0), // nothing actually leads to ground because ground is separate
+        LOW(-500, 1),
+        MIDDLE(-1000, 2),
+        HIGH(0, 3);
 
         public final int position;
 
-        State(int position) {
+        public final int index;
+
+        State(int position, int index) {
             this.position = position;
+            this.index = index;
         }
 
         @NonNull
