@@ -3,22 +3,22 @@ package org.firstinspires.ftc.teamcode.components.test;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.arcrobotics.ftclib.hardware.GyroEx;
-import com.arcrobotics.ftclib.hardware.RevIMU;
-import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
-import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.PSButtons;
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
+import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 
 /**
  * Opmode to test the functionality of the {@link AutomaticAlignmentToPixelsComponent} class. <br />
- *
+ * <p>
  * Controls:
  * <ul>
  *     <li>Dpad left/right - change the selected pixels stack. </li>
@@ -30,11 +30,10 @@ public class AutomaticAlignmentToPixelsFunctionalityTester extends OpMode {
     private GamepadEx gamepad;
 
     private ArmComponent arm;
-    private LinearSlideComponent linearSlide;
-    private GrabberComponent grabber;
+    private ActiveIntakeComponent activeIntake;
     private MecanumDrive mecanum;
-    private SensorDistanceEx distanceSensor;
-    private GyroEx gyro;
+    private DistanceSensor distanceSensor;
+    private IMU imu;
     private WebcamName webcam;
 
     private AutomaticAlignmentToPixelsComponent automaticAlignmentToPixels;
@@ -43,19 +42,16 @@ public class AutomaticAlignmentToPixelsFunctionalityTester extends OpMode {
 
     @Override
     public void init() {
+        LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
+
         arm = new ArmComponent(
                 new MotorEx(hardwareMap, "arm_motor"),
-                new SimpleServo(hardwareMap, "grabber_rotation_servo", 0, 360)
+                lynxModule.getInputVoltage(VoltageUnit.VOLTS)
         );
 
-        linearSlide = new LinearSlideComponent(
-                new MotorEx(hardwareMap, "linear_slide_motor")
-        );
-
-        grabber = new GrabberComponent(
-                new SimpleServo(hardwareMap, "grabber_servo_1", 0, 360),
-                new SimpleServo(hardwareMap, "grabber_servo_2", 0, 360),
-                hardwareMap.touchSensor.get("touch_sensor")
+        activeIntake = new ActiveIntakeComponent(
+                new MotorEx(hardwareMap, "active_intake_motor_left"),
+                new MotorEx(hardwareMap, "active_intake_motor_right")
         );
 
         mecanum = new MecanumDrive(
@@ -65,25 +61,41 @@ public class AutomaticAlignmentToPixelsFunctionalityTester extends OpMode {
                 new Motor(hardwareMap, "back_right_motor")
         );
 
-        distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "front_distance_sensor");
 
-        gyro = new RevIMU(hardwareMap, "gyro");
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(
+                new IMU.Parameters(
+                        new RevHubOrientationOnRobot(
+                                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                                RevHubOrientationOnRobot.UsbFacingDirection.UP
+                        )
+                )
+        );
 
         webcam = hardwareMap.get(WebcamName.class, "webcam");
 
         automaticAlignmentToPixels = new AutomaticAlignmentToPixelsComponent(
-                arm, linearSlide, grabber, mecanum, distanceSensor, gyro, webcam
+                arm, activeIntake, mecanum, distanceSensor, imu, webcam
         );
 
         gamepad = new GamepadEx(gamepad1);
-
-        gamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whenPressed(() -> pixelStackIndex = (pixelStackIndex - 1) % AutomaticAlignmentToPixelsComponent.N_PIXEL_STACKS);
-        gamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(() -> pixelStackIndex = (pixelStackIndex + 1) % AutomaticAlignmentToPixelsComponent.N_PIXEL_STACKS);
-
-        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(() -> automaticAlignmentToPixels.toggleMoving(pixelStackIndex));
     }
+
     @Override
     public void loop() {
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            pixelStackIndex = (pixelStackIndex - 1) % AutomaticAlignmentToPixelsComponent.N_PIXEL_STACKS;
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            pixelStackIndex = (pixelStackIndex + 1) % AutomaticAlignmentToPixelsComponent.N_PIXEL_STACKS;
+        }
+
+        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
+            automaticAlignmentToPixels.toggleMoving(pixelStackIndex, 2);
+        }
+
         if (!automaticAlignmentToPixels.isMoving()) {
             telemetry.addLine("Robot moving manually. ");
             telemetry.addData("Currently selected pixel stack index", pixelStackIndex);

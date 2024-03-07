@@ -4,11 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.hardware.GyroEx;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -28,8 +30,8 @@ import java.util.stream.Collectors;
  * </b> <br /> <br />
  *
  * <p>
- * Call {@link #startMoving(int) startMoving()} once to get the robot to move, and then call {@link #moveRobot()} continuously. <br />
- *
+ * Call {@link #startMoving(int, int) startMoving()} once to get the robot to move, and then call {@link #moveRobot()} continuously. <br />
+ * <p>
  * You can find out whether the robot is moving using {@link #isMoving()}.
  * </p>
  */
@@ -46,63 +48,54 @@ public class AutomaticAlignmentToPixelsComponent {
     public static final double MAX_AUTO_SPEED = 0.5;
     public static final double MAX_AUTO_TURN = 0.3;
 
-    public static final double SCANNING_FOR_PIXEL_STACK_ANGLE = 30; // degrees
-
     public static final double AUTO_DRIVING_DIVISOR = 6;
     public static final double AUTO_ANGLE_DIVISOR = 45;
 
-    public static final double LINEAR_SLIDE_LOWERING_SPEED = -0.5;
-
     public static final int N_PIXEL_STACKS = 6;
-    public static final double[] xOffsetFromAprilTags = {6, 18, 30, -30, -18, -6}; // 12 inch spacing between stacks
+    public static final double[] X_OFFSET_FROM_APRIL_TAGS = {6, 18, 30, -30, -18, -6}; // 12 inch spacing between stacks
 
     // TODO: check these are the right way round
     public static final int LEFT_APRIL_TAG_ID = 7;
     public static final int RIGHT_APRIL_TAG_ID = 10;
 
     private final ArmComponent arm;
-    private final LinearSlideComponent linearSlide;
-    private final GrabberComponent grabber;
+    private final ActiveIntakeComponent activeIntake;
     private final MecanumDrive mecanum;
-    private final SensorDistanceEx distanceSensor;
-    private final GyroEx gyro;
+    private final DistanceSensor distanceSensor;
+    private final IMU imu;
 
     private final AprilTagProcessor aprilTag;
     private final VisionPortal visionPortal;
-
-    private final double[] closestAngle = {0, Double.POSITIVE_INFINITY}; // [angle (degrees), distance (inches)]
 
     private State currentState = State.IDLE;
     private AprilTagDetection aprilTagDetection;
 
     private int pixelStackIndex = 0;
+    private int nPixels;
 
     /**
      * Code to align the robot to a stack of pixels.
      *
-     * @param arm         The {@link ArmComponent} that the robot uses.
-     * @param linearSlide The {@link LinearSlideComponent} that the robot uses.
-     * @param grabber     The {@link GrabberComponent} that the robot uses.
-     * @param mecanum     The {@link MecanumDrive} for the robot.
-     * @param webcam      The webcam for the robot.
+     * @param arm          The {@link ArmComponent} that the robot uses.
+     * @param activeIntake The {@link ActiveIntakeComponent} that the robot uses.
+     * @param mecanum      The {@link MecanumDrive} for the robot.
+     * @param webcam       The webcam for the robot.
      */
     public AutomaticAlignmentToPixelsComponent(ArmComponent arm,
-                                               LinearSlideComponent linearSlide,
-                                               GrabberComponent grabber,
+                                               ActiveIntakeComponent activeIntake,
                                                MecanumDrive mecanum,
-                                               SensorDistanceEx distanceSensor,
-                                               GyroEx gyro,
+                                               DistanceSensor distanceSensor,
+                                               IMU imu,
                                                WebcamName webcam) {
         this.arm = arm;
-        this.linearSlide = linearSlide;
-        this.grabber = grabber;
+        this.activeIntake = activeIntake;
         this.mecanum = mecanum;
         this.distanceSensor = distanceSensor;
-        this.gyro = gyro;
+        this.imu = imu;
 
         visionPortal = new VisionPortal.Builder()
                 .setCamera(webcam)
-                .enableLiveView(true)
+                .enableLiveView(false)
                 .build();
 
         aprilTag = new AprilTagProcessor.Builder().build();
@@ -126,18 +119,23 @@ public class AutomaticAlignmentToPixelsComponent {
     /**
      * If the robot isn't moving, then make it move.
      *
-     * @param pixelStackIndex The index of the pixel stack to move to (starting from the left).
+     * @param pixelStackIndex The index of the pixel stack to move to (starting from the left), from the perspective of facing towards the audience side.
+     * @param nPixels         The number of pixels to pick up (1 or 2).
      */
-    public void startMoving(int pixelStackIndex) {
+    public void startMoving(int pixelStackIndex, int nPixels) {
         if (pixelStackIndex >= N_PIXEL_STACKS || pixelStackIndex < 0) {
             throw new IllegalArgumentException("'pixelStackIndex' must be between 0 and " + N_PIXEL_STACKS + " but is " + pixelStackIndex);
         }
 
+        if (nPixels != 1 && nPixels != 2) {
+            throw new IllegalArgumentException("'nPixels' must be either 1 or 2, but was" + nPixels);
+        }
+
         if (currentState == State.IDLE) {
+            this.nPixels = nPixels;
+
             this.pixelStackIndex = pixelStackIndex;
             currentState = State.SEARCHING_FOR_APRIL_TAGS;
-
-            visionPortal.resumeStreaming();
         }
     }
 
@@ -146,11 +144,11 @@ public class AutomaticAlignmentToPixelsComponent {
      *
      * @param pixelStackIndex The pixel stack that the robot should go to if it starts moving.
      */
-    public void toggleMoving(int pixelStackIndex) {
+    public void toggleMoving(int pixelStackIndex, int nPixels) {
         if (isMoving()) {
             stopMoving();
         } else {
-            startMoving(pixelStackIndex);
+            startMoving(pixelStackIndex, nPixels);
         }
     }
 
@@ -162,57 +160,33 @@ public class AutomaticAlignmentToPixelsComponent {
     }
 
     /**
-     * Call continuously once {@link #startMoving(int) startMoving()} has been called, to make the robot automatically pick up a pixel.
+     * Call continuously once {@link #startMoving(int, int) startMoving()} has been called, to make the robot automatically pick up a pixel.
      */
     public void moveRobot() {
+        boolean hasFinished;
+
         switch (currentState) {
             case SEARCHING_FOR_APRIL_TAGS:
                 aprilTagDetection = getAprilTag();
-                gyro.reset();
+                imu.resetYaw();
 
                 if (aprilTagDetection != null) {
-                    if (aprilTagDetection.metadata.id != LEFT_APRIL_TAG_ID && pixelStackIndex <= 2) {
-                        // rotate the robot towards the correct april tag
+                    if (aprilTagDetection.metadata.id == RIGHT_APRIL_TAG_ID && pixelStackIndex <= 2) {
                         mecanum.driveRobotCentric(0, 0, -MAX_AUTO_TURN);
-                    } else if (aprilTagDetection.metadata.id != RIGHT_APRIL_TAG_ID && pixelStackIndex >= 3) {
-                        // rotate the robot towards the correct april tag
+                    } else if (aprilTagDetection.metadata.id == LEFT_APRIL_TAG_ID && pixelStackIndex >= 3) {
                         mecanum.driveRobotCentric(0, 0, MAX_AUTO_TURN);
                     } else { // if the robot is facing towards the correct april tag
                         currentState = State.MOVING_TO_PIXEL_STACK;
                     }
-
-                    // if the robot is close enough to the wall, then just go to the nearest april tag
-                } else if (distanceSensor.getDistance(DistanceUnit.INCH) <= MOVING_DESIRED_DISTANCE) {
-                    currentState = State.TURNING;
                 }
 
                 break;
 
             case MOVING_TO_PIXEL_STACK:
-                boolean hasFinished = moveToPosition(aprilTagDetection.ftcPose, xOffsetFromAprilTags[pixelStackIndex]);
+                hasFinished = moveToPosition(aprilTagDetection.ftcPose, X_OFFSET_FROM_APRIL_TAGS[pixelStackIndex]);
 
                 if (hasFinished) {
                     aprilTagDetection = null;
-                    currentState = State.TURNING;
-                }
-
-                break;
-
-            case TURNING:
-                hasFinished = turnToAngle(-SCANNING_FOR_PIXEL_STACK_ANGLE);
-
-                if (hasFinished) {
-                    gyro.reset();
-
-                    currentState = State.SEARCHING_FOR_PIXEL_STACK;
-                }
-
-                break;
-
-            case SEARCHING_FOR_PIXEL_STACK:
-                hasFinished = scanForPixelStack(SCANNING_FOR_PIXEL_STACK_ANGLE * 2);
-
-                if (hasFinished) {
                     currentState = State.SHIFTING_TO_PIXEL_STACK;
                 }
 
@@ -221,10 +195,6 @@ public class AutomaticAlignmentToPixelsComponent {
             case SHIFTING_TO_PIXEL_STACK:
                 hasFinished = driveToDistance(SHIFTING_DESIRED_DISTANCE);
 
-                if (distanceSensor.getDistance(DistanceUnit.INCH) > closestAngle[1]) { // if the robot has driven off at the wrong angle
-                    currentState = State.TURNING;
-                }
-
                 if (hasFinished) {
                     currentState = State.PREPARING_FOR_PIXEL_PICKUP;
                 }
@@ -232,34 +202,34 @@ public class AutomaticAlignmentToPixelsComponent {
                 break;
 
             case PREPARING_FOR_PIXEL_PICKUP:
-                linearSlide.lift();
-                arm.lift();
-                grabber.open();
+                arm.setState(ArmComponent.State.GROUND);
 
-                linearSlide.moveToSetPoint();
                 arm.moveToSetPoint();
 
-                if (linearSlide.atSetPoint() && arm.atSetPoint()) {
+                if (arm.atSetPoint()) {
                     currentState = State.PICKING_UP_PIXEL;
                 }
 
                 break;
 
             case PICKING_UP_PIXEL:
-                // TODO: do this in a better way once we have more information about the grabber.
-
-                arm.lower();
-                linearSlide.lift();
+                arm.setState(ArmComponent.State.GROUND);
 
                 arm.moveToSetPoint();
-                linearSlide.moveToSetPoint();
 
                 arm.read();
-                linearSlide.read();
 
-                if (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                    grabber.close();
-                    currentState = State.MOVING_BACK_FROM_PIXELS;
+                if (arm.atSetPoint()) {
+                    if (activeIntake.getState() == ActiveIntakeComponent.State.OFF) {
+                        if (nPixels == 0) {
+                            currentState = State.MOVING_BACK_FROM_PIXELS;
+                        }
+
+                        activeIntake.turnManually();
+                        nPixels--;
+                    }
+
+                    activeIntake.moveMotor();
                 }
 
                 break;
@@ -302,20 +272,16 @@ public class AutomaticAlignmentToPixelsComponent {
      * @param xOffset The horizontal offset from the april tag, in inches.
      *                For example, if you want to move the robot half a foot right of an april tag, then pass in 6.
      * @return If it has finished moving the robot.
+     * TODO: improve this
      */
     private boolean moveToPosition(@NonNull AprilTagPoseFtc anchor, double xOffset) {
         // calculate how far the robot has to turn/move
         double headingError = 90 - Math.toDegrees(Math.atan2(anchor.y, anchor.x + xOffset));
         double distanceError = distanceSensor.getDistance(DistanceUnit.INCH);
 
-        double currentHeading = gyro.getHeading();
-        // set the angle to be from -179 to 180 instead of 0 to 359
-        currentHeading = currentHeading > 180 ? currentHeading - 360 : currentHeading;
+        boolean hasTurned = turnToAngle(headingError);
 
-        if (!(Math.abs(headingError - currentHeading) <= ANGLE_ERROR)) {
-            turnToAngle(headingError);
-
-        } else if (!(Math.abs(distanceError - MOVING_DESIRED_DISTANCE) <= DISTANCE_ERROR)) {
+        if (hasTurned && !(Math.abs(distanceError - MOVING_DESIRED_DISTANCE) <= DISTANCE_ERROR)) {
             driveToDistance(distanceError);
 
         } else {
@@ -326,22 +292,6 @@ public class AutomaticAlignmentToPixelsComponent {
     }
 
     /**
-     * Turns the robot clockwise while logging the closest angle in closestAngle.
-     *
-     * @return If it has finished scanning.
-     */
-    // TODO: find a `better way to do this
-    private boolean scanForPixelStack(double searchAngle) {
-        if (distanceSensor.getDistance(DistanceUnit.INCH) < closestAngle[1]) {
-            closestAngle[0] = gyro.getHeading();
-            closestAngle[1] = distanceSensor.getDistance(DistanceUnit.INCH);
-        }
-
-        return turnToAngle(searchAngle);
-    }
-
-
-    /**
      * Turns robot to angle.
      * Note that angle should be -179 to 180 rather than 0 to 360.
      *
@@ -349,7 +299,8 @@ public class AutomaticAlignmentToPixelsComponent {
      */
 
     private boolean turnToAngle(double angle) {
-        double currentHeading = gyro.getHeading() > 180 ? gyro.getHeading() - 360 : gyro.getHeading();
+        double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        currentHeading = currentHeading > 180 ? currentHeading - 360 : currentHeading;
 
         if (Math.abs(currentHeading - angle) <= ANGLE_ERROR) {
             return true;
@@ -389,8 +340,6 @@ public class AutomaticAlignmentToPixelsComponent {
         IDLE("Idle"),
         SEARCHING_FOR_APRIL_TAGS("Searching for april tags"),
         MOVING_TO_PIXEL_STACK("Moving to stack"),
-        TURNING("Turning"),
-        SEARCHING_FOR_PIXEL_STACK("Searching for stack"),
         SHIFTING_TO_PIXEL_STACK("Shifting to  stack"),
         PREPARING_FOR_PIXEL_PICKUP("Preparing for pixel pickup"),
         PICKING_UP_PIXEL("Picking up pixel"),
