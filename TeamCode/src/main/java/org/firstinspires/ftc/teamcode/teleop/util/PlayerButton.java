@@ -5,6 +5,11 @@ import androidx.annotation.NonNull;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 
+/**
+ * Button class that contains which gamepad it is binded to.
+ * Exposes some methods of GamepadEx and GamepadKeys.Button.
+ * If you want to use a method from those classes that's not here, just add it (and also override it in NullPlayerButton).
+ */
 public class PlayerButton {
     private final GamepadEx gamepad;
     private final GamepadKeys.Button button;
