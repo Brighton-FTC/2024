@@ -68,7 +68,7 @@ public class AutomaticAlignmentToPixelsFunctionalityTester extends OpMode {
                 new IMU.Parameters(
                         new RevHubOrientationOnRobot(
                                 RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                                RevHubOrientationOnRobot.UsbFacingDirection.UP
+                                RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
                         )
                 )
         );
