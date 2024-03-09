@@ -39,21 +39,23 @@ public class BasicAutonomousGeneric extends OpMode {
     private ColourMassDetectionProcessor colourMassDetectionProcessor;
 
     // TODO: fine tune these values
-    public final double ANGLE_ERROR = 20;
+    public static final double ANGLE_ERROR = 20;
 
-    public final double SHIFTING_TO_BACKDROP_DIST = 3;
+    public static final double SHIFTING_TO_BACKDROP_DIST = 3;
 
-    public final double ANGLE_DIVISOR = 90;
+    public static final double ANGLE_DIVISOR = 90;
 
-    public final double MIN_DISTANCE_FROM_OBJECT = 6;
+    public static final double MIN_DISTANCE_FROM_OBJECT = 6;
 
-    public final double PARKING_DIST_ERROR = 3;
+    public static final double PARKING_DIST_ERROR = 3;
+
+    public static final double PURPLE_INITIAL_FORWARDS_MILLISECONDS = 0;
+    public static final double PURPLE_MIDDLE_FORWARDS_MILLISECONDS = 0;
+
+    public static final Size CAMERA_SIZE = new Size(640, 480);
 
 
     private VisionPortal visionPortal;
-
-    // TODO: set these values
-    private final Size cameraSize = new Size(640, 480);
 
     private MecanumDrive mecanum;
 
@@ -79,8 +81,6 @@ public class BasicAutonomousGeneric extends OpMode {
     private ElapsedTime time;
 
     // TODO: fill in constants
-    private final double PURPLE_INITIAL_FORWARDS_MILLISECONDS = 0;
-    private final double PURPLE_MIDDLE_FORWARDS_MILLISECONDS = 0;
 
     @Override
     public void init() {
@@ -128,7 +128,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "webcam_name"))
-                .setCameraResolution(cameraSize)
+                .setCameraResolution(CAMERA_SIZE)
                 .enableLiveView(true)
                 .addProcessor(colourMassDetectionProcessor)
                 .build();
@@ -136,7 +136,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
     @Override
     public void start() {
-        // shuts down the camera once the match starts, we dont need to look any more
+        // shuts down the camera once the match starts, we don't need to look any more
         if (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING) {
             visionPortal.stopLiveView();
             visionPortal.stopStreaming();
