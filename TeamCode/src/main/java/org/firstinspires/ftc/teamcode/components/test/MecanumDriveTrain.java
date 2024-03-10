@@ -44,8 +44,6 @@ public class MecanumDriveTrain extends OpMode {
             motor.setInverted(!motor.getInverted());
         }
 
-        frontright.setInverted(!frontright.getInverted());
-
         player1Gamepad = new GamepadEx(gamepad1);
     }
 
