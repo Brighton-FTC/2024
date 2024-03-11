@@ -11,6 +11,8 @@ public class BasicAutonomousBlue extends BasicAutonomousGeneric {
         teamColor = TeamColor.BLUE;
         backdropTurningAngle = -90;
 
+        aprilTagIds = new int[]{1, 2, 3};
+
         cvLower = new Scalar(80, 10, 150);
         cvUpper = new Scalar(110, 100, 255);
 

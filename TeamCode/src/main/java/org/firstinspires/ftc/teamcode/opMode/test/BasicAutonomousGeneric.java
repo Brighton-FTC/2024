@@ -1,9 +1,13 @@
 package org.firstinspires.ftc.teamcode.opMode.test;
 
+import static org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor.PropPositions.LEFT;
+import static org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor.PropPositions.RIGHT;
 import static org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor.PropPositions.UNFOUND;
 
 import android.util.Size;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
 import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
@@ -24,7 +28,13 @@ import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Scalar;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Rudimentary autonomous code. <br />
@@ -35,13 +45,13 @@ import org.opencv.core.Scalar;
  * Be sure to merge the grabber-code, linear-slide-code, and arm-code branches into the branch that this is in before running.
  * </b>
  */
-public class BasicAutonomousGeneric extends OpMode {
+public abstract class BasicAutonomousGeneric extends OpMode {
     private ColourMassDetectionProcessor colourMassDetectionProcessor;
 
     // TODO: fine tune these values
     public static final double ANGLE_ERROR = 20;
 
-    public static final double SHIFTING_TO_BACKDROP_DIST = 3;
+    public static final double DRIVING_TO_BACKDROP_DIST = 3;
 
     public static final double ANGLE_DIVISOR = 90;
 
@@ -49,13 +59,14 @@ public class BasicAutonomousGeneric extends OpMode {
 
     public static final double PARKING_DIST_ERROR = 3;
 
-    public static final double PURPLE_INITIAL_FORWARDS_MILLISECONDS = 0;
-    public static final double PURPLE_MIDDLE_FORWARDS_MILLISECONDS = 0;
+    public static final double PURPLE_INITIAL_FORWARD_SECONDS = 0.4;
+    public static final double PURPLE_MIDDLE_FORWARDS_SECONDS = 0.2;
 
     public static final Size CAMERA_SIZE = new Size(640, 480);
 
 
     private VisionPortal visionPortal;
+    private AprilTagProcessor aprilTag;
 
     private MecanumDrive mecanum;
 
@@ -74,6 +85,8 @@ public class BasicAutonomousGeneric extends OpMode {
     protected Scalar cvLower;
     protected Scalar cvUpper;
 
+    protected int[] aprilTagIds; // left, middle, right
+
     private final double CV_MIN_AREA = 100; // the minimum area for the detection to consider for your prop
 
     private ColourMassDetectionProcessor.PropPositions recordedPropPosition;
@@ -84,6 +97,8 @@ public class BasicAutonomousGeneric extends OpMode {
 
     @Override
     public void init() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         // hardware
 
         Motor[] motors = {
@@ -95,17 +110,12 @@ public class BasicAutonomousGeneric extends OpMode {
 
         mecanum = new MecanumDrive(motors[0], motors[1], motors[2], motors[3]);
 
-        // invert some motors (because hardware is weird)
-        for (Motor motor : new Motor[]{motors[0], motors[2], motors[3]}) {
-            motor.setInverted(!motor.getInverted());
-        }
-
         LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), lynxModule.getInputVoltage(VoltageUnit.VOLTS));
-        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo", 0, 360));
+//        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), lynxModule.getInputVoltage(VoltageUnit.VOLTS));
+//        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo", 0, 360));
 
-        distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor");
+        distanceSensor = new SensorRevTOFDistance(hardwareMap, "distance_sensor_front");
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(
                 new IMU.Parameters(
@@ -126,24 +136,22 @@ public class BasicAutonomousGeneric extends OpMode {
                 () -> 426 // the left dividing line, in this case the right third of the frame
         );
 
+        aprilTag = new AprilTagProcessor.Builder().build();
+
         visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "webcam_name"))
+                .setCamera(hardwareMap.get(WebcamName.class, "webcam"))
                 .setCameraResolution(CAMERA_SIZE)
-                .enableLiveView(true)
-                .addProcessor(colourMassDetectionProcessor)
+                .addProcessors(colourMassDetectionProcessor, aprilTag)
                 .build();
     }
 
     @Override
     public void start() {
-        // shuts down the camera once the match starts, we don't need to look any more
-        if (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING) {
-            visionPortal.stopLiveView();
-            visionPortal.stopStreaming();
-        }
+        imu.resetYaw();
 
         // gets the recorded prop position
         recordedPropPosition = colourMassDetectionProcessor.getRecordedPropPosition();
+        colourMassDetectionProcessor.close();
 
         // now we can use recordedPropPosition to determine where the prop is! if we never saw a prop, your recorded position will be UNFOUND.
         // if it is UNFOUND, you can manually set it to any of the other positions to guess
@@ -156,17 +164,23 @@ public class BasicAutonomousGeneric extends OpMode {
 
     @Override
     public void loop() {
-        arm.read();
+//        arm.read();
 
         currentState.run();
 
+        telemetry.addData("Distance", distanceSensor.getDistance(DistanceUnit.INCH));
         telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        visionPortal.close();
     }
 
     private void driveToSpikeMarks() {
         telemetry.addLine("Driving to spike marks.");
 
-        if (time.time() < PURPLE_INITIAL_FORWARDS_MILLISECONDS) {
+        if (time.time() < PURPLE_INITIAL_FORWARD_SECONDS) {
             mecanum.driveRobotCentric(0, 0.8, 0);
         } else {
             imu.resetYaw();
@@ -185,15 +199,15 @@ public class BasicAutonomousGeneric extends OpMode {
             case LEFT:
                 isDone = turnToAngle(-90);
                 if (isDone) {
-                    arm.setState(ArmComponent.State.GROUND);
+//                    arm.setState(ArmComponent.State.GROUND);
                     currentState = this::placePurplePixel;
                 }
                 break;
             case MIDDLE:
-                if (time.time() < PURPLE_MIDDLE_FORWARDS_MILLISECONDS) {
+                if (time.time() < PURPLE_MIDDLE_FORWARDS_SECONDS) {
                     mecanum.driveRobotCentric(0, 0.8, 0);
                 } else {
-                    arm.setState(ArmComponent.State.GROUND);
+//                    arm.setState(ArmComponent.State.GROUND);
 
                     currentState = this::placePurplePixel;
                 }
@@ -202,7 +216,7 @@ public class BasicAutonomousGeneric extends OpMode {
                 isDone = turnToAngle(90);
 
                 if (isDone) {
-                    arm.setState(ArmComponent.State.GROUND);
+//                    arm.setState(ArmComponent.State.GROUND);
                     currentState = this::placePurplePixel;
                 }
                 break;
@@ -212,7 +226,7 @@ public class BasicAutonomousGeneric extends OpMode {
     private void placePurplePixel() {
         telemetry.addLine("Placing purple pixel");
 
-        outtake.releasePixel();
+//        outtake.releasePixel();
 
         currentState = this::turnToBackdrop;
         imu.resetYaw();
@@ -224,15 +238,53 @@ public class BasicAutonomousGeneric extends OpMode {
         boolean isDone = turnToAngle(backdropTurningAngle);
 
         if (isDone) {
+            currentState = this::driveToBackdrop;
+//            outtake.releasePixel();
+        }
+    }
+
+    private void driveToBackdrop() {
+        double strafeAmount;
+
+        int aprilTagIdsIndex;
+        if (recordedPropPosition == LEFT) {
+            aprilTagIdsIndex = 0;
+        } else if (recordedPropPosition == RIGHT) {
+            aprilTagIdsIndex = 2;
+        }
+        else {
+            aprilTagIdsIndex = 1;
+        }
+
+        List<AprilTagDetection> detections = aprilTag.getDetections().stream()
+                .filter((x) -> x.id == aprilTagIds[aprilTagIdsIndex] && x.metadata != null)
+                .collect(Collectors.toList());
+
+        if (detections.isEmpty()) {
+            strafeAmount = 0;
+
+        } else {
+            AprilTagDetection detection = detections.get(0);
+            if (detection.ftcPose.x < 2) {
+                strafeAmount = 0;
+            } else if (detection.ftcPose.x > 0) {
+                strafeAmount = -0.25;
+            } else {
+                strafeAmount = 0.25;
+            }
+        }
+
+        mecanum.driveRobotCentric(strafeAmount, 0.5, 0);
+
+        if (distanceSensor.getDistance(DistanceUnit.INCH) < DRIVING_TO_BACKDROP_DIST) {
             currentState = this::placeYellowPixel;
-            outtake.releasePixel();
         }
     }
 
     private void placeYellowPixel() {
         telemetry.addLine("Placing yellow pixel. ");
 
-        outtake.releasePixel();
+//        outtake.releasePixel();
 
         currentState = this::strafeToPark;
     }
@@ -242,7 +294,7 @@ public class BasicAutonomousGeneric extends OpMode {
 
         mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? -0.25 : 0.25, 0);
 
-        if (distanceSensor.getDistance(DistanceUnit.INCH) > SHIFTING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
+        if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
             currentState = this::park;
         }
     }
