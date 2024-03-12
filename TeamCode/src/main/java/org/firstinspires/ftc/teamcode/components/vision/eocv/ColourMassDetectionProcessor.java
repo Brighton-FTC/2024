@@ -112,27 +112,29 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 	@Override
 	public Object processFrame(Mat frame, long captureTimeNanos) {
 
+		Mat modifiedFrame = frame.clone();
+
 		// this method processes the image (frame) taken by the camera, and tries to find a suitable prop
 		// you dont need to call it
 
-		Imgproc.GaussianBlur(frame, frame, new Size(5, 5), 0, 0);
+		Imgproc.GaussianBlur(modifiedFrame, modifiedFrame, new Size(5, 5), 0, 0);
 		
 		// this converts the frame from RGB to HSV, which is supposed to be better for doing colour blob detection
-		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2HSV);
+		Imgproc.cvtColor(modifiedFrame, modifiedFrame, Imgproc.COLOR_RGB2HSV);
 		// thats why you need to give your scalar upper and lower bounds as HSV values
 		
 		if (upper.val[0] < lower.val[0]) {
 			// makes new scalars for the upper [upper, 0] detection, places the result in sel1
-			Core.inRange(frame, new Scalar(upper.val[0], lower.val[1], lower.val[2]), new Scalar(0, upper.val[1], upper.val[2]), sel1);
+			Core.inRange(modifiedFrame, new Scalar(upper.val[0], lower.val[1], lower.val[2]), new Scalar(0, upper.val[1], upper.val[2]), sel1);
 			// makes new scalars for the lower [0, lower] detection, places the result in sel2
-			Core.inRange(frame, new Scalar(0, lower.val[1], lower.val[2]), new Scalar(lower.val[0], upper.val[1], upper.val[2]), sel2);
+			Core.inRange(modifiedFrame, new Scalar(0, lower.val[1], lower.val[2]), new Scalar(lower.val[0], upper.val[1], upper.val[2]), sel2);
 			
 			// combines the selections
-			Core.bitwise_or(sel1, sel2, frame);
+			Core.bitwise_or(sel1, sel2, modifiedFrame);
 		} else {
 			// this process is simpler if we are not trying to wrap through 0
 			// this method makes the colour image black and white, with everything between your upper and lower bound values as white, and everything else black
-			Core.inRange(frame, lower, upper, frame);
+			Core.inRange(modifiedFrame, lower, upper, modifiedFrame);
 		}
 		
 		
@@ -141,7 +143,7 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 		
 		// this finds the contours, which are borders between black and white, and tries to simplify them to make nice outlines around potential objects
 		// this basically helps us to find all the shapes/outlines of objects that exist within our colour range
-		Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(modifiedFrame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 		
 		// this sets up our largest contour area to be 0
 		largestContourArea = -1;
@@ -197,11 +199,11 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 		// updates the previous prop position to help us check for changes
 		previousPropPosition = propPosition;
 
-//		Imgproc.drawContours(frame, contours, -1, colour);
+//		Imgproc.drawContours(modifiedFrame, contours, -1, colour);
 		
 		// returns back the edited image, don't worry about this too much
-		Bitmap b = Bitmap.createBitmap(frame.width(), frame.height(), Bitmap.Config.RGB_565);
-		Utils.matToBitmap(frame, b);
+		Bitmap b = Bitmap.createBitmap(modifiedFrame.width(), modifiedFrame.height(), Bitmap.Config.RGB_565);
+		Utils.matToBitmap(modifiedFrame, b);
 		lastFrame.set(b);
 		return frame;
 	}
