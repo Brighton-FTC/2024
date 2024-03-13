@@ -14,7 +14,7 @@ public class ArmComponent {
     private static final int f = 0;
 
     private final FTCLibCachingMotorEx armMotor;
-    private State state = State.GROUND;
+    private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
@@ -40,7 +40,7 @@ public class ArmComponent {
     public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor, double currentVoltage) {
         voltageNormalization = currentVoltage / tuningVoltage;
         this.armMotor = armMotor;
-        setTargetPosition(State.GROUND.position);
+        setTargetPosition(State.PICKUP_GROUND.position);
     }
 
     /**
@@ -58,11 +58,11 @@ public class ArmComponent {
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void toggle() {
-        if (state == State.GROUND) {
+        if (state == State.PICKUP_GROUND) {
             setState(State.HIGH);
 
         } else {
-            setState(State.GROUND);
+            setState(State.PICKUP_GROUND);
         }
     }
 
@@ -151,10 +151,11 @@ public class ArmComponent {
     }
 
     public enum State {
-        GROUND(2000),
-        LOW(-500),
-        MIDDLE(-1000),
-        HIGH(0);
+        PICKUP_GROUND(-15),
+        PLACE_GROUND(-470),
+        LOW(-415),
+        MIDDLE(-365),
+        HIGH(-300);
 
         public final int position;
 
@@ -166,8 +167,10 @@ public class ArmComponent {
         @Override
         public String toString() {
             switch (this) {
-                case GROUND:
-                    return "GROUND";
+                case PICKUP_GROUND:
+                    return "PICKUP_GROUND";
+                case PLACE_GROUND:
+                    return "PLACE_GROUND";
                 case LOW:
                     return "LOW";
                 case MIDDLE:

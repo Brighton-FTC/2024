@@ -13,14 +13,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  *
  * Controls:
  * <ul>
- *     <li>Rotate servo by rotation angle - dpad left & dpad right</li>
  *     <li>Change rotation angle  - dpad down & dpad up</li>
  *     <li>Rotate arm  - left joystick</li>
  * </ul>
  *
  */
 
-@TeleOp(name = "Grabber Arm Position Tester", group = "arm-test")
+@TeleOp(name = "Arm Position Tester", group = "arm-test")
 public class ArmPositionFinder extends OpMode {
     private GamepadEx gamepad;
 
@@ -29,6 +28,7 @@ public class ArmPositionFinder extends OpMode {
     @Override
     public void init() {
         armMotor = new Motor(hardwareMap, "arm_motor");
+        armMotor.setRunMode(Motor.RunMode.RawPower);
         gamepad = new GamepadEx(gamepad1);
 
         System.out.println(gamepad1 == null);
@@ -37,7 +37,6 @@ public class ArmPositionFinder extends OpMode {
     @Override
     public void loop() {
         armMotor.set(gamepad.getLeftX());
-        armMotor.setRunMode(Motor.RunMode.RawPower);
 
         telemetry.addData("Motor position", armMotor.getCurrentPosition());
     }
