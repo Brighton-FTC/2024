@@ -51,15 +51,13 @@ public abstract class BasicAutonomousGeneric extends OpMode {
 
     public static final double ANGLE_DIVISOR = 90;
 
-    public static final double MIN_DISTANCE_FROM_OBJECT = 6;
-
-    public static final double PARKING_DIST_ERROR = 3;
-
+    public static final double PARK_TIME = 1;
     public static final double PURPLE_INITIAL_FORWARD_SECONDS = 0.4;
     public static final double PURPLE_MIDDLE_FORWARDS_SECONDS = 0.2;
 
     public static final Size CAMERA_SIZE = new Size(640, 480);
 
+    public final double CV_MIN_AREA = 100; // the minimum area for the detection to consider for your prop
 
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
@@ -82,8 +80,6 @@ public abstract class BasicAutonomousGeneric extends OpMode {
     protected Scalar cvUpper;
 
     protected int[] aprilTagIds; // left, middle, right
-
-    private final double CV_MIN_AREA = 100; // the minimum area for the detection to consider for your prop
 
     private ColourMassDetectionProcessor.PropPositions recordedPropPosition;
 
@@ -178,7 +174,7 @@ public abstract class BasicAutonomousGeneric extends OpMode {
     private void driveToSpikeMarks() {
         telemetry.addLine("Driving to spike marks.");
 
-        if (time.time() < PURPLE_INITIAL_FORWARD_SECONDS) {
+        if (time.seconds() < PURPLE_INITIAL_FORWARD_SECONDS) {
             mecanum.driveRobotCentric(0, 0.8, 0);
         } else {
             currentState = this::movingForPurplePixelPlacement;
@@ -201,7 +197,7 @@ public abstract class BasicAutonomousGeneric extends OpMode {
                 }
                 break;
             case MIDDLE:
-                if (time.time() < PURPLE_MIDDLE_FORWARDS_SECONDS) {
+                if (time.seconds() < PURPLE_MIDDLE_FORWARDS_SECONDS) {
                     mecanum.driveRobotCentric(0, 0.8, 0);
                 } else {
                     isDone = turnToAngle(180);
@@ -275,6 +271,15 @@ public abstract class BasicAutonomousGeneric extends OpMode {
         mecanum.driveRobotCentric(strafeAmount, 0.5, 0);
 
         if (distanceSensor.getDistance(DistanceUnit.INCH) < DRIVING_TO_BACKDROP_DIST) {
+            currentState = this::turnToPlaceYellowPixel;
+        }
+    }
+
+    private void turnToPlaceYellowPixel() {
+        double turningAngle = backdropTurningAngle > 0 ? backdropTurningAngle - 180 : backdropTurningAngle + 180;
+        boolean isDone = turnToAngle(turningAngle);
+
+        if (isDone) {
             currentState = this::placeYellowPixel;
         }
     }
@@ -284,15 +289,18 @@ public abstract class BasicAutonomousGeneric extends OpMode {
 
 //        outtake.releasePixel();
 
+        time.reset();
+
         currentState = this::park;
     }
 
     private void park() {
         telemetry.addLine("Parking. ");
 
-        mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? -0.25 : 0.25, 0);
+        mecanum.driveRobotCentric(teamColor == TeamColor.RED ? 0.75 : -0.75, 0, 0);
 
-        if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
+        if (time.seconds() >= PARK_TIME) {
+            mecanum.driveRobotCentric(0, 0, 0);
             currentState = () -> {};
         }
 
