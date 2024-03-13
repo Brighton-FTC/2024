@@ -9,7 +9,7 @@ public class BasicAutonomousRed extends BasicAutonomousGeneric {
     @Override
     public void init() {
         teamColor = TeamColor.RED;
-        backdropTurningAngle = 90;
+        backdropTurningAngle = -90;
 
         aprilTagIds = new int[]{4, 5, 6};
 

@@ -11,9 +11,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SensorDistanceEx;
 import com.arcrobotics.ftclib.hardware.SensorRevTOFDistance;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -23,7 +21,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.ColourMassDetectionProcessor;
@@ -32,7 +29,6 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Scalar;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,9 +45,9 @@ public abstract class BasicAutonomousGeneric extends OpMode {
     private ColourMassDetectionProcessor colourMassDetectionProcessor;
 
     // TODO: fine tune these values
-    public static final double ANGLE_ERROR = 20;
+    public static final double ANGLE_ERROR = 10;
 
-    public static final double DRIVING_TO_BACKDROP_DIST = 3;
+    public static final double DRIVING_TO_BACKDROP_DIST = 6;
 
     public static final double ANGLE_DIVISOR = 90;
 
@@ -151,7 +147,6 @@ public abstract class BasicAutonomousGeneric extends OpMode {
 
         // gets the recorded prop position
         recordedPropPosition = colourMassDetectionProcessor.getRecordedPropPosition();
-        colourMassDetectionProcessor.close();
 
         // now we can use recordedPropPosition to determine where the prop is! if we never saw a prop, your recorded position will be UNFOUND.
         // if it is UNFOUND, you can manually set it to any of the other positions to guess
@@ -168,12 +163,15 @@ public abstract class BasicAutonomousGeneric extends OpMode {
 
         currentState.run();
 
+        telemetry.addData("Detected prop placement", recordedPropPosition.toString());
         telemetry.addData("Distance", distanceSensor.getDistance(DistanceUnit.INCH));
+        telemetry.addData("Yaw", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
         telemetry.update();
     }
 
     @Override
     public void stop() {
+        colourMassDetectionProcessor.close();
         visionPortal.close();
     }
 
@@ -183,21 +181,20 @@ public abstract class BasicAutonomousGeneric extends OpMode {
         if (time.time() < PURPLE_INITIAL_FORWARD_SECONDS) {
             mecanum.driveRobotCentric(0, 0.8, 0);
         } else {
-            imu.resetYaw();
             currentState = this::movingForPurplePixelPlacement;
             time.reset();
         }
     }
 
     private void movingForPurplePixelPlacement() {
-        telemetry.addLine("Strafing to place purple pixel.");
+        telemetry.addLine("Moving to place purple pixel.");
 
         boolean isDone;
 
         // now we can use recordedPropPosition in our auto code to modify where we place the purple and yellow pixels
         switch (recordedPropPosition) {
             case LEFT:
-                isDone = turnToAngle(-90);
+                isDone = turnToAngle(90);
                 if (isDone) {
 //                    arm.setState(ArmComponent.State.GROUND);
                     currentState = this::placePurplePixel;
@@ -207,13 +204,15 @@ public abstract class BasicAutonomousGeneric extends OpMode {
                 if (time.time() < PURPLE_MIDDLE_FORWARDS_SECONDS) {
                     mecanum.driveRobotCentric(0, 0.8, 0);
                 } else {
-//                    arm.setState(ArmComponent.State.GROUND);
-
-                    currentState = this::placePurplePixel;
+                    isDone = turnToAngle(180);
+                    if (isDone) {
+//                      arm.setState(ArmComponent.State.GROUND);
+                        currentState = this::placePurplePixel;
+                    }
                 }
                 break;
             case RIGHT:
-                isDone = turnToAngle(90);
+                isDone = turnToAngle(-90);
 
                 if (isDone) {
 //                    arm.setState(ArmComponent.State.GROUND);
@@ -229,7 +228,6 @@ public abstract class BasicAutonomousGeneric extends OpMode {
 //        outtake.releasePixel();
 
         currentState = this::turnToBackdrop;
-        imu.resetYaw();
     }
 
     private void turnToBackdrop() {
@@ -286,28 +284,18 @@ public abstract class BasicAutonomousGeneric extends OpMode {
 
 //        outtake.releasePixel();
 
-        currentState = this::strafeToPark;
-    }
-
-    private void strafeToPark() {
-        telemetry.addLine("Strafing to park. ");
-
-        mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? -0.25 : 0.25, 0);
-
-        if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
-            currentState = this::park;
-        }
+        currentState = this::park;
     }
 
     private void park() {
         telemetry.addLine("Parking. ");
 
-        if (distanceSensor.getDistance(DistanceUnit.INCH) > MIN_DISTANCE_FROM_OBJECT) {
-            mecanum.driveRobotCentric(0, 0.25, 0);
-        } else {
-            currentState = () -> {
-            };
+        mecanum.driveRobotCentric(0, teamColor == TeamColor.RED ? -0.25 : 0.25, 0);
+
+        if (distanceSensor.getDistance(DistanceUnit.INCH) > DRIVING_TO_BACKDROP_DIST + PARKING_DIST_ERROR) {
+            currentState = () -> {};
         }
+
     }
 
 
@@ -319,11 +307,14 @@ public abstract class BasicAutonomousGeneric extends OpMode {
      */
     private boolean turnToAngle(double angle) {
         double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        telemetry.addData("Angle", angle);
+        telemetry.addData("Recorded heading", heading);
+        telemetry.addData("Turn amount", (heading - angle) / ANGLE_DIVISOR);
 
-        if (Math.abs(angle - heading) <= ANGLE_ERROR) {
+        if (Math.abs(heading - angle) <= ANGLE_ERROR) {
             return true;
         } else {
-            mecanum.driveRobotCentric(0, 0, -heading / ANGLE_DIVISOR);
+            mecanum.driveRobotCentric(0, 0, (heading - angle) / ANGLE_DIVISOR);
             return false;
         }
     }
