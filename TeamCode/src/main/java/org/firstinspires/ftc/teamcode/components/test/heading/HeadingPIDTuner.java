@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test.heading;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -34,7 +36,7 @@ public class HeadingPIDTuner extends OpMode {
     private static double ki = 0;
     private static double kd = 0;
 
-    private static double currentHeading;
+    private static double currentHeading = 0;
 
     private MecanumDrive drive;
 
@@ -47,14 +49,18 @@ public class HeadingPIDTuner extends OpMode {
                                  new MotorEx(hardwareMap, "front_right_drive"),
                                  new MotorEx(hardwareMap, "back_left_drive"),
                                  new MotorEx(hardwareMap, "back_right_drive"));
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
     }
 
     @Override
     public void loop() {
         pid.setPID(kp, ki, kd);
         currentHeading = gyro.getHeading();
-        pid.calculate(gyro.getHeading());
+        pid.calculate(currentHeading);
 
-        drive.driveRobotCentric(0, pid.calculate(gyro.getHeading()), 0);
+        drive.driveRobotCentric(0, pid.calculate(currentHeading), 0);
+        telemetry.addData("Current heading ", currentHeading);
+        telemetry.addData("Desired heading ", desiredHeading);
     }
 }

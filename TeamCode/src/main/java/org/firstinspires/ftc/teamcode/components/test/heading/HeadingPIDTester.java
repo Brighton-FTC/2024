@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode.components.test.heading;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
 
@@ -18,14 +20,22 @@ import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
  * This is saved in desiredHeading.
  * Then, the actual heading of the bot (based on gyro) is passed into the controller, and a value is returned!
  */
-@Autonomous(name = "Turn Speed Tester", group = "tuner")
-public class TurnSpeedTester extends OpMode {
+@Autonomous(name = "Heading PID Tester", group = "tuner")
+public class HeadingPIDTester extends OpMode {
 
     private BCGyro gyro;
 
     private MecanumDrive drive;
 
     private ElapsedTime time;
+
+    private HeadingPID headingPID;
+
+    private GamepadEx gamepad;
+
+    private final double DEAD_ZONE_SIZE = 0.2;
+
+    private double previousTurning;
 
     @Override
     public void init() {
@@ -38,14 +48,30 @@ public class TurnSpeedTester extends OpMode {
                                  new MotorEx(hardwareMap, "back_right_drive"));
         time = new ElapsedTime();
         time.reset();
+
+        gamepad = new GamepadEx(gamepad1);
     }
 
     @Override
     public void loop() {
-        if (time.milliseconds() < 5000) {
-            drive.driveRobotCentric(0, 1, 0);
+        double timePassed = time.milliseconds();
+        double headingCorrection = headingPID.runPID(timePassed, previousTurning);
+        double[] driveCoefficients = {
+                gamepad.getLeftX(),
+                gamepad.getLeftY(),
+                gamepad.getRightX() + headingCorrection
+        };
+        for (int i = 0; i < driveCoefficients.length; i++) {
+            driveCoefficients[i] = Math.abs(driveCoefficients[i]) > DEAD_ZONE_SIZE ? driveCoefficients[i] : 0;
+            driveCoefficients[i] = Range.clip(-1, 1, driveCoefficients[i]); // clip in case of multiplier that is greater than 1
         }
-        telemetry.addData("Gyro: ", gyro.getHeading());
+        drive.driveRobotCentric(driveCoefficients[0], driveCoefficients[1], driveCoefficients[2]);
+        previousTurning = gamepad.getLeftY();
+        time.reset();
+
+        telemetry.addData("Previous turn input: ", previousTurning);
+        telemetry.addData("Time passed: ", timePassed);
+        telemetry.addData("Heading correction: ", headingCorrection);
         telemetry.update();
     }
 }
