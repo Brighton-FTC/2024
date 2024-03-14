@@ -7,16 +7,15 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
-import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
-import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
-import org.firstinspires.ftc.teamcode.components.test.HeadingPID;
-import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
+import org.firstinspires.ftc.teamcode.components.ActiveIntakeComponent;
+import org.firstinspires.ftc.teamcode.components.ArmComponent;
+import org.firstinspires.ftc.teamcode.components.DroneLauncherComponent;
+import org.firstinspires.ftc.teamcode.components.test.heading.HeadingPID;
+import org.firstinspires.ftc.teamcode.components.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.teleop.util.PlayerButton;
 import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
 

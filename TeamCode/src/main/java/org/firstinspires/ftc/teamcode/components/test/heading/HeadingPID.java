@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.components.test;
+package org.firstinspires.ftc.teamcode.components.test.heading;
 
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
@@ -29,8 +29,11 @@ public class HeadingPID {
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
 
+//    private MecanumDriveOdometry odo;
+
 
     public HeadingPID(BCGyro gyro){
+//        odo = new MecanumDriveOdometry();
         this.gyro = gyro;
     }
 
@@ -38,11 +41,11 @@ public class HeadingPID {
      * Does PID calculations - call this every loop and add the result to turnSpeed of drivetrain.
      *
      * @param turnSpeed the turnSpeed passed to the MecanumDrive, gotten from the gamepad
-     * @param time in millseconds after last time this method was called
+     * @param time in seconds after last time this method was called
      * @return the value to add to the turnSpeed parameter in order to correct heading
      */
     public double runPID(double turnSpeed, double time){
-        desiredHeading += turnSpeed * turnConstant;
+        desiredHeading += turnSpeed * turnConstant * time;
         pid.setSetPoint(desiredHeading);
 
         return pid.calculate(gyro.getHeading());
