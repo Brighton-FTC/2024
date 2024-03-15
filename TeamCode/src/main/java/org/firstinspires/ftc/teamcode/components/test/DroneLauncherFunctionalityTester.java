@@ -30,11 +30,14 @@ public class DroneLauncherFunctionalityTester extends OpMode {
         );
 
         gamepad = new GamepadEx(gamepad1);
-        gamepad.getGamepadButton(PSButtons.CROSS).whenPressed(droneLauncherComponent::launch);
     }
 
     @Override
     public void loop() {
+       gamepad.readButtons();
 
+       if (gamepad.wasJustPressed(PSButtons.CROSS)) {
+           droneLauncherComponent.launch();
+       }
     }
 }
