@@ -36,14 +36,7 @@ public class TurnSpeedTester extends OpMode {
     @Override
     public void init() {
         gyro = new BCGyro(hardwareMap);
-        gyro.init(
-                new BNO055IMU.Parameters(
-                        new RevHubOrientationOnRobot(
-                                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                                RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                        )
-                )
-        );
+        gyro.init();
 
         drive = new MecanumDrive(new MotorEx(hardwareMap, "front_left_drive"),
                                  new MotorEx(hardwareMap, "front_right_drive"),

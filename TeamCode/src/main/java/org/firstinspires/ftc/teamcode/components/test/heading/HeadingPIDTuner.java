@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test.heading;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
@@ -20,21 +21,27 @@ import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
  * This is saved in desiredHeading.
  * Then, the actual heading of the bot (based on gyro) is passed into the controller, and a value is returned!
  */
+
+@Config
 @Autonomous(name = "Heading PID Tuner", group = "tuner")
 public class HeadingPIDTuner extends OpMode {
 
+    // P = 0.05
+    // I = 0
+    // D = 0.0032
+
     private BCGyro gyro;
 
-    private static double desiredHeading;
+    public static double desiredHeading;
 
     // TODO: Tune this
     private static double turnConstant = 0;
     // TODO: Tune this
     private PIDController pid = new PIDController(0, 0, 0);
 
-    private static double kp = 0;
-    private static double ki = 0;
-    private static double kd = 0;
+    public static double kp = 0;
+    public static double ki = 0;
+    public static double kd = 0;
 
     private static double currentHeading = 0;
 
@@ -57,10 +64,23 @@ public class HeadingPIDTuner extends OpMode {
     public void loop() {
         pid.setPID(kp, ki, kd);
         currentHeading = gyro.getHeading();
-        pid.calculate(currentHeading);
+        pid.setSetPoint(desiredHeading);
+        double difference = Math.abs(desiredHeading - currentHeading);
+        double modifiedHeading = currentHeading;
+        double value;
+        if (difference > 180){
+            value = 360;
+            int sign = desiredHeading > currentHeading ? -1 : 1;
+            modifiedHeading = desiredHeading + sign * (360 - difference);
+        }
+        else {
+            value = 0;
+        }
+        telemetry.addData("value ", value);
 
-        drive.driveRobotCentric(0, pid.calculate(currentHeading), 0);
+        drive.driveRobotCentric(0, 0, pid.calculate(modifiedHeading));
         telemetry.addData("Current heading ", currentHeading);
+        telemetry.addData("Modified heading ", modifiedHeading);
         telemetry.addData("Desired heading ", desiredHeading);
     }
 }

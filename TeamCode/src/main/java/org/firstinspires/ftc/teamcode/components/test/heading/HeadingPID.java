@@ -27,7 +27,7 @@ public class HeadingPID {
     // TODO: Tune this
     private static final double turnConstant = 0;
     // TODO: Tune this
-    private final PIDController pid = new PIDController(0, 0, 0);
+    private final PIDController pid = new PIDController(0.05, 0, 0.0032);
 
 //    private MecanumDriveOdometry odo;
 
