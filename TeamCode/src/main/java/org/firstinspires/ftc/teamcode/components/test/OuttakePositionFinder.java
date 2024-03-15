@@ -19,7 +19,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name = "Outtake Servo Position Finder", group = "outtake-test")
 public class OuttakePositionFinder extends OpMode {
-    private final GamepadEx gamepad = new GamepadEx(gamepad1);
+    private GamepadEx gamepad;
 
     private ServoEx testServo;
 
@@ -27,6 +27,7 @@ public class OuttakePositionFinder extends OpMode {
 
     @Override
     public void init() {
+        gamepad = new GamepadEx(gamepad1);
         testServo = new SimpleServo(hardwareMap, "outtake_servo", 0, 360);
     }
 

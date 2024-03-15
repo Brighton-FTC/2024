@@ -5,7 +5,8 @@ import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.PSButtons;
+import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
+
 
 /**
  * OpMode to test the functionality of the grabber.
@@ -39,5 +40,6 @@ public class OuttakeFunctionalityTester extends OpMode {
         }
 
         telemetry.addLine(outtakeComponent.isClosed() ? "Outtake Closed" : "Outtake Open");
+        telemetry.addData("Servo angle", outtakeComponent.getServo().getAngle());
     }
 }

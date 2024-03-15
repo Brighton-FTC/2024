@@ -1,17 +1,19 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.hardware.ServoEx;
 
 /**
  * Code to open/close outtake, and tilt outtake. <br />
  */
 
+@Config
 public class OuttakeComponent {
     // TODO: fill in these values
-    public static final int OUTTAKE_CLOSED_POSITION = 0;
-    public static final int OUTTAKE_OPEN_POSITION = 90;
-    public static final int RELEASE_TIME = 500;
-    public static final int RELEASE_ALL_TIME = 1000;
+    public static double RELEASE_ANGLE = 5;
+    public static double RELEASE_ALL_ANGLE = 15;
+
+    public static long SERVO_SLEEP_TIME = 200;
 
     private final ServoEx outtakeServo;
 
@@ -24,39 +26,27 @@ public class OuttakeComponent {
      */
     public OuttakeComponent(ServoEx outtakeServo) {
         this.outtakeServo = outtakeServo;
-        this.outtakeServo.setRange(OUTTAKE_CLOSED_POSITION, OUTTAKE_OPEN_POSITION);
+        this.outtakeServo.setRange(0, 360);
     }
 
-    /**
-     * Open the outtake.
-     */
-    public void open() {
-        outtakeServo.turnToAngle(OUTTAKE_OPEN_POSITION);
+    public void release(double angle) {
+        outtakeServo.rotateByAngle(angle);
         isOuttakeClosed = false;
-    }
+        try {
+            Thread.sleep(SERVO_SLEEP_TIME);
+        } catch (InterruptedException e) {
 
-    /**
-     * Close the outtake.
-     */
-    public void close() {
-        outtakeServo.turnToAngle(OUTTAKE_CLOSED_POSITION);
+        }
+        outtakeServo.rotateByAngle(-angle);
         isOuttakeClosed = true;
     }
 
-    public void release(int waitTime) {
-        open();
-        try {
-            Thread.sleep(waitTime);
-        } catch (InterruptedException ignored) {}
-        close();
-    }
-
     public void releasePixel() {
-        release(RELEASE_TIME);
+        release(RELEASE_ANGLE);
     }
 
     public void releaseAllPixels() {
-        release(RELEASE_ALL_TIME);
+        release(RELEASE_ALL_ANGLE);
     }
 
     /**
