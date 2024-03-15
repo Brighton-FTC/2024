@@ -61,8 +61,14 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 		this.contours = new ArrayList<>();
 
 		// These are very tight ranges for the blue indicator
-		this.lower = new Scalar(80, 10, 150); // the lower hsv threshold for your detection
-		this.upper = new Scalar(110, 100, 255); // the upper hsv threshold for your detection
+//		this.lower = new Scalar(90, 220, 160); // the lower hsv threshold for your detection
+//		this.upper = new Scalar(120, 255, 215); // the upper hsv threshold for your detection
+
+//		this.lower = new Scalar(90, 150, 180); // the lower hsv threshold for your detection
+//		this.upper = new Scalar(120, 255, 245); // the upper hsv threshold for your detection
+
+ 		this.lower = new Scalar(90, 150, 125); // the lower hsv threshold for your detection
+		this.upper = new Scalar(120, 255, 235); // the upper hsv threshold for your detection
 
 //		// These are very tight ranges for the red indicator
 //		this.lower = new Scalar(350, 160, 90); // the lower hsv threshold for your detection
@@ -117,6 +123,9 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 	public double getLargestContourArea() {
 		return largestContourArea;
 	}
+
+	private int row = 100;
+	private int col = 120;
 	
 	@Override
 	public Object processFrame(Mat frame, long captureTimeNanos) {
@@ -126,10 +135,11 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 		// this converts the frame from RGB to HSV, which is supposed to be better for doing colour blob detection
 		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2HSV);
 		// thats why you need to give your scalar upper and lower bounds as HSV values
+		telemetry.addData("H: ", frame.get(row, col)[0]);
+		telemetry.addData("S: ", frame.get(row, col)[1]);
+		telemetry.addData("V: ", frame.get(row, col)[2]);
+		telemetry.addData("Size: ", frame.size());
 
-		telemetry.addData("Hello: ", frame.get(120, 160)[0]);
-		telemetry.addData("Hello: ", frame.get(120, 160)[1]);
-		telemetry.addData("Hello: ", frame.get(120, 160)[2]);
 //		telemetry.addData("Hello: ", 120);
 //		telemetry.addData("Hello: ", frame.width());
 		telemetry.update();
@@ -237,6 +247,14 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 			
 			canvas.drawLine(points[0], points[3], points[2], points[3], linePaint);
 			canvas.drawLine(points[2], points[1], points[2], points[3], linePaint);
+
+			Paint data = new Paint();
+			data.setColor(Color.RED); // you may want to change this
+			data.setAntiAlias(true);
+			data.setStrokeWidth(10); // or this
+			data.setStrokeCap(Paint.Cap.ROUND);
+			data.setStrokeJoin(Paint.Join.ROUND);
+			canvas.drawCircle(row * scaleBmpPxToCanvasPx, col * scaleBmpPxToCanvasPx, 10, data);
 			
 			String text = String.format(Locale.ENGLISH, "%s", recordedPropPosition.toString());
 			//another class not supported in EOCV
