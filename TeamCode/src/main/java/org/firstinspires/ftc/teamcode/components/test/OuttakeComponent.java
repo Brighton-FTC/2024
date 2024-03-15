@@ -1,17 +1,15 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.hardware.ServoEx;
 
 /**
  * Code to open/close outtake, and tilt outtake. <br />
  */
 
-@Config
 public class OuttakeComponent {
     // TODO: fill in these values
-    public static double RELEASE_ANGLE = 5;
-    public static double RELEASE_ALL_ANGLE = 15;
+    public static final double RELEASE_ANGLE = 23;
+    public static final double RELEASE_ALL_ANGLE = 40;
 
     public static long SERVO_SLEEP_TIME = 200;
 
