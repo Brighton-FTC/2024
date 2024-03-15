@@ -60,19 +60,14 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 
 		this.contours = new ArrayList<>();
 
-		// These are very tight ranges for the blue indicator
-//		this.lower = new Scalar(90, 220, 160); // the lower hsv threshold for your detection
-//		this.upper = new Scalar(120, 255, 215); // the upper hsv threshold for your detection
-
-//		this.lower = new Scalar(90, 150, 180); // the lower hsv threshold for your detection
-//		this.upper = new Scalar(120, 255, 245); // the upper hsv threshold for your detection
-
- 		this.lower = new Scalar(90, 150, 125); // the lower hsv threshold for your detection
-		this.upper = new Scalar(120, 255, 235); // the upper hsv threshold for your detection
+		// These are very tight ranges for the blue indicatoR
+		// USE THIS
+// 		this.lower = new Scalar(90, 150, 125); // the lower hsv threshold for your detection
+//		this.upper = new Scalar(120, 255, 235); // the upper hsv threshold for your detection
 
 //		// These are very tight ranges for the red indicator
-//		this.lower = new Scalar(350, 160, 90); // the lower hsv threshold for your detection
-//		this.upper = new Scalar(20, 245, 255); // the upper hsv threshold for your detection
+		this.lower = new Scalar(355, 120, 205); // the lower hsv threshold for your detection
+		this.upper = new Scalar(20, 245, 255); // the upper hsv threshold for your detection
 
 		this.minArea = () -> 100;
 		this.left = () -> 213; // the left dividing line, in this case the left third of the frame
@@ -285,4 +280,14 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 		RIGHT,
 		UNFOUND;
 	}
+
+	// bad nums I'm keeping cuz why not
+	// 		blue old shiny 3dp prop
+	//		this.lower = new Scalar(90, 220, 160); // the lower hsv threshold for your detection
+	//		this.upper = new Scalar(120, 255, 215); // the upper hsv threshold for your detection
+
+	//		tighter ranges for pp cone, abandoned because high risk
+	//		this.lower = new Scalar(90, 150, 180); // the lower hsv threshold for your detection
+	//		this.upper = new Scalar(120, 255, 245); // the upper hsv threshold for your detection
+
 }
