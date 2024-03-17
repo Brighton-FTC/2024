@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opMode.test;
 
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.teleop.util.PlayerButton;
 import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
@@ -25,5 +26,17 @@ public class TwoPlayerTeleOp extends GenericTeleOp {
                 new PlayerButton(gamepadp1, PSButtons.CROSS), // OUTTAKE_RELEASE_ONE_PIXEL
                 new PlayerButton(gamepadp2, GamepadKeys.Button.LEFT_BUMPER) // DRONE_LEFT_RELEASE
         );
+    }
+
+    @Override
+    public void start() {
+        gamepad1.rumbleBlips(Integer.MAX_VALUE);
+        gamepad1.runLedEffect(new Gamepad.LedEffect.Builder()
+                .addStep(255, 0, 0, 100)
+                .addStep(0, 0, 0, 100)
+                .setRepeating(true)
+                .build());
+
+        super.start();
     }
 }
