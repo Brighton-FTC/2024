@@ -5,7 +5,10 @@ import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.GyroEx;
 import com.arcrobotics.ftclib.kinematics.wpilibkinematics.MecanumDriveOdometry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
 
 /**
@@ -20,21 +23,33 @@ import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
  */
 public class HeadingPID {
 
-    private BCGyro gyro;
+    private IMU gyro;
 
-    private double desiredHeading;
+    private double desiredHeading = 0;
 
     // TODO: Tune this
-    private static final double turnConstant = 0;
+    private double turnConstant = 900;
     // TODO: Tune this
     private final PIDController pid = new PIDController(0.05, 0, 0.0032);
+
+    private Telemetry telemetry;
 
 //    private MecanumDriveOdometry odo;
 
 
-    public HeadingPID(BCGyro gyro){
+    public HeadingPID(Telemetry telemetry, IMU gyro){
 //        odo = new MecanumDriveOdometry();
         this.gyro = gyro;
+        this.telemetry = telemetry;
+    }
+
+    private void resetDesiredHeading(){
+        desiredHeading = desiredHeading < 0 ? desiredHeading + 360 : desiredHeading;
+        desiredHeading = desiredHeading > 360 ? desiredHeading - 360 : desiredHeading;
+    }
+
+    public void setTurnConstant(double newConstant){
+        turnConstant = newConstant;
     }
 
     /**
@@ -46,8 +61,25 @@ public class HeadingPID {
      */
     public double runPID(double turnSpeed, double time){
         desiredHeading += turnSpeed * turnConstant * time;
+        double currentHeading = gyro.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        resetDesiredHeading();
+        if (currentHeading < 0){
+            currentHeading *= -1 ;
+        }
+        else {
+            currentHeading = 360 - currentHeading;
+        }
         pid.setSetPoint(desiredHeading);
-
-        return pid.calculate(gyro.getHeading());
+        double difference = Math.abs(desiredHeading - currentHeading);
+        double modifiedHeading = currentHeading;
+        if (difference > 180){
+            int sign = desiredHeading > currentHeading ? 1 : -1;
+            modifiedHeading = desiredHeading + sign * (360 - difference);
+        }
+        telemetry.addData("Current heading ", currentHeading);
+        telemetry.addData("Modified heading ", modifiedHeading);
+        telemetry.addData("Desired heading ", desiredHeading);
+        double output = pid.calculate(modifiedHeading);
+        return output;
     }
 }

@@ -39,9 +39,9 @@ public class HeadingPIDTuner extends OpMode {
     // TODO: Tune this
     private PIDController pid = new PIDController(0, 0, 0);
 
-    public static double kp = 0;
-    public static double ki = 0;
-    public static double kd = 0;
+    public static double kp = 0.05;
+    public static double ki = 0.001;
+    public static double kd = 0.0033;
 
     private static double currentHeading = 0;
 
@@ -70,16 +70,19 @@ public class HeadingPIDTuner extends OpMode {
         double value;
         if (difference > 180){
             value = 360;
-            int sign = desiredHeading > currentHeading ? -1 : 1;
+            int sign = desiredHeading > currentHeading ? 1 : -1;
             modifiedHeading = desiredHeading + sign * (360 - difference);
         }
         else {
             value = 0;
         }
         telemetry.addData("value ", value);
+        double output = pid.calculate(modifiedHeading);
 
-        drive.driveRobotCentric(0, 0, pid.calculate(modifiedHeading));
+
+        drive.driveRobotCentric(0, 0, output);
         telemetry.addData("Current heading ", currentHeading);
+        telemetry.addData("Output: ", output);
         telemetry.addData("Modified heading ", modifiedHeading);
         telemetry.addData("Desired heading ", desiredHeading);
     }
