@@ -13,8 +13,8 @@ public class BasicAutonomousBlue extends BasicAutonomousGeneric {
 
         aprilTagIds = new int[]{1, 2, 3};
 
-        cvLower = new Scalar(80, 10, 150);
-        cvUpper = new Scalar(110, 100, 255);
+        cvLower = new Scalar(90, 150, 125);
+        cvUpper = new Scalar(120, 255, 235);
 
         super.init();
     }
