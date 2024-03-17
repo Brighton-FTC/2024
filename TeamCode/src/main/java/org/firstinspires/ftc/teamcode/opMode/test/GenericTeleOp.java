@@ -114,19 +114,6 @@ public abstract class GenericTeleOp extends OpMode {
     }
 
     @Override
-    public void start() {
-        // prank: uncomment if wanted
-        /*
-        gamepad1.rumble(Integer.MAX_VALUE);
-        gamepad1.runLedEffect(new Gamepad.LedEffect.Builder()
-                .addStep(255, 0, 0, 100)
-                .addStep(0, 0, 0, 100)
-                .setRepeating(true)
-                .build());
-         */
-    }
-
-    @Override
     public void loop() {
         gamepadp1.readButtons();
         gamepadp2.readButtons();
