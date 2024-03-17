@@ -34,11 +34,11 @@ public class ColourMassDetectionOpMode extends OpMode {
 
 		// Steve here: Ignore the above values.
 //		// These are very tight ranges for the blue indicator
-//		Scalar lower = new Scalar(80, 10, 150); // the lower hsv threshold for your detection
-//		Scalar upper = new Scalar(110, 100, 255); // the upper hsv threshold for your detection
+// 		Scalar lower = new Scalar(90, 150, 125); // the lower hsv threshold for your detection
+//		Scalar upper = new Scalar(120, 255, 235); // the upper hsv threshold for your detection
 
 		// These are very tight ranges for the red indicator
-		Scalar lower = new Scalar(350, 160, 90); // the lower hsv threshold for your detection
+		Scalar lower = new Scalar(355, 120, 205); // the lower hsv threshold for your detection
 		Scalar upper = new Scalar(20, 245, 255); // the upper hsv threshold for your detection
 
 		double minArea = 100; // the minimum area for the detection to consider for your prop
