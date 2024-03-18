@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.components;
+package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.hardware.ServoEx;
 

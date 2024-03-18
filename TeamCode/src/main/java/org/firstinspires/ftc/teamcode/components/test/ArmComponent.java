@@ -1,8 +1,9 @@
-package org.firstinspires.ftc.teamcode.components;
+package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 
@@ -14,7 +15,9 @@ public class ArmComponent {
     private static final int f = 0;
 
     private final MotorEx armMotor;
-    private State state = State.GROUND;
+    private final ServoEx outtakeRotationServo;
+
+    private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
     private final PIDController pid = new PIDController(0, 0, 0);
@@ -37,19 +40,21 @@ public class ArmComponent {
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor, double currentVoltage) {
+    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo, double currentVoltage) {
         voltageNormalization = currentVoltage / tuningVoltage;
         this.armMotor = armMotor;
-        setTargetPosition(State.GROUND.position);
+        this.outtakeRotationServo = outtakeRotationServo;
+        setTargetPosition(State.PICKUP_GROUND.position);
     }
 
     /**
      * Call once to set the arm to a certain state. <br />
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
-    public void setState(State newState) {
+    public void setState(@NonNull State newState) {
         state = newState;
 
+        outtakeRotationServo.setPosition(newState.rotationAngle);
         setTargetPosition(state.position);
     }
 
@@ -58,11 +63,11 @@ public class ArmComponent {
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void toggle() {
-        if (state == State.GROUND) {
+        if (state == State.PICKUP_GROUND) {
             setState(State.HIGH);
 
         } else {
-            setState(State.GROUND);
+            setState(State.PICKUP_GROUND);
         }
     }
 
@@ -150,29 +155,37 @@ public class ArmComponent {
         currentVelocity = armMotor.getVelocity();
     }
 
+    public MotorEx getArmMotor() {
+        return armMotor;
+    }
+
+    public ServoEx getOuttakeRotationServo() {
+        return outtakeRotationServo;
+    }
+
     public enum State {
-        // TODO: TUNE THIS
-        // also this starts from 1 because yay
-        GROUND(2000, 0), // nothing actually leads to ground because ground is separate
-        LOW(-500, 1),
-        MIDDLE(-1000, 2),
-        HIGH(0, 3);
+        PICKUP_GROUND(-15, 0),
+        PLACE_GROUND(-470, 180),
+        LOW(-415, 230),
+        MIDDLE(-365, 220),
+        HIGH(-300, 210);
 
         public final int position;
+        public final int rotationAngle;
 
-        public final int index;
-
-        State(int position, int index) {
+        State(int position, int rotationAngle) {
             this.position = position;
-            this.index = index;
+            this.rotationAngle = rotationAngle;
         }
 
         @NonNull
         @Override
         public String toString() {
             switch (this) {
-                case GROUND:
-                    return "GROUND";
+                case PICKUP_GROUND:
+                    return "PICKUP_GROUND";
+                case PLACE_GROUND:
+                    return "PLACE_GROUND";
                 case LOW:
                     return "LOW";
                 case MIDDLE:
