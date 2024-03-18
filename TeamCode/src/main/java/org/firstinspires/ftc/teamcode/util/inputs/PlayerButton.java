@@ -37,6 +37,12 @@ public class PlayerButton {
         return gamepad.wasJustPressed(button);
     }
 
+    @NonNull
+    @Override
+    public String toString() {
+        return button.name();
+    }
+
     /**
      * A example of the null object pattern for PlayerButton - a dummy object that will do nothing.
      * It will only return the defaultBool passed to it in its constructor.
@@ -61,6 +67,12 @@ public class PlayerButton {
         @Override
         public boolean wasJustPressed() {
             return false;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return "NULL";
         }
     }
 }

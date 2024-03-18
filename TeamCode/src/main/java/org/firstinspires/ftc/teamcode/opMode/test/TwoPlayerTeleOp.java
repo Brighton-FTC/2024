@@ -26,10 +26,10 @@ public class TwoPlayerTeleOp extends GenericTeleOp {
                 new PlayerButton(gamepadp2, GamepadKeys.Button.DPAD_DOWN), // move arm to ground
 
                 new PlayerButton(gamepadp2, PSButtons.CROSS), // toggle intake
-                new PlayerButton(gamepadp2, PSButtons.CIRCLE), // turn intake off
+                new PlayerButton(gamepadp2, PSButtons.CIRCLE), // turn intake once
 
                 new PlayerButton(gamepadp2, PSButtons.TRIANGLE), // release all pixels
-                new PlayerButton(gamepadp2, PSButtons.CROSS), // release one pixel
+                new PlayerButton(gamepadp2, PSButtons.SQUARE), // release one pixel
 
                 new PlayerButton(gamepadp2, GamepadKeys.Button.RIGHT_BUMPER) // release drone
         );

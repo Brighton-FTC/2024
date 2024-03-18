@@ -28,7 +28,7 @@ public class OnePlayerTeleOp extends GenericTeleOp {
                 new PlayerButton(gamepadp1, PSButtons.CIRCLE), // turn intake once
 
                 new PlayerButton(gamepadp1, PSButtons.TRIANGLE), // release all pixels
-                new PlayerButton(gamepadp1, PSButtons.CROSS), // release one pixel
+                new PlayerButton(gamepadp1, PSButtons.SQUARE), // release one pixel
 
                 new PlayerButton(gamepadp1, GamepadKeys.Button.RIGHT_BUMPER) // release drone
         );

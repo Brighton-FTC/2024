@@ -194,14 +194,14 @@ public abstract class GenericTeleOp extends OpMode {
         if (armStateForward.wasJustPressed()) {
             int newIndex = Arrays.asList(ArmComponent.State.values()).indexOf(selectedState) + 1;
             if (newIndex > ArmComponent.State.values().length) {
-                newIndex = 0;
+                newIndex = 2; // ignore the first two states
             }
             selectedState = ArmComponent.State.values()[newIndex];
         }
 
         if (armStateBackwards.wasJustPressed()) {
             int newIndex = Arrays.asList(ArmComponent.State.values()).indexOf(arm.getState()) - 1;
-            if (newIndex < 0) {
+            if (newIndex < 2) { // ignore the first two states
                 newIndex = ArmComponent.State.values().length;
             }
             selectedState = ArmComponent.State.values()[newIndex];
