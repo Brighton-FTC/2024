@@ -3,8 +3,9 @@ package org.firstinspires.ftc.teamcode.components.test;
 import androidx.annotation.NonNull;
 
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
-import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
 
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
@@ -13,7 +14,9 @@ public class ArmComponent {
     // TODO: fill in these values
     private static final int f = 0;
 
-    private final FTCLibCachingMotorEx armMotor;
+    private final MotorEx armMotor;
+    private final ServoEx outtakeRotationServo;
+
     private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
@@ -37,9 +40,10 @@ public class ArmComponent {
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull FTCLibCachingMotorEx armMotor, double currentVoltage) {
+    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo, double currentVoltage) {
         voltageNormalization = currentVoltage / tuningVoltage;
         this.armMotor = armMotor;
+        this.outtakeRotationServo = outtakeRotationServo;
         setTargetPosition(State.PICKUP_GROUND.position);
     }
 
@@ -47,9 +51,10 @@ public class ArmComponent {
      * Call once to set the arm to a certain state. <br />
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
-    public void setState(State newState) {
+    public void setState(@NonNull State newState) {
         state = newState;
 
+        outtakeRotationServo.setPosition(newState.rotationAngle);
         setTargetPosition(state.position);
     }
 
@@ -150,17 +155,27 @@ public class ArmComponent {
         currentVelocity = armMotor.getVelocity();
     }
 
+    public MotorEx getArmMotor() {
+        return armMotor;
+    }
+
+    public ServoEx getOuttakeRotationServo() {
+        return outtakeRotationServo;
+    }
+
     public enum State {
-        PICKUP_GROUND(-15),
-        PLACE_GROUND(-470),
-        LOW(-415),
-        MIDDLE(-365),
-        HIGH(-300);
+        PICKUP_GROUND(-15, 0),
+        PLACE_GROUND(-470, 180),
+        LOW(-415, 230),
+        MIDDLE(-365, 220),
+        HIGH(-300, 210);
 
         public final int position;
+        public final int rotationAngle;
 
-        State(int position) {
+        State(int position, int rotationAngle) {
             this.position = position;
+            this.rotationAngle = rotationAngle;
         }
 
         @NonNull

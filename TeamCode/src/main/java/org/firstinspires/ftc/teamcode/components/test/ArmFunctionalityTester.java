@@ -2,12 +2,13 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.arcrobotics.ftclib.hardware.SimpleServo;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
-import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.cachingftclib.FTCLibCachingMotorEx;
 
 import java.util.List;
 
@@ -38,7 +39,8 @@ public class ArmFunctionalityTester extends OpMode {
         // this is how you get the voltage - just takes first hub
         // not sure if you should be getting average of all voltages but prob doesn't matter
         armComponent = new ArmComponent(
-                new FTCLibCachingMotorEx(hardwareMap, "arm_motor"),
+                new MotorEx(hardwareMap, "arm_motor"),
+                new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360),
                 allHubs.get(0).getInputVoltage(VoltageUnit.VOLTS)
         );
 
@@ -85,8 +87,9 @@ public class ArmFunctionalityTester extends OpMode {
         }
 
         telemetry.addData("Arm state:", armComponent.getState());
-        telemetry.addData("Selected state:", selectedState);
+        telemetry.addData("Selected state:", selectedState.toString());
         telemetry.addData("Setpoint: ", armComponent.getSetPoint());
+        telemetry.addData("Servo position", armComponent.getOuttakeRotationServo().getAngle());
         telemetry.update();
     }
 }
