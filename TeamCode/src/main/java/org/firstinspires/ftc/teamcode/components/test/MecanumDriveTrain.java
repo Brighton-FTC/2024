@@ -18,10 +18,6 @@ public class MecanumDriveTrain extends OpMode {
     private GamepadEx player1Gamepad;
 
     // P1 Controls
-    public static final GamepadKeys.Button DPAD_STRAFE_LEFT = GamepadKeys.Button.DPAD_LEFT;
-    public static final GamepadKeys.Button DPAD_STRAFE_RIGHT = GamepadKeys.Button.DPAD_RIGHT;
-    public static final GamepadKeys.Button DPAD_FORWARD = GamepadKeys.Button.DPAD_UP;
-    public static final GamepadKeys.Button DPAD_BACKWARDS = GamepadKeys.Button.DPAD_DOWN;
     public static final double DEAD_ZONE_CONSTANT = 0.2;
 
     @Override
@@ -41,7 +37,6 @@ public class MecanumDriveTrain extends OpMode {
 
         for (Motor motor : new Motor[]{frontleft, frontright, backleft, backright}) {
             motor.setRunMode(Motor.RunMode.VelocityControl);
-            motor.setInverted(!motor.getInverted());
         }
 
         player1Gamepad = new GamepadEx(gamepad1);
@@ -68,17 +63,9 @@ public class MecanumDriveTrain extends OpMode {
         telemetry.addLine();
 
         activeIntake.moveMotor();
-        double leftY = -player1Gamepad.getLeftY();
-        double leftX = -player1Gamepad.getLeftX();
-        double rightX = -player1Gamepad.getRightX();
-
-        leftX += player1Gamepad.getButton(DPAD_STRAFE_LEFT) ? 0.75 : 0;
-        leftX -= player1Gamepad.getButton(DPAD_STRAFE_RIGHT) ? 0.75 : 0;
-        leftX = Range.clip(leftX, -1, 1);
-
-        leftY += player1Gamepad.getButton(DPAD_FORWARD) ? 0.75 : 0;
-        leftY -= player1Gamepad.getButton(DPAD_BACKWARDS) ? 0.75 : 0;
-        leftY = Range.clip(leftY, -1, 1);
+        double leftY = player1Gamepad.getLeftY();
+        double leftX = player1Gamepad.getLeftX();
+        double rightX = player1Gamepad.getRightX();
 
         drive.driveRobotCentric(
                 Math.abs(leftX) > DEAD_ZONE_CONSTANT ? leftX : 0,
