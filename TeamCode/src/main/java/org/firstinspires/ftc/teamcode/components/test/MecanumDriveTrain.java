@@ -33,10 +33,7 @@ public class MecanumDriveTrain extends OpMode {
 
         for (Motor motor : new Motor[]{frontleft, frontright, backleft, backright}) {
             motor.setRunMode(Motor.RunMode.VelocityControl);
-            motor.setInverted(!motor.getInverted());
         }
-
-        frontright.setInverted(!frontright.getInverted());
 
         player1Gamepad = new GamepadEx(gamepad1);
     }
@@ -44,8 +41,8 @@ public class MecanumDriveTrain extends OpMode {
     @Override
     public void loop() {
         double leftY = player1Gamepad.getLeftY();
-        double leftX = -player1Gamepad.getLeftX();
-        double rightX = -player1Gamepad.getRightX();
+        double leftX = player1Gamepad.getLeftX();
+        double rightX = player1Gamepad.getRightX();
 
         leftX += player1Gamepad.getButton(DPAD_STRAFE_LEFT) ? 0.75 : 0;
         leftX -= player1Gamepad.getButton(DPAD_STRAFE_RIGHT) ? 0.75 : 0;
