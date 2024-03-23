@@ -14,6 +14,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 @Config
 public class ArmComponent {
+    public static final double PICKUP_SERVO_POS = 15;
+    public static final double PICKUP_ARM_POS = 0;
     private final MotorEx armMotor;
     private final ServoEx outtakeRotationServo;
 
@@ -150,6 +152,11 @@ public class ArmComponent {
         currentVelocity = armMotor.getVelocity();
     }
 
+    public void pickup() {
+        pid.setSetPoint(PICKUP_ARM_POS);
+        outtakeRotationServo.turnToAngle(PICKUP_SERVO_POS);
+    }
+
     public MotorEx getArmMotor() {
         return armMotor;
     }
@@ -160,7 +167,7 @@ public class ArmComponent {
 
     @Config
     public enum State {
-        PICKUP_GROUND(-600, 0),
+        PICKUP_GROUND(-200, 60),
         PLACE_GROUND(-1900, 180),
         LOW(-1800, 230),
         MIDDLE(-1600, 220),

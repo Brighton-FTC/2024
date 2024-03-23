@@ -51,6 +51,6 @@ public class ArmPositionFinder extends OpMode {
         armMotor.set(gamepad.getLeftX() / 2);
 
         telemetry.addData("Motor position", armMotor.getCurrentPosition());
-        telemetry.addData("Servo pos", rotationServo.getPosition());
+        telemetry.addData("Servo pos", rotationServo.getAngle());
     }
 }
