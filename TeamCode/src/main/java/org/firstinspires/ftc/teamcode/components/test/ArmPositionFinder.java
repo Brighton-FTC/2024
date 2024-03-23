@@ -24,19 +24,33 @@ public class ArmPositionFinder extends OpMode {
     private GamepadEx gamepad;
 
     private Motor armMotor;
+    private ServoEx rotationServo;
 
     @Override
     public void init() {
         armMotor = new Motor(hardwareMap, "arm_motor");
         armMotor.setRunMode(Motor.RunMode.RawPower);
         armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
+
+        rotationServo = new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360);
         gamepad = new GamepadEx(gamepad1);
     }
 
     @Override
     public void loop() {
-        armMotor.set(gamepad.getLeftX());
+        gamepad.readButtons();
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            rotationServo.rotateByAngle(-15);
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            rotationServo.rotateByAngle(15);
+        }
+
+        armMotor.set(gamepad.getLeftX() / 2);
 
         telemetry.addData("Motor position", armMotor.getCurrentPosition());
+        telemetry.addData("Servo pos", rotationServo.getPosition());
     }
 }

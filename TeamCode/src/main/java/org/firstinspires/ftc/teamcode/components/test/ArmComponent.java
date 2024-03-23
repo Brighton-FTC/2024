@@ -160,11 +160,11 @@ public class ArmComponent {
 
     @Config
     public enum State {
-        PICKUP_GROUND(-500, 0),
-        PLACE_GROUND(-1650, 180),
-        LOW(-1400, 230),
-        MIDDLE(-1240, 220),
-        HIGH(-1100, 210);
+        PICKUP_GROUND(-600, 0),
+        PLACE_GROUND(-1900, 180),
+        LOW(-1800, 230),
+        MIDDLE(-1600, 220),
+        HIGH(-1400, 210);
 
         public final int position;
         public final int rotationAngle;
