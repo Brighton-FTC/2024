@@ -8,8 +8,8 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 
 public class OuttakeComponent {
     // TODO: fill in these values
-    public static final double RELEASE_ANGLE = 23;
-    public static final double RELEASE_ALL_ANGLE = 40;
+    public static final double RELEASE_ANGLE = 40;
+    public static final double RELEASE_ALL_ANGLE = 60;
 
     public static long SERVO_SLEEP_TIME = 200;
 
