@@ -26,22 +26,13 @@ public class ArmFunctionalityTester extends OpMode {
     private ArmComponent armComponent;
     private GamepadEx gamepad;
 
-    private ArmComponent.State selectedState;
+    private ArmComponent.State selectedState = ArmComponent.State.HIGH;
 
     @Override
     public void init() {
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-
-        for (LynxModule module : allHubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-        }
-
-        // this is how you get the voltage - just takes first hub
-        // not sure if you should be getting average of all voltages but prob doesn't matter
         armComponent = new ArmComponent(
                 new MotorEx(hardwareMap, "arm_motor"),
-                new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360),
-                allHubs.get(0).getInputVoltage(VoltageUnit.VOLTS)
+                new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360)
         );
 
         gamepad = new GamepadEx(gamepad1);
@@ -86,10 +77,26 @@ public class ArmFunctionalityTester extends OpMode {
             armComponent.setState(ArmComponent.State.PICKUP_GROUND);
         }
 
+        if (gamepad.wasJustPressed(GamepadKeys.Button.Y)) {
+            armComponent.getOuttakeRotationServo().rotateByAngle(20);
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.A)) {
+            armComponent.getOuttakeRotationServo().rotateByAngle(-20);
+        }
+
+        if (gamepad.wasJustPressed(GamepadKeys.Button.X)) {
+            armComponent.getArmMotor().resetEncoder();
+        }
+
+        if (gamepad.getLeftX() > 0.2) {
+            armComponent.getArmMotor().set(gamepad.getLeftX());
+        }
+
         telemetry.addData("Arm state:", armComponent.getState());
         telemetry.addData("Selected state:", selectedState.toString());
         telemetry.addData("Setpoint: ", armComponent.getSetPoint());
+        telemetry.addData("Motor position", armComponent.getArmMotor().getCurrentPosition());
         telemetry.addData("Servo position", armComponent.getOuttakeRotationServo().getAngle());
-        telemetry.update();
     }
 }

@@ -19,6 +19,10 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 public class ArmPIDF extends OpMode {
     private PIDController controller;
 
+    public static boolean isGreaterThan = false;
+
+    public static int APEX_TICKS = 0;
+
     public static double p = 0;
     public static double i = 0;
     public static double d = 0;
@@ -51,12 +55,21 @@ public class ArmPIDF extends OpMode {
         double pid = controller.calculate(slidePos, target);
         double ff = Math.cos(Math.toRadians(target / ticks_in_degrees)) * f;
 
-        double power = pid + ff;
+        double power;
+        if (isGreaterThan) {
+            power = arm_motor.getCurrentPosition() > APEX_TICKS ? pid + ff : pid - ff;
+        } else {
+            power = arm_motor.getCurrentPosition() < APEX_TICKS ? pid + ff : pid - ff;
+        }
 
         arm_motor.setPower(power);
 
         telemetry.addData("pos ", slidePos);
+        telemetry.addData("vel", arm_motor.getVelocity());
         telemetry.addData("target ", target);
+        telemetry.addData("PID", pid);
+        telemetry.addData("FF", ff);
+        telemetry.addData("PIDF", power);
         telemetry.update();
     }
 }

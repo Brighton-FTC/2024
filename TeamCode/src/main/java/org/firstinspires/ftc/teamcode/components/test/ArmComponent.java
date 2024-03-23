@@ -2,25 +2,26 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
  */
+@Config
 public class ArmComponent {
-    // TODO: fill in these values
-    private static final int f = 0;
-
     private final MotorEx armMotor;
     private final ServoEx outtakeRotationServo;
 
     private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
-    private final PIDController pid = new PIDController(0, 0, 0);
+    private static final double kP = 0.018;
+    private final PIDController pid = new PIDController(kP, 0, 0);
 
     // we are using hd on arm yes
     // got this from LRR drive constants page
@@ -30,19 +31,14 @@ public class ArmComponent {
 
     private double currentPosition;
 
-    // TODO: Replace this with the voltage that we tuned the arm at.
-    private final double tuningVoltage = 12.;
-
-    private final double voltageNormalization;
-
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo, double currentVoltage) {
-        voltageNormalization = currentVoltage / tuningVoltage;
+    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo) {
         this.armMotor = armMotor;
+        this.armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         this.outtakeRotationServo = outtakeRotationServo;
         setTargetPosition(State.PICKUP_GROUND.position);
     }
@@ -54,7 +50,7 @@ public class ArmComponent {
     public void setState(@NonNull State newState) {
         state = newState;
 
-        outtakeRotationServo.setPosition(newState.rotationAngle);
+//        outtakeRotationServo.setPosition(newState.rotationAngle);
         setTargetPosition(state.position);
     }
 
@@ -112,10 +108,9 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * f;
+//        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * ff;
 
-        // essentially, voltage normalization is adjusting the motor input for the current voltage supplied by the battery
-        armMotor.set((pid.calculate(currentPosition) + ff) / voltageNormalization);
+        armMotor.set((pid.calculate(currentPosition)));
     }
 
     /**
@@ -163,12 +158,13 @@ public class ArmComponent {
         return outtakeRotationServo;
     }
 
+    @Config
     public enum State {
-        PICKUP_GROUND(-15, 0),
-        PLACE_GROUND(-470, 180),
-        LOW(-415, 230),
-        MIDDLE(-365, 220),
-        HIGH(-300, 210);
+        PICKUP_GROUND(-500, 0),
+        PLACE_GROUND(-1650, 180),
+        LOW(-1400, 230),
+        MIDDLE(-1240, 220),
+        HIGH(-1100, 210);
 
         public final int position;
         public final int rotationAngle;

@@ -29,9 +29,8 @@ public class ArmPositionFinder extends OpMode {
     public void init() {
         armMotor = new Motor(hardwareMap, "arm_motor");
         armMotor.setRunMode(Motor.RunMode.RawPower);
+        armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         gamepad = new GamepadEx(gamepad1);
-
-        System.out.println(gamepad1 == null);
     }
 
     @Override
