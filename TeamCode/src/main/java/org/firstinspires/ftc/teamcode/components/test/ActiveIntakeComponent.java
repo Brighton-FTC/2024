@@ -10,7 +10,7 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  * Call {@link #turnContinually()} or {@link #turnManually()} once and then call {@link #moveMotor()} continuously to move the motor.
  */
 public class ActiveIntakeComponent {
-    public static final double MOTOR_SPEED = 0.5;
+    public static final double MOTOR_SPEED = 1;
     public static final int TURN_MANUALLY_DEGREES = 270;
 
     private State state = State.OFF;
