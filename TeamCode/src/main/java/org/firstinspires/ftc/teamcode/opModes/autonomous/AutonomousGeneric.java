@@ -18,7 +18,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor.PropPositions;
@@ -48,7 +47,6 @@ public class AutonomousGeneric extends LinearOpMode {
 
     // overwrite in subclasses
     protected PosesContainer posesContainer;
-    protected boolean goesToPixelStackFirst;
 
     private ColourMassDetectionProcessor colorMassDetectionProcessor;
     private AprilTagProcessor aprilTag;
@@ -56,7 +54,6 @@ public class AutonomousGeneric extends LinearOpMode {
     private MecanumDrive drive;
 
     private ArmComponent arm;
-    private LinearSlideComponent linearSlide;
     private ActiveIntakeComponent activeIntake;
     private OuttakeComponent outtake;
 
@@ -80,9 +77,8 @@ public class AutonomousGeneric extends LinearOpMode {
         // initialize hardware
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "armMotor"));
-        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linearSlideMotor"), arm);
-        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "activeIntakeMotor"));
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360));
+        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"), new MotorEx(hardwareMap, "active_intake_motor_rigth"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtakeServo", 0, 360));
 
         // initialize vision

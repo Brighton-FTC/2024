@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
@@ -7,17 +12,24 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  * Call {@link #turnContinually()} or {@link #turnManually()} once and then call {@link #moveMotor()} continuously to move the motor.
  */
 public class ActiveIntakeComponent {
-    private State state;
-    private final double DEGREES_PER_TICK = 360 / 560;
-    private final MotorEx motor;
+    public static final double MOTOR_SPEED = 1;
+    public static final int TURN_MANUALLY_DEGREES = 270;
+
+    private State state = State.OFF;
+    private final double DEGREES_PER_TICK = 360.0 / 560.0;
+    private final MotorEx motor1, motor2;
 
     /**
      * Component class for active intake:
-     *
-     * @param motor The active intake motor.
      */
-    public ActiveIntakeComponent(MotorEx motor) {
-        this.motor = motor;
+    public ActiveIntakeComponent(MotorEx motor1, MotorEx motor2) {
+        this.motor1 = motor1;
+        this.motor2 = motor2;
+
+        this.motor1.setRunMode(Motor.RunMode.VelocityControl);
+        this.motor2.setRunMode(Motor.RunMode.VelocityControl);
+
+        this.motor2.setInverted(true);
     }
 
     /**
@@ -33,7 +45,8 @@ public class ActiveIntakeComponent {
     public void turnManually() {
         if (state == State.OFF) {
             state = State.TURNING_MANUALLY;
-            motor.resetEncoder();
+            motor1.resetEncoder();
+            motor2.resetEncoder();
         }
     }
 
@@ -49,15 +62,69 @@ public class ActiveIntakeComponent {
      */
     public void moveMotor() {
         if (state == State.TURNING_MANUALLY) {
-            if (motor.getCurrentPosition() >= 180 / DEGREES_PER_TICK) {
+            if (motor1.getCurrentPosition() >= TURN_MANUALLY_DEGREES / DEGREES_PER_TICK
+                    && motor2.getCurrentPosition() >= TURN_MANUALLY_DEGREES / DEGREES_PER_TICK) {
                 state = State.OFF;
             } else {
-                motor.set(1);
-
+                motor1.set(MOTOR_SPEED);
+                motor2.set(MOTOR_SPEED);
             }
         } else if (state == State.TURNING_CONTINUOUSLY) {
-            motor.set(1);
+            motor1.set(MOTOR_SPEED);
+            motor2.set(MOTOR_SPEED);
+        } else {
+            motor1.set(0);
+            motor2.set(0);
         }
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public MotorEx[] getMotors() {
+        return new MotorEx[] {motor1, motor2};
+    }
+
+    public Action turnManuallyAction() {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    turnManually();
+                    init = true;
+                }
+
+                moveMotor();
+
+                return state != State.OFF;
+            }
+        };
+    }
+
+    public Action turnContinuallyAction() {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    turnContinually();
+                    init = true;
+                }
+
+                moveMotor();
+
+                return state != State.OFF;
+            }
+        };
+    }
+
+    public Action turnMotorOffAction() {
+        return (p) -> {
+            turnMotorOff();
+            return false;
+        };
     }
 
     /**
@@ -66,6 +133,21 @@ public class ActiveIntakeComponent {
     public enum State {
         OFF,
         TURNING_MANUALLY,
-        TURNING_CONTINUOUSLY
+        TURNING_CONTINUOUSLY;
+
+        @NonNull
+        @Override
+        public String toString() {
+            switch (this) {
+                case OFF:
+                    return "OFF";
+                case TURNING_MANUALLY:
+                    return "TURNING MANUALLY";
+                case TURNING_CONTINUOUSLY:
+                    return "TURNING CONTINUOUSLY";
+                default:
+                    return "UNKNOWN";
+            }
+        }
     }
 }
