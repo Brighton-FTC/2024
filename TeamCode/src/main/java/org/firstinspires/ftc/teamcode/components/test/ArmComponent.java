@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.components.test;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
@@ -156,6 +158,24 @@ public class ArmComponent {
 
     public ServoEx getOuttakeRotationServo() {
         return outtakeRotationServo;
+    }
+
+    public Action goToStateAction(State state) {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    setState(state);
+                    init = true;
+                }
+
+                read();
+                moveToSetPoint();
+
+                return !atSetPoint();
+            }
+        };
     }
 
     @Config
