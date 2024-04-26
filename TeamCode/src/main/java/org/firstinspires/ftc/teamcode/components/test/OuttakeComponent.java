@@ -1,6 +1,11 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * Code to open/close outtake, and tilt outtake. <br />
@@ -12,6 +17,7 @@ public class OuttakeComponent {
     public static final double RELEASE_ALL_ANGLE = 40;
 
     public static long SERVO_SLEEP_TIME = 200;
+    private final ElapsedTime elapsedTime = new ElapsedTime();
 
     private final ServoEx outtakeServo;
 
@@ -28,12 +34,13 @@ public class OuttakeComponent {
     }
 
     public void release(double angle) {
+        elapsedTime.reset();
         outtakeServo.rotateByAngle(angle);
         isOuttakeClosed = false;
-        try {
-            Thread.sleep(SERVO_SLEEP_TIME);
-        } catch (InterruptedException e) {
-
+        while (elapsedTime.milliseconds() < SERVO_SLEEP_TIME) {
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {}
         }
         outtakeServo.rotateByAngle(-angle);
         isOuttakeClosed = true;
@@ -61,5 +68,29 @@ public class OuttakeComponent {
      */
     public ServoEx getServo() {
         return outtakeServo;
+    }
+
+    public Action releaseAction(double turnAngle) {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    outtakeServo.turnToAngle(turnAngle);
+                    elapsedTime.reset();
+                    init = true;
+                }
+
+                return elapsedTime.milliseconds() < SERVO_SLEEP_TIME;
+            }
+        };
+    }
+
+    public Action releasePixelAction() {
+        return releaseAction(RELEASE_ANGLE);
+    }
+
+    public Action releaseAllPixelsAction() {
+        return releaseAction(RELEASE_ALL_ANGLE);
     }
 }
