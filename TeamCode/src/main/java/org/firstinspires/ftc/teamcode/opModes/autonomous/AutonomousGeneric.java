@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
@@ -63,7 +64,6 @@ public class AutonomousGeneric extends LinearOpMode {
             placePixelsOnBackdropAction,
             intakePixelsAction,
             driveToBackdropFromSpikeMarksAction,
-            driveToCenterOfSpikeMarksAction,
             driveToBackdropFromPixelStackAction,
             driveToPixekStackAction;
 
@@ -72,8 +72,6 @@ public class AutonomousGeneric extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        posesContainer = getPosesContainer();
-
         // initialize hardware
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
@@ -98,9 +96,38 @@ public class AutonomousGeneric extends LinearOpMode {
                 .setCameraResolution(CAMERA_RESOLUTION)
                 .build();
 
-        waitForStart();
-
+        // initialize actions
+        posesContainer = getPosesContainer();
         Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
+
+        driveToCorrectSpikeMarkAction = drive.actionBuilder(drive.pose)
+                .splineTo(correctPoses.first.position, correctPoses.first.heading)
+                .build();
+
+        placePixelOnGroundAction = new SequentialAction(
+                arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
+                outtake.releasePixelAction()
+        );
+
+        placePixelsOnBackdropAction = new SequentialAction(
+                arm.goToStateAction(ArmComponent.State.HIGH),
+                outtake.releaseAllPixelsAction()
+        );
+
+        intakePixelsAction = new SequentialAction(
+                activeIntake.turnManuallyAction(),
+                activeIntake.turnManuallyAction()
+        );
+
+        driveToBackdropFromSpikeMarksAction = drive.actionBuilder(correctPoses.first)
+                .splineTo(correctPoses.second.position, correctPoses.second.heading)
+                .build();
+
+        driveToBackdropFromPixelStackAction = drive.actionBuilder(posesContainer.pixelStackPose)
+                .splineTo(posesContainer.centerBackdropPose.position, posesContainer.centerBackdropPose.heading)
+                .build();
+
+        waitForStart();
 
         Actions.runBlocking(driveToCorrectSpikeMarkAction);
         Actions.runBlocking(placePixelOnGroundAction);
