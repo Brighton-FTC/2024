@@ -13,7 +13,6 @@ class RobotColorScheme : ColorSchemeRedDark() {
     override val BOT_DIRECTION_COLOR: Color = ColorManager.COLOR_PALETTE.GRAY_900
     override val BOT_WHEEL_COLOR: Color = ColorManager.COLOR_PALETTE.WHITE
 
-    override val TRAJCETORY_PATH_COLOR: Color = ColorManager.COLOR_PALETTE.WHITE
     override val TRAJECTORY_MARKER_COLOR: Color = ColorManager.COLOR_PALETTE.RED_500
     override val TRAJECTORY_TURN_COLOR: Color = ColorManager.COLOR_PALETTE.RED_400
 }

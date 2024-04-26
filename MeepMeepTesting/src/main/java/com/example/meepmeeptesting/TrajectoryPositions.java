@@ -1,6 +1,6 @@
 package com.example.meepmeeptesting;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 
 /**
  * Class containing positions of useful places on the field.
