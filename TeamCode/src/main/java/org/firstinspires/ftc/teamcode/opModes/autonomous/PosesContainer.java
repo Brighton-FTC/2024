@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opModes.autonomous;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+
+import com.acmerobotics.roadrunner.Pose2d;
 
 /**
  * A class to house trajectories and poses.
