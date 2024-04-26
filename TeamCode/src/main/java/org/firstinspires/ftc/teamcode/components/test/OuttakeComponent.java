@@ -13,8 +13,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class OuttakeComponent {
     // TODO: fill in these values
-    public static final double RELEASE_ANGLE = 23;
-    public static final double RELEASE_ALL_ANGLE = 40;
+    public static double RELEASE_ANGLE = 23;
+    public static double RELEASE_ALL_ANGLE = 40;
 
     public static long SERVO_SLEEP_TIME = 200;
     private final ElapsedTime elapsedTime = new ElapsedTime();
