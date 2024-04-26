@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
@@ -82,6 +84,47 @@ public class ActiveIntakeComponent {
 
     public MotorEx[] getMotors() {
         return new MotorEx[] {motor1, motor2};
+    }
+
+    public Action turnManuallyAction() {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    turnManually();
+                    init = true;
+                }
+
+                moveMotor();
+
+                return state != State.OFF;
+            }
+        };
+    }
+
+    public Action turnContinuallyAction() {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    turnContinually();
+                    init = true;
+                }
+
+                moveMotor();
+
+                return state != State.OFF;
+            }
+        };
+    }
+
+    public Action turnMotorOffAction() {
+        return (p) -> {
+            turnMotorOff();
+            return false;
+        };
     }
 
     /**
