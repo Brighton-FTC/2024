@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
@@ -20,6 +21,9 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
+import org.firstinspires.ftc.teamcode.components.trajectories.Drive;
+import org.firstinspires.ftc.teamcode.components.trajectories.PosesContainer;
+import org.firstinspires.ftc.teamcode.components.trajectories.TrajectoriesFactory;
 import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor.PropPositions;
 import org.firstinspires.ftc.teamcode.util.roadRunner.MecanumDrive;
@@ -58,14 +62,18 @@ public class AutonomousGeneric extends LinearOpMode {
     private ActiveIntakeComponent activeIntake;
     private OuttakeComponent outtake;
 
+    private TrajectoriesFactory trajectoriesFactory;
+
     // TODO: define these actions
     private Action driveToCorrectSpikeMarkAction,
             placePixelOnGroundAction,
             placePixelsOnBackdropAction,
             intakePixelsAction,
+            intakeSinglePixelAction,
             driveToBackdropFromSpikeMarksAction,
             driveToBackdropFromPixelStackAction,
-            driveToPixekStackAction;
+            driveToPixelStackFromBackdropAction,
+            driveToPixelStackFromSpikeMarksAction;
 
     // these are filled in already, they're distance from camera to center of bot
     public static final Vector2d DELTA_F = new Vector2d(8.5, 0);
@@ -99,10 +107,9 @@ public class AutonomousGeneric extends LinearOpMode {
         // initialize actions
         posesContainer = getPosesContainer();
         Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
+        trajectoriesFactory = new TrajectoriesFactory(new MecanumDriveAdaptor(drive), posesContainer, drive.pose, correctPoses.first, correctPoses.second);
 
-        driveToCorrectSpikeMarkAction = drive.actionBuilder(drive.pose)
-                .splineTo(correctPoses.first.position, correctPoses.first.heading)
-                .build();
+        driveToCorrectSpikeMarkAction = trajectoriesFactory.driveToSpikeMark();
 
         placePixelOnGroundAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
@@ -119,26 +126,34 @@ public class AutonomousGeneric extends LinearOpMode {
                 activeIntake.turnManuallyAction()
         );
 
-        driveToBackdropFromSpikeMarksAction = drive.actionBuilder(correctPoses.first)
-                .splineTo(correctPoses.second.position, correctPoses.second.heading)
-                .build();
+        intakeSinglePixelAction = activeIntake.turnManuallyAction();
 
-        driveToBackdropFromPixelStackAction = drive.actionBuilder(posesContainer.pixelStackPose)
-                .splineTo(posesContainer.centerBackdropPose.position, posesContainer.centerBackdropPose.heading)
-                .build();
+        driveToBackdropFromSpikeMarksAction = trajectoriesFactory.driveToBackdropFromSpikeMarks();
+
+        driveToBackdropFromPixelStackAction = trajectoriesFactory.driveToBackdropFromPixelStack();
+
+        driveToPixelStackFromSpikeMarksAction = trajectoriesFactory.driveToPixelStackFromSpikeMarks();
+
+        driveToPixelStackFromBackdropAction = trajectoriesFactory.driveToBackdropFromPixelStack();
 
         waitForStart();
 
         Actions.runBlocking(driveToCorrectSpikeMarkAction);
         Actions.runBlocking(placePixelOnGroundAction);
-        Actions.runBlocking((drive.actionBuilder(drive.pose)
-                .splineTo(posesContainer.centerSpikeMarkPose.position, posesContainer.centerSpikeMarkPose.heading)
-                .build())); // used to standardise robot position after spike mark (as robot could be in 3 different positions.
-        Actions.runBlocking(driveToBackdropFromSpikeMarksAction);
-        Actions.runBlocking(placePixelsOnBackdropAction);
+
+        if (posesContainer.startingPose.equals(PosesContainer.BLUE_AUDIENCE_POSES.startingPose)
+                || posesContainer.startingPose.equals(PosesContainer.RED_AUDIENCE_POSES.startingPose)) {
+            Actions.runBlocking(driveToPixelStackFromSpikeMarksAction);
+            Actions.runBlocking(intakeSinglePixelAction);
+            Actions.runBlocking(driveToBackdropFromPixelStackAction);
+            Actions.runBlocking(placePixelsOnBackdropAction);
+        } else {
+            Actions.runBlocking(driveToBackdropFromSpikeMarksAction);
+            Actions.runBlocking(placePixelsOnBackdropAction);
+        }
 
         while (opModeIsActive()) {
-            Actions.runBlocking(driveToPixekStackAction);
+            Actions.runBlocking(driveToPixelStackFromBackdropAction);
             Actions.runBlocking(intakePixelsAction);
             Actions.runBlocking(driveToBackdropFromPixelStackAction);
             Actions.runBlocking(placePixelsOnBackdropAction);
@@ -147,7 +162,14 @@ public class AutonomousGeneric extends LinearOpMode {
         visionPortal.close();
     }
 
-    private double distance(Vector2d u, Vector2d v) {
+    /**
+     * Get the distance between two {@link Vector2d} objects.
+     *
+     * @param u The first vector.
+     * @param v The second vector.
+     * @return The distance between them (using pythagoras' theorem).
+     */
+    private double distance(@NonNull Vector2d u, @NonNull Vector2d v) {
         return Math.hypot(u.x - v.x, u.y - v.y);
     }
 
@@ -183,6 +205,11 @@ public class AutonomousGeneric extends LinearOpMode {
         }
     }
 
+    /**
+     * Get the correct poses for the spike mark and backdrop.
+     *
+     * @return The poses, as a {@link Pair} of <code>[spike mark pose, backdrop pose]</code>
+     */
     @NonNull
     private Pair<Pose2d, Pose2d> getCorrectPoses() {
         PropPositions propPosition = colorMassDetectionProcessor.getRecordedPropPosition();
@@ -196,6 +223,19 @@ public class AutonomousGeneric extends LinearOpMode {
 
         } else { // middle or not found
             return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.centerBackdropPose);
+        }
+    }
+
+    private static class MecanumDriveAdaptor implements Drive {
+        private final MecanumDrive drive;
+
+        public MecanumDriveAdaptor(MecanumDrive drive) {
+            this.drive = drive;
+        }
+
+        @Override
+        public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
+            return drive.actionBuilder(beginPose);
         }
     }
 }

@@ -1,5 +1,7 @@
-package org.firstinspires.ftc.teamcode.opModes.autonomous;
+package org.firstinspires.ftc.teamcode.components.trajectories;
 
+
+import androidx.annotation.Nullable;
 
 import com.acmerobotics.roadrunner.Pose2d;
 
