@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.components.trajectories;
+package com.example.meepmeeptesting.trajectories;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;

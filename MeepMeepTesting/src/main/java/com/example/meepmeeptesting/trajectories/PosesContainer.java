@@ -1,7 +1,5 @@
-package org.firstinspires.ftc.teamcode.components.trajectories;
+package com.example.meepmeeptesting.trajectories;
 
-
-import androidx.annotation.Nullable;
 
 import com.acmerobotics.roadrunner.Pose2d;
 
@@ -17,9 +15,9 @@ public class PosesContainer {
             new Pose2d(-35, -30, Math.toRadians(0)),
             new Pose2d(-35, -30, Math.toRadians(90)),
 
-            new Pose2d(60, 30, Math.toRadians(180)),
-            new Pose2d(60, 40, Math.toRadians(180)),
-            new Pose2d(60, 35, Math.toRadians(180)),
+            new Pose2d(60, -30, Math.toRadians(180)),
+            new Pose2d(60, -40, Math.toRadians(180)),
+            new Pose2d(60, -35, Math.toRadians(180)),
 
             new Pose2d(-60, -23, Math.toRadians(180)),
             new Pose2d(60, -60, Math.toRadians(180))
@@ -32,9 +30,9 @@ public class PosesContainer {
             new Pose2d(10, -30, Math.toRadians(0)),
             new Pose2d(10, -30, Math.toRadians(90)),
 
-            new Pose2d(60, 30, Math.toRadians(180)),
-            new Pose2d(60, 40, Math.toRadians(180)),
-            new Pose2d(60, 35, Math.toRadians(180)),
+            new Pose2d(60, -30, Math.toRadians(180)),
+            new Pose2d(60, -40, Math.toRadians(180)),
+            new Pose2d(60, -35, Math.toRadians(180)),
 
             new Pose2d(-60, -23, Math.toRadians(180)),
             new Pose2d(60, -60, Math.toRadians(180))
@@ -69,6 +67,12 @@ public class PosesContainer {
             new Pose2d(60, 60, Math.toRadians(180))
     );
 
+    public static final PosesContainer[] POSES = {RED_AUDIENCE_POSES, RED_FAR_SIDE_POSES, BLUE_AUDIENCE_POSES, BLUE_FAR_SIDE_POSES};
+    public static final PosesContainer[] RED_POSES = {RED_AUDIENCE_POSES, RED_FAR_SIDE_POSES};
+    public static final PosesContainer[] BLUE_POSES = {BLUE_AUDIENCE_POSES, BLUE_FAR_SIDE_POSES};
+    public static final PosesContainer[] AUDIENCE_POSES = {RED_AUDIENCE_POSES, BLUE_AUDIENCE_POSES};
+    public static final PosesContainer[] FAR_SIDE_POSES = {RED_FAR_SIDE_POSES, BLUE_FAR_SIDE_POSES};
+
     public final Pose2d startingPose;
     public final Pose2d leftSpikeMarkPose;
     public final Pose2d rightSpikeMarkPose;
@@ -78,6 +82,10 @@ public class PosesContainer {
     public final Pose2d centerBackdropPose;
     public final Pose2d pixelStackPose;
     public final Pose2d parkPose;
+
+    // arrays are in format [left, right, center]
+    public final Pose2d[] backdropPoses;
+    public final Pose2d[] spikeMarkPoses;
 
     public PosesContainer(Pose2d startingPose,
                           Pose2d leftSpikeMarkPose,
@@ -97,5 +105,8 @@ public class PosesContainer {
         this.centerBackdropPose = centerBackdropPose;
         this.pixelStackPose = pixelStackPose;
         this.parkPose = parkPose;
+
+        this.backdropPoses = new Pose2d[]{leftBackdropPose, rightBackdropPose, centerBackdropPose};
+        this.spikeMarkPoses = new Pose2d[]{leftSpikeMarkPose, rightSpikeMarkPose, centerSpikeMarkPose};
     }
 }

@@ -1,17 +1,18 @@
-package org.firstinspires.ftc.teamcode.components.trajectories;
+package com.example.meepmeeptesting.trajectories;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-
-import org.firstinspires.ftc.teamcode.opModes.autonomous.AutonomousGeneric;
+import com.acmerobotics.roadrunner.VelConstraint;
 
 /**
  * A class for generating trajectories.
+ * TODO: fix trajectory overshoot.
  */
 public class TrajectoriesFactory {
     private final Drive drive;
     private final PosesContainer poses;
     private final Pose2d startPose, spikeMarkPose, backdropThirdPose;
+
 
     /**
      * A class for generating trajectories.
@@ -36,43 +37,43 @@ public class TrajectoriesFactory {
      * @param spikeMarkPose The spike mark that the robot should drive to.
      * @param backdropThirdPose The third of the backdrop that the robot should drive to.
      */
-    public TrajectoriesFactory(org.firstinspires.ftc.teamcode.components.trajectories.Drive drive, org.firstinspires.ftc.teamcode.components.trajectories.PosesContainer poses, Pose2d spikeMarkPose, Pose2d backdropThirdPose) {
+    public TrajectoriesFactory(Drive drive, PosesContainer poses, Pose2d spikeMarkPose, Pose2d backdropThirdPose) {
         this(drive, poses, poses.startingPose, spikeMarkPose, backdropThirdPose);
     }
 
     public Action driveToSpikeMark() {
         return drive.actionBuilder(startPose)
-                .splineTo(spikeMarkPose.position, spikeMarkPose.heading)
+                .splineToLinearHeading(spikeMarkPose, spikeMarkPose.heading)
                 .build();
     }
 
     public Action driveToBackdropFromSpikeMarks() {
         return drive.actionBuilder(spikeMarkPose)
-                .splineTo(backdropThirdPose.position, backdropThirdPose.heading)
+                .splineToLinearHeading(backdropThirdPose, backdropThirdPose.heading)
                 .build();
     }
 
     public Action driveToPixelStackFromSpikeMarks() {
         return drive.actionBuilder(spikeMarkPose)
-                .splineTo(poses.pixelStackPose.position, poses.pixelStackPose.heading)
+                .splineToLinearHeading(poses.pixelStackPose, poses.pixelStackPose.heading)
                 .build();
     }
 
     public Action driveToPixelStackFromBackdrop() {
         return drive.actionBuilder(backdropThirdPose)
-                .splineTo(poses.pixelStackPose.position, poses.pixelStackPose.heading)
+                .splineToLinearHeading(poses.pixelStackPose, poses.pixelStackPose.heading)
                 .build();
     }
 
     public Action driveToBackdropFromPixelStack() {
         return drive.actionBuilder(poses.pixelStackPose)
-                .splineTo(backdropThirdPose.position, backdropThirdPose.heading)
+                .splineToLinearHeading(backdropThirdPose, backdropThirdPose.heading)
                 .build();
     }
 
     public Action parkFromBackdrop() {
         return drive.actionBuilder(backdropThirdPose)
-                .splineTo(poses.parkPose.position, poses.parkPose.heading)
+                .splineToLinearHeading(poses.parkPose, poses.parkPose.heading)
                 .build();
     }
 }
