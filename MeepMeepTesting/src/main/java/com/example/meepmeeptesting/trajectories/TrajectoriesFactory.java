@@ -2,7 +2,6 @@ package com.example.meepmeeptesting.trajectories;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.VelConstraint;
 
 /**
  * A class for generating trajectories.
