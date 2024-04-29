@@ -2,6 +2,7 @@ package com.example.meepmeeptesting.trajectories;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
 
 /**
@@ -49,31 +50,36 @@ public class TrajectoriesFactory {
 
     public Action driveToBackdropFromSpikeMarks() {
         return drive.actionBuilder(spikeMarkPose)
-                .splineToLinearHeading(backdropThirdPose, backdropThirdPose.heading)
+                .setTangent(backdropThirdPose.heading)
+                .strafeTo(backdropThirdPose.position)
                 .build();
     }
 
     public Action driveToPixelStackFromSpikeMarks() {
         return drive.actionBuilder(spikeMarkPose)
-                .splineToLinearHeading(poses.pixelStackPose, poses.pixelStackPose.heading)
+                .setTangent(poses.pixelStackPose.heading)
+                .strafeTo(poses.pixelStackPose.position)
                 .build();
     }
 
     public Action driveToPixelStackFromBackdrop() {
         return drive.actionBuilder(backdropThirdPose)
-                .splineToLinearHeading(poses.pixelStackPose, poses.pixelStackPose.heading)
+                .setTangent(poses.pixelStackPose.heading)
+                .strafeTo(poses.pixelStackPose.position)
                 .build();
     }
 
     public Action driveToBackdropFromPixelStack() {
         return drive.actionBuilder(poses.pixelStackPose)
-                .splineToLinearHeading(backdropThirdPose, backdropThirdPose.heading)
+                .setTangent(backdropThirdPose.heading)
+                .strafeTo(backdropThirdPose.position)
                 .build();
     }
 
     public Action parkFromBackdrop() {
         return drive.actionBuilder(backdropThirdPose)
-                .splineToLinearHeading(poses.parkPose, poses.parkPose.heading)
+                .strafeTo(new Vector2d(backdropThirdPose.position.x, poses.parkPose.position.y))
+                .strafeTo(poses.parkPose.position)
                 .build();
     }
 }

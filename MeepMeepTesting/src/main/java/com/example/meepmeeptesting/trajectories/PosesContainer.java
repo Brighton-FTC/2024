@@ -15,11 +15,11 @@ public class PosesContainer {
             new Pose2d(-35, -30, Math.toRadians(0)),
             new Pose2d(-35, -30, Math.toRadians(90)),
 
-            new Pose2d(60, -30, Math.toRadians(180)),
-            new Pose2d(60, -40, Math.toRadians(180)),
-            new Pose2d(60, -35, Math.toRadians(180)),
+            new Pose2d(50, -30, Math.toRadians(180)),
+            new Pose2d(50, -40, Math.toRadians(180)),
+            new Pose2d(50, -35, Math.toRadians(180)),
 
-            new Pose2d(-60, -23, Math.toRadians(180)),
+            new Pose2d(-60, -36, Math.toRadians(180)),
             new Pose2d(60, -60, Math.toRadians(180))
     );
 
@@ -30,11 +30,11 @@ public class PosesContainer {
             new Pose2d(10, -30, Math.toRadians(0)),
             new Pose2d(10, -30, Math.toRadians(90)),
 
-            new Pose2d(60, -30, Math.toRadians(180)),
-            new Pose2d(60, -40, Math.toRadians(180)),
-            new Pose2d(60, -35, Math.toRadians(180)),
+            new Pose2d(50, -30, Math.toRadians(180)),
+            new Pose2d(50, -40, Math.toRadians(180)),
+            new Pose2d(50, -35, Math.toRadians(180)),
 
-            new Pose2d(-60, -23, Math.toRadians(180)),
+            new Pose2d(-60, -36, Math.toRadians(180)),
             new Pose2d(60, -60, Math.toRadians(180))
     );
     public static final PosesContainer BLUE_AUDIENCE_POSES = new PosesContainer(
@@ -44,26 +44,26 @@ public class PosesContainer {
             new Pose2d(-35, 30, Math.toRadians(180)),
             new Pose2d(-35, 30, Math.toRadians(270)),
 
-            new Pose2d(60, 30, Math.toRadians(180)),
-            new Pose2d(60, 40, Math.toRadians(180)),
-            new Pose2d(60, 35, Math.toRadians(180)),
+            new Pose2d(50, 30, Math.toRadians(180)),
+            new Pose2d(50, 40, Math.toRadians(180)),
+            new Pose2d(50, 35, Math.toRadians(180)),
 
-            new Pose2d(-60, 23, Math.toRadians(180)),
+            new Pose2d(-60, 36, Math.toRadians(180)),
             new Pose2d(60, 60, Math.toRadians(180))
     );
 
     public static final PosesContainer BLUE_FAR_SIDE_POSES = new PosesContainer(
-            new Pose2d(-35, 60, Math.toRadians(270)),
+            new Pose2d(10, 60, Math.toRadians(270)),
 
             new Pose2d(10, 30, Math.toRadians(0)),
             new Pose2d(10, 30, Math.toRadians(180)),
             new Pose2d(10, 30, Math.toRadians(270)),
 
-            new Pose2d(60, 30, Math.toRadians(180)),
-            new Pose2d(60, 40, Math.toRadians(180)),
-            new Pose2d(60, 35, Math.toRadians(180)),
+            new Pose2d(50, 30, Math.toRadians(180)),
+            new Pose2d(50, 40, Math.toRadians(180)),
+            new Pose2d(50, 35, Math.toRadians(180)),
 
-            new Pose2d(-60, 23, Math.toRadians(180)),
+            new Pose2d(-60, 36, Math.toRadians(180)),
             new Pose2d(60, 60, Math.toRadians(180))
     );
 
