@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.ServoEx;
@@ -16,38 +19,27 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * </ul>
  */
 
+@Config
 @TeleOp(name = "Drone Launcher Position Tester", group = "drone-test")
 public class DroneLauncherPositionFinder extends OpMode {
     private final GamepadEx gamepad = new GamepadEx(gamepad1);
 
     private ServoEx droneLauncherServo;
 
-    private int rotationAngle = 20;
+    public static int rotationAngle = 20;
 
     @Override
     public void init() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         droneLauncherServo = new SimpleServo(hardwareMap, "drone_servo", 0, 360);
     }
 
     @Override
     public void loop() {
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            rotationAngle -= 5;
-        }
-
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            rotationAngle += 5;
-        }
-
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            droneLauncherServo.rotateByAngle(rotationAngle);
-        }
-
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            droneLauncherServo.rotateByAngle(-rotationAngle);
-        }
+        droneLauncherServo.turnToAngle(rotationAngle);
 
         telemetry.addData("Rotation angle", rotationAngle);
         telemetry.addData("Motor position", droneLauncherServo.getAngle());
+        telemetry.update();
     }
 }
