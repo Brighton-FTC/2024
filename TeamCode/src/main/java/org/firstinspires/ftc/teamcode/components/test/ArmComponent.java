@@ -24,8 +24,9 @@ public class ArmComponent {
     private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
-    private static final double kP = 0.018;
-    private final PIDController pid = new PIDController(kP, 0, 0);
+    private final PIDController pid = new PIDController(0, 0, 0);
+
+    private double f = 0;
 
     // we are using hd on arm yes
     // got this from LRR drive constants page
@@ -112,7 +113,7 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-//        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * ff;
+        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * f;
 
         armMotor.set((pid.calculate(currentPosition)));
     }

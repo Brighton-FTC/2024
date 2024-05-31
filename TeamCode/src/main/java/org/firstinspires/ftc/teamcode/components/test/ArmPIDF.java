@@ -23,6 +23,9 @@ public class ArmPIDF extends OpMode {
 
     public static int APEX_TICKS = 0;
 
+    // at rest = 235 horzional = 10
+    // 0.0005 d, 0.01 p, tested without container attached
+
     public static double p = 0;
     public static double i = 0;
     public static double d = 0;
@@ -36,6 +39,8 @@ public class ArmPIDF extends OpMode {
     // CORE REV doesn't have much info on it - I found a google doc saying CORE is 288.
     // However, past me left this value as 560, so either my original source was wrong, CORE uses 560, or we aren't using CORE.
     private final double ticks_in_degrees = 288.0 / 360.0;
+
+    private static final double INITIAL_RADS = -225;
 
     private DcMotorEx arm_motor;
 
@@ -51,20 +56,22 @@ public class ArmPIDF extends OpMode {
     @Override
     public void loop() {
         controller.setPID(p, i, d);
-        int slidePos = arm_motor.getCurrentPosition();
-        double pid = controller.calculate(slidePos, target);
-        double ff = Math.cos(Math.toRadians(target / ticks_in_degrees)) * f;
+        int armPosition = arm_motor.getCurrentPosition();
+        double pid = controller.calculate(armPosition, target);
+        double ff = Math.cos(Math.toRadians(armPosition / ticks_in_degrees) - INITIAL_RADS) * f;
 
         double power;
-        if (isGreaterThan) {
-            power = arm_motor.getCurrentPosition() > APEX_TICKS ? pid + ff : pid - ff;
-        } else {
-            power = arm_motor.getCurrentPosition() < APEX_TICKS ? pid + ff : pid - ff;
-        }
+//        if (isGreaterThan) {
+//            power = arm_motor.getCurrentPosition() > APEX_TICKS ? pid + ff : pid - ff;
+//        } else {
+//            power = arm_motor.getCurrentPosition() < APEX_TICKS ? pid + ff : pid - ff;
+//        }
+
+        power = pid + ff;
 
         arm_motor.setPower(power);
 
-        telemetry.addData("pos ", slidePos);
+        telemetry.addData("pos ", armPosition);
         telemetry.addData("vel", arm_motor.getVelocity());
         telemetry.addData("target ", target);
         telemetry.addData("PID", pid);
