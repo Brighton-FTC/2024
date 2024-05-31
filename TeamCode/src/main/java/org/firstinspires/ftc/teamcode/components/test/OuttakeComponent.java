@@ -1,6 +1,11 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * Code to open/close outtake, and tilt outtake. <br />
@@ -8,9 +13,11 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 
 public class OuttakeComponent {
     // TODO: fill in these values
-    public static final int OUTTAKE_CLOSED_POSITION = 0;
-    public static final int OUTTAKE_OPEN_POSITION = 90;
-    public static final long RELEASE_TIME = 500;
+    public static double RELEASE_ANGLE = 23;
+    public static double RELEASE_ALL_ANGLE = 40;
+
+    public static long SERVO_SLEEP_TIME = 200;
+    private final ElapsedTime elapsedTime = new ElapsedTime();
 
     private final ServoEx outtakeServo;
 
@@ -23,31 +30,28 @@ public class OuttakeComponent {
      */
     public OuttakeComponent(ServoEx outtakeServo) {
         this.outtakeServo = outtakeServo;
-        this.outtakeServo.setRange(OUTTAKE_CLOSED_POSITION, OUTTAKE_OPEN_POSITION);
+        this.outtakeServo.setRange(0, 360);
     }
 
-    /**
-     * Open the outtake.
-     */
-    public void open() {
-        outtakeServo.turnToAngle(OUTTAKE_OPEN_POSITION);
+    public void release(double angle) {
+        elapsedTime.reset();
+        outtakeServo.rotateByAngle(angle);
         isOuttakeClosed = false;
-    }
-
-    /**
-     * Close the outtake.
-     */
-    public void close() {
-        outtakeServo.turnToAngle(OUTTAKE_CLOSED_POSITION);
+        while (elapsedTime.milliseconds() < SERVO_SLEEP_TIME) {
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {}
+        }
+        outtakeServo.rotateByAngle(-angle);
         isOuttakeClosed = true;
     }
 
     public void releasePixel() {
-        open();
-        try {
-            Thread.sleep(RELEASE_TIME);
-        } catch (InterruptedException ignored) {}
-        close();
+        release(RELEASE_ANGLE);
+    }
+
+    public void releaseAllPixels() {
+        release(RELEASE_ALL_ANGLE);
     }
 
     /**
@@ -64,5 +68,29 @@ public class OuttakeComponent {
      */
     public ServoEx getServo() {
         return outtakeServo;
+    }
+
+    public Action releaseAction(double turnAngle) {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    outtakeServo.turnToAngle(turnAngle);
+                    elapsedTime.reset();
+                    init = true;
+                }
+
+                return elapsedTime.milliseconds() < SERVO_SLEEP_TIME;
+            }
+        };
+    }
+
+    public Action releasePixelAction() {
+        return releaseAction(RELEASE_ANGLE);
+    }
+
+    public Action releaseAllPixelsAction() {
+        return releaseAction(RELEASE_ALL_ANGLE);
     }
 }

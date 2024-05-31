@@ -4,25 +4,31 @@ import android.util.Pair;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.example.meepmeeptesting.trajectories.Drive;
+import com.example.meepmeeptesting.trajectories.PosesContainer;
+import com.example.meepmeeptesting.trajectories.TrajectoriesFactory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.test.LinearSlideComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor;
 import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetectionProcessor.PropPositions;
-import org.firstinspires.ftc.teamcode.util.roadRunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.util.roadRunner.MecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.jetbrains.annotations.Contract;
 import org.opencv.core.Scalar;
 
 /**
@@ -46,32 +52,39 @@ public class AutonomousGeneric extends LinearOpMode {
 
     // overwrite in subclasses
     protected PosesContainer posesContainer;
-    protected boolean goesToPixelStackFirst;
 
     private ColourMassDetectionProcessor colorMassDetectionProcessor;
     private AprilTagProcessor aprilTag;
 
-    private SampleMecanumDrive drive;
+    private MecanumDrive drive;
 
     private ArmComponent arm;
-    private LinearSlideComponent linearSlide;
     private ActiveIntakeComponent activeIntake;
     private OuttakeComponent outtake;
+
+    private TrajectoriesFactory trajectoriesFactory;
+
+    // TODO: define these actions
+    private Action driveToCorrectSpikeMarkAction,
+            placePixelOnGroundAction,
+            placePixelsOnBackdropAction,
+            intakePixelsAction,
+            intakeSinglePixelAction,
+            driveToBackdropFromSpikeMarksAction,
+            driveToBackdropFromPixelStackAction,
+            driveToPixelStackFromBackdropAction,
+            driveToPixelStackFromSpikeMarksAction;
 
     // these are filled in already, they're distance from camera to center of bot
     public static final Vector2d DELTA_F = new Vector2d(8.5, 0);
 
     @Override
     public void runOpMode() throws InterruptedException {
-        posesContainer = getPosesContainer();
-
         // initialize hardware
-        drive = new SampleMecanumDrive(hardwareMap);
-        drive.setLocalizer(new AprilTagLocalizer(aprilTag));
+        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "armMotor"));
-        linearSlide = new LinearSlideComponent(new MotorEx(hardwareMap, "linearSlideMotor"), arm);
-        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "activeIntakeMotor"));
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360));
+        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"), new MotorEx(hardwareMap, "active_intake_motor_rigth"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtakeServo", 0, 360));
 
         // initialize vision
@@ -91,22 +104,73 @@ public class AutonomousGeneric extends LinearOpMode {
                 .setCameraResolution(CAMERA_RESOLUTION)
                 .build();
 
+        // initialize actions
+        posesContainer = getPosesContainer();
+        Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
+        trajectoriesFactory = new TrajectoriesFactory(new MecanumDriveAdaptor(drive), posesContainer, drive.pose, correctPoses.first, correctPoses.second);
+
+        driveToCorrectSpikeMarkAction = trajectoriesFactory.driveToSpikeMark();
+
+        placePixelOnGroundAction = new SequentialAction(
+                arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
+                outtake.releasePixelAction()
+        );
+
+        placePixelsOnBackdropAction = new SequentialAction(
+                arm.goToStateAction(ArmComponent.State.HIGH),
+                outtake.releaseAllPixelsAction()
+        );
+
+        intakePixelsAction = new SequentialAction(
+                activeIntake.turnManuallyAction(),
+                activeIntake.turnManuallyAction()
+        );
+
+        intakeSinglePixelAction = activeIntake.turnManuallyAction();
+
+        driveToBackdropFromSpikeMarksAction = trajectoriesFactory.driveToBackdropFromSpikeMarks();
+
+        driveToBackdropFromPixelStackAction = trajectoriesFactory.driveToBackdropFromPixelStack();
+
+        driveToPixelStackFromSpikeMarksAction = trajectoriesFactory.driveToPixelStackFromSpikeMarks();
+
+        driveToPixelStackFromBackdropAction = trajectoriesFactory.driveToBackdropFromPixelStack();
+
         waitForStart();
 
-        Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
+        Actions.runBlocking(driveToCorrectSpikeMarkAction);
+        Actions.runBlocking(placePixelOnGroundAction);
 
-        placePurplePixel(correctPoses.first);
-
-        if (goesToPixelStackFirst) {
-            pickUpPixel(posesContainer.pixelStackPose);
+        if (posesContainer.startingPose.equals(PosesContainer.BLUE_AUDIENCE_POSES.startingPose)
+                || posesContainer.startingPose.equals(PosesContainer.RED_AUDIENCE_POSES.startingPose)) {
+            Actions.runBlocking(driveToPixelStackFromSpikeMarksAction);
+            Actions.runBlocking(intakeSinglePixelAction);
+            Actions.runBlocking(driveToBackdropFromPixelStackAction);
+            Actions.runBlocking(placePixelsOnBackdropAction);
+        } else {
+            Actions.runBlocking(driveToBackdropFromSpikeMarksAction);
+            Actions.runBlocking(placePixelsOnBackdropAction);
         }
 
         while (opModeIsActive()) {
-            placePixel(correctPoses.second);
-            pickUpPixel(posesContainer.pixelStackPose);
+            Actions.runBlocking(driveToPixelStackFromBackdropAction);
+            Actions.runBlocking(intakePixelsAction);
+            Actions.runBlocking(driveToBackdropFromPixelStackAction);
+            Actions.runBlocking(placePixelsOnBackdropAction);
         }
 
         visionPortal.close();
+    }
+
+    /**
+     * Get the distance between two {@link Vector2d} objects.
+     *
+     * @param u The first vector.
+     * @param v The second vector.
+     * @return The distance between them (using pythagoras' theorem).
+     */
+    private double distance(@NonNull Vector2d u, @NonNull Vector2d v) {
+        return Math.hypot(u.x - v.x, u.y - v.y);
     }
 
     /**
@@ -114,25 +178,26 @@ public class AutonomousGeneric extends LinearOpMode {
      *
      * @return The corresponding poses container.
      */
+    @Nullable
     private PosesContainer getPosesContainer() {
         // TODO: fill in positions
-        Vector2d redAudience = new Vector2d();
-        Vector2d redFarSide = new Vector2d();
-        Vector2d blueAudience = new Vector2d();
-        Vector2d blueFarSide = new Vector2d();
+        Vector2d redAudience = PosesContainer.RED_AUDIENCE_POSES.startingPose.position;
+        Vector2d redFarSide = PosesContainer.RED_FAR_SIDE_POSES.startingPose.position;
+        Vector2d blueAudience = PosesContainer.BLUE_AUDIENCE_POSES.startingPose.position;
+        Vector2d blueFarSide = PosesContainer.BLUE_FAR_SIDE_POSES.startingPose.position;
 
-        Vector2d currentPosition = drive.getPoseEstimate().vec();
+        Vector2d currentPosition = drive.pose.position;
 
-        if (currentPosition.distTo(redAudience) <= STARTING_POSE_ERROR) {
+        if (distance(currentPosition, redAudience) <= STARTING_POSE_ERROR) {
             return PosesContainer.RED_AUDIENCE_POSES;
 
-        } else if (currentPosition.distTo(redFarSide) <= STARTING_POSE_ERROR) {
+        } else if (distance(currentPosition, redFarSide) <= STARTING_POSE_ERROR) {
             return PosesContainer.RED_FAR_SIDE_POSES;
 
-        } else if (currentPosition.distTo(blueAudience) <= STARTING_POSE_ERROR) {
+        } else if (distance(currentPosition, blueAudience) <= STARTING_POSE_ERROR) {
             return PosesContainer.BLUE_AUDIENCE_POSES;
 
-        } else if (currentPosition.distTo(blueFarSide) <= STARTING_POSE_ERROR) {
+        } else if (distance(currentPosition, blueFarSide) <= STARTING_POSE_ERROR) {
             return PosesContainer.BLUE_FAR_SIDE_POSES;
 
         } else {
@@ -141,96 +206,9 @@ public class AutonomousGeneric extends LinearOpMode {
     }
 
     /**
-     * Get the robot to place a purple pixel on the correct spike mark
+     * Get the correct poses for the spike mark and backdrop.
      *
-     * @param endPose The pose where the robot needs to be to place the pixel.
-     */
-    private void placePurplePixel(Pose2d endPose) {
-        drive.followTrajectory(
-                drive.trajectoryBuilder(drive.getPoseEstimate())
-                        .addTemporalMarker(0, () -> {
-                            arm.lower();
-                            linearSlide.lower();
-
-                            while (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                                arm.moveToSetPoint();
-                                linearSlide.moveToSetPoint();
-                            }
-                        })
-                        .lineToLinearHeading(endPose)
-                        .build()
-        );
-
-        outtake.releasePixel();
-    }
-
-    /**
-     * Pick up a pixel from a pixel stack.
-     *
-     * @param endPose The pose where the robot needs to be to pick up the pixel.
-     */
-    private void pickUpPixel(Pose2d endPose) {
-        drive.update();
-        drive.followTrajectory(
-                drive.trajectoryBuilder(drive.getPoseEstimate())
-                        .addTemporalMarker(0, () -> {
-                            arm.lift();
-                            linearSlide.lower();
-
-                            while (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                                arm.moveToSetPoint();
-                                linearSlide.moveToSetPoint();
-                            }
-                        })
-                        .lineToLinearHeading(endPose)
-                        .build()
-        );
-
-        activeIntake.turnManually();
-    }
-
-    /**
-     * Place a pixel on the backdrop.
-     *
-     * @param endPose The pose where the robot needs to be to place the pixel.
-     */
-    private void placePixel(Pose2d endPose) {
-        drive.update();
-        drive.followTrajectory(
-                drive.trajectoryBuilder(drive.getPoseEstimate())
-                        .addTemporalMarker(0, () -> {
-                            arm.lift();
-                            linearSlide.lift();
-
-                            while (arm.atSetPoint() && linearSlide.atSetPoint()) {
-                                arm.moveToSetPoint();
-                                linearSlide.moveToSetPoint();
-                            }
-                        })
-                        .lineToLinearHeading(endPose)
-                        .build()
-        );
-
-        activeIntake.turnManually();
-    }
-
-    /**
-     * Park the robot in the backstage area.
-     *
-     * @param endPose The place for the robot to be parked.
-     */
-    private void park(Pose2d endPose) {
-        drive.followTrajectory(
-                drive.trajectoryBuilder(drive.getPoseEstimate())
-                        .lineToLinearHeading(endPose)
-                        .build()
-        );
-    }
-
-    /**
-     * Determine which spike mark the white pixel/team prop is on.
-     *
-     * @return The poses for the correct spike mark, and the correct backdrop side.
+     * @return The poses, as a {@link Pair} of <code>[spike mark pose, backdrop pose]</code>
      */
     @NonNull
     private Pair<Pose2d, Pose2d> getCorrectPoses() {
@@ -245,6 +223,19 @@ public class AutonomousGeneric extends LinearOpMode {
 
         } else { // middle or not found
             return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.centerBackdropPose);
+        }
+    }
+
+    private static class MecanumDriveAdaptor implements Drive {
+        private final MecanumDrive drive;
+
+        public MecanumDriveAdaptor(MecanumDrive drive) {
+            this.drive = drive;
+        }
+
+        @Override
+        public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
+            return drive.actionBuilder(beginPose);
         }
     }
 }

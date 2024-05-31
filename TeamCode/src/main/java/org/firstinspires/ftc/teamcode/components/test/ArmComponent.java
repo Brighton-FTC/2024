@@ -2,59 +2,58 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+
 
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
  */
+@Config
 public class ArmComponent {
-
-//    public static final int GRABBER_ROTATE_DOWN_POSITION = -60;
-//    public static final int GRABBER_ROTATE_UP_POSITION = 220;
-
-    // TODO: fill in these values
-    public static final int ARM_LIFTED_POSITION = 0;
-    public static final int ARM_LOWERED_POSITION = 2000;
-
-    private static final double f = 0;
-
     private final MotorEx armMotor;
-    private boolean isArmLifted = false;
+    private final ServoEx outtakeRotationServo;
+
+    private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
-    private final PIDController pid = new PIDController(0, 0, 0);
+    private static final double kP = 0.018;
+    private final PIDController pid = new PIDController(kP, 0, 0);
 
-    public final double ARM_TICKS_IN_DEGREES = 288.0 / 360.0;
+    // we are using hd on arm yes
+    // got this from LRR drive constants page
+    public final double ticks_in_degrees = 560.0 / 360.0;
+
+    private double currentVelocity;
+
+    private double currentPosition;
 
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor) {
+    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo) {
         this.armMotor = armMotor;
-        setTargetPosition(ARM_LOWERED_POSITION);
+        this.armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        this.outtakeRotationServo = outtakeRotationServo;
+        setTargetPosition(State.PICKUP_GROUND.position);
     }
 
     /**
-     * Call once to set the arm to be lifted. <br />
+     * Call once to set the arm to a certain state. <br />
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
-    public void lift() {
-        isArmLifted = true;
+    public void setState(@NonNull State newState) {
+        state = newState;
 
-        setTargetPosition(ARM_LIFTED_POSITION);
-    }
-
-    /**
-     * Call once to set the arm to be lowered. <br />
-     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
-     */
-    public void lower() {
-        isArmLifted = false;
-
-        setTargetPosition(ARM_LOWERED_POSITION);
+//        outtakeRotationServo.setPosition(newState.rotationAngle);
+        setTargetPosition(state.position);
     }
 
     /**
@@ -62,18 +61,18 @@ public class ArmComponent {
      * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
      */
     public void toggle() {
-        if (isArmLifted) {
-            lower();
-        } else {
-            lift();
-        }
+        if (state == State.PICKUP_GROUND) {
+            setState(State.HIGH);
 
-        isArmLifted = !isArmLifted;
+        } else {
+            setState(State.PICKUP_GROUND);
+        }
     }
 
 
     /**
      * Directly control the movement of the arm.
+     *
      * @param velocity The velocity (-1 to 1) that the motor is set to.
      */
     public void setVelocity(double velocity) {
@@ -85,8 +84,8 @@ public class ArmComponent {
      *
      * @return If the arm is lifted or not.
      */
-    public boolean isLifted() {
-        return isArmLifted;
+    public State getState() {
+        return state;
     }
 
     /**
@@ -95,7 +94,7 @@ public class ArmComponent {
      * @return The position of the arm.
      */
     public double getArmPosition() {
-        return armMotor.getCurrentPosition();
+        return currentPosition;
     }
 
     /**
@@ -104,30 +103,33 @@ public class ArmComponent {
      * @return The velocity of the arm motor.
      */
     public double getArmVelocity() {
-        return armMotor.getVelocity();
+        return currentVelocity;
     }
 
     /**
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ARM_TICKS_IN_DEGREES)) * f;
-        armMotor.set(pid.calculate(armMotor.getCurrentPosition()) + ff);
+//        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * ff;
+
+        armMotor.set((pid.calculate(currentPosition)));
     }
 
     /**
      * Get the setpoint of the PID controller.
+     *
      * @return The setpoint of the PID Controller, in ticks.
      */
-    public double getSetPoint(){
+    public double getSetPoint() {
         return pid.getSetPoint();
     }
 
     /**
      * Get if the motor is at the setpoint.
+     *
      * @return a boolean for if the motor is at the setpoint.
      */
-    public boolean atSetPoint(){
+    public boolean atSetPoint() {
         return pid.atSetPoint();
     }
 
@@ -141,7 +143,74 @@ public class ArmComponent {
         pid.setSetPoint(position);
     }
 
-    public MotorEx getMotor() {
+    /**
+     * Reads from motors and stores data in ArmComponent.
+     * Call in every loop or encoders break.
+     */
+    public void read() {
+        currentPosition = armMotor.getCurrentPosition();
+        currentVelocity = armMotor.getVelocity();
+    }
+
+    public MotorEx getArmMotor() {
         return armMotor;
+    }
+
+    public ServoEx getOuttakeRotationServo() {
+        return outtakeRotationServo;
+    }
+
+    public Action goToStateAction(State state) {
+        return new Action() {
+            private boolean init = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (!init) {
+                    setState(state);
+                    init = true;
+                }
+
+                read();
+                moveToSetPoint();
+
+                return !atSetPoint();
+            }
+        };
+    }
+
+    @Config
+    public enum State {
+        PICKUP_GROUND(-500, 0),
+        PLACE_GROUND(-1650, 180),
+        LOW(-1400, 230),
+        MIDDLE(-1240, 220),
+        HIGH(-1100, 210);
+
+        public final int position;
+        public final int rotationAngle;
+
+        State(int position, int rotationAngle) {
+            this.position = position;
+            this.rotationAngle = rotationAngle;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            switch (this) {
+                case PICKUP_GROUND:
+                    return "PICKUP_GROUND";
+                case PLACE_GROUND:
+                    return "PLACE_GROUND";
+                case LOW:
+                    return "LOW";
+                case MIDDLE:
+                    return "MIDDLE";
+                case HIGH:
+                    return "HIGH";
+                default:
+                    return "UNKNOWN";
+            }
+        }
     }
 }
