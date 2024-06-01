@@ -3,6 +3,7 @@ package com.example.meepmeeptesting;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.example.meepmeeptesting.trajectories.Drive;
 import com.example.meepmeeptesting.trajectories.PosesContainer;
@@ -26,17 +27,16 @@ public class MeepMeepTesting {
         MeepMeep meepMeep = new MeepMeep(600);
         Constraints constraints = new Constraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15);
 
-        for (PosesContainer poses : PosesContainer.POSES) {
-            for (int randomization = 0; randomization < 3; randomization++) {
-                RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
-                        .setConstraints(constraints)
-                        .setColorScheme(Arrays.asList(PosesContainer.RED_POSES).contains(poses) ? new ColorSchemeRedLight() : new ColorSchemeBlueLight())
-                        .build();
+        for (int randomization = 0; randomization < 3; randomization++) {
+            RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
+                    .setConstraints(constraints)
+                    .setColorScheme(Arrays.asList(PosesContainer.RED_POSES).contains(PosesContainer.RED_AUDIENCE_POSES) ? new ColorSchemeRedLight() : new ColorSchemeBlueLight())
+                    .build();
 
-                bot.runAction(generateTrajectorySequence(bot.getDrive(), poses, randomization, 3, Arrays.asList(PosesContainer.AUDIENCE_POSES).contains(constraints)));
-                meepMeep.addEntity(bot);
-            }
+            bot.runAction(generateTrajectorySequence(bot.getDrive(), PosesContainer.RED_AUDIENCE_POSES, randomization, 3, Arrays.asList(PosesContainer.AUDIENCE_POSES).contains(constraints)));
+            meepMeep.addEntity(bot);
         }
+
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_LIGHT)
                 .setDarkMode(true)
@@ -78,21 +78,24 @@ public class MeepMeepTesting {
 
         List<Action> actions = new ArrayList<>();
 
-        actions.add(factory.driveToSpikeMark());
+        actions.add(factory.startToSpike());
 
         if (goesToPixelStackFirst) {
-            actions.add(factory.driveToPixelStackFromSpikeMarks());
-            actions.add(factory.driveToBackdropFromPixelStack());
+            actions.add(factory.spikeToPixel());
+            actions.add(factory.pixelToBackdrop());
+//            actions.add(factory.driveToBackdropFromPixelStack());
         } else {
-            actions.add(factory.driveToBackdropFromSpikeMarks());
+            actions.add(factory.spikeToBackdrop());
         }
 
         for (int i = 0; i < repeatTimes; i++) {
-            actions.add(factory.driveToPixelStackFromBackdrop());
-            actions.add(factory.driveToBackdropFromPixelStack());
+            actions.add(factory.backdropToPixel());
+            actions.add(new SleepAction(1.0));
+            actions.add(factory.pixelToBackdrop());
+            actions.add(new SleepAction(1.0));
         }
 
-        actions.add(factory.parkFromBackdrop());
+        actions.add(factory.park());
 
         return new SequentialAction(actions);
     }
