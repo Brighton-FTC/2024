@@ -11,14 +11,17 @@ public class PosesContainer {
     public static final PosesContainer RED_AUDIENCE_POSES = new PosesContainer(
             new Pose2d(-35, -60, Math.toRadians(90)),
 
-            new Pose2d(-35, -30, Math.toRadians(180)),
-            new Pose2d(-35, -30, Math.toRadians(0)),
-            new Pose2d(-35, -30, Math.toRadians(90)),
+            new Pose2d(-35, -32, Math.toRadians(180)),
+            new Pose2d(-35, -32, Math.toRadians(0)),
+            new Pose2d(-35, -32, Math.toRadians(90)),
 
             new Pose2d(50, -30, Math.toRadians(180)),
             new Pose2d(50, -40, Math.toRadians(180)),
             new Pose2d(50, -35, Math.toRadians(180)),
 
+//            new Pose2d(60, -30, Math.toRadians(180)),
+//            new Pose2d(60, -40, Math.toRadians(180)),
+//            new Pose2d(60, -35, Math.toRadians(180)),
             new Pose2d(-60, -36, Math.toRadians(180)),
             new Pose2d(60, -60, Math.toRadians(180))
     );
@@ -77,11 +80,19 @@ public class PosesContainer {
     public final Pose2d leftSpikeMarkPose;
     public final Pose2d rightSpikeMarkPose;
     public final Pose2d centerSpikeMarkPose;
+//    public final Pose2d spikeToBackdropPart1Pose;
+//    public final int spikeToBackdropPart1EndTangent;
+//    public final int spikeToBackdropPart1SetTangent;
+//    public final int spikeToBackdropPart2EndTangent;
     public final Pose2d leftBackdropPose;
     public final Pose2d rightBackdropPose;
     public final Pose2d centerBackdropPose;
+//    public final Pose2d backdropToPixelPart1Pose;
+//    public final int spikeToBackdropPart1EndTangent;
+//    public final int spikeToBackdropPart1Tangent;
     public final Pose2d pixelStackPose;
     public final Pose2d parkPose;
+//    public final int parkEndTangent;
 
     // arrays are in format [left, right, center]
     public final Pose2d[] backdropPoses;

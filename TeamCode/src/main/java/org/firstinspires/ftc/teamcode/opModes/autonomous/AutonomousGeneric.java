@@ -109,7 +109,7 @@ public class AutonomousGeneric extends LinearOpMode {
         Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
         trajectoriesFactory = new TrajectoriesFactory(new MecanumDriveAdaptor(drive), posesContainer, drive.pose, correctPoses.first, correctPoses.second);
 
-        driveToCorrectSpikeMarkAction = trajectoriesFactory.driveToSpikeMark();
+        driveToCorrectSpikeMarkAction = trajectoriesFactory.startToSpike();
 
         placePixelOnGroundAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
@@ -128,13 +128,13 @@ public class AutonomousGeneric extends LinearOpMode {
 
         intakeSinglePixelAction = activeIntake.turnManuallyAction();
 
-        driveToBackdropFromSpikeMarksAction = trajectoriesFactory.driveToBackdropFromSpikeMarks();
+        driveToBackdropFromSpikeMarksAction = trajectoriesFactory.spikeToBackdrop();
 
-        driveToBackdropFromPixelStackAction = trajectoriesFactory.driveToBackdropFromPixelStack();
+        driveToBackdropFromPixelStackAction = trajectoriesFactory.pixelToBackdrop();
 
-        driveToPixelStackFromSpikeMarksAction = trajectoriesFactory.driveToPixelStackFromSpikeMarks();
+        driveToPixelStackFromSpikeMarksAction = trajectoriesFactory.spikeToPixel();
 
-        driveToPixelStackFromBackdropAction = trajectoriesFactory.driveToBackdropFromPixelStack();
+        driveToPixelStackFromBackdropAction = trajectoriesFactory.pixelToBackdrop();
 
         waitForStart();
 
