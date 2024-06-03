@@ -60,15 +60,15 @@ public class MeepMeepTesting {
         switch (randomization) {
             case 0:
                 spikeMarkPose = poses.leftSpikeMarkPose;
-                backdropThirdPose = poses.leftBackdropPose;
+                backdropThirdPose = poses.cyclePoses.leftBackdropPose;
                 break;
             case 1:
                 spikeMarkPose = poses.rightSpikeMarkPose;
-                backdropThirdPose = poses.rightBackdropPose;
+                backdropThirdPose = poses.cyclePoses.rightBackdropPose;
                 break;
             case 2:
                 spikeMarkPose = poses.centerSpikeMarkPose;
-                backdropThirdPose = poses.centerBackdropPose;
+                backdropThirdPose = poses.cyclePoses.centerBackdropPose;
                 break;
             default:
                 throw new IllegalArgumentException("'randomization' must be between 0 and 2 (inclusive), but was " + randomization);

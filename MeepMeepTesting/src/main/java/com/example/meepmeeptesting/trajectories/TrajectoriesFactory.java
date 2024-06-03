@@ -56,20 +56,20 @@ public class TrajectoriesFactory {
 
     public Action spikeToPixel() {
         return drive.actionBuilder(spikeMarkPose)
-                .setTangent(poses.pixelStackPose.heading)
-                .strafeTo(poses.pixelStackPose.position)
+                .setTangent(poses.cyclePoses.pixelStackPose.heading)
+                .strafeTo(poses.cyclePoses.pixelStackPose.position)
                 .build();
     }
 
     public Action backdropToPixel() {
         return drive.actionBuilder(backdropPose)
                 .splineToSplineHeading(new Pose2d(16, -9, Math.toRadians(180)), Math.toRadians(180))
-                .splineToLinearHeading(poses.pixelStackPose, Math.toRadians(225))
+                .splineToLinearHeading(poses.cyclePoses.pixelStackPose, Math.toRadians(225))
                 .build();
     }
 
     public Action pixelToBackdrop() {
-        return drive.actionBuilder(poses.pixelStackPose)
+        return drive.actionBuilder(poses.cyclePoses.pixelStackPose)
                 .setTangent(Math.toRadians(30))
                 .splineToSplineHeading(new Pose2d(-16, -9, Math.toRadians(180)), Math.toRadians(360))
                 .setTangent(Math.toRadians(360))
@@ -79,7 +79,7 @@ public class TrajectoriesFactory {
 
     public Action park() {
         return drive.actionBuilder(backdropPose)
-                .splineToLinearHeading(poses.parkPose, Math.toRadians(0))
+                .splineToLinearHeading(poses.cyclePoses.parkPose, Math.toRadians(0))
                 .build();
     }
 }
