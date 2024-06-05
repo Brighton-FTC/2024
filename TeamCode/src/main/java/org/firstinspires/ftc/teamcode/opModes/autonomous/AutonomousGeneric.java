@@ -216,13 +216,13 @@ public class AutonomousGeneric extends LinearOpMode {
 
         // check which third of the screen the object is in
         if (propPosition == PropPositions.LEFT) {
-            return new Pair<>(posesContainer.leftSpikeMarkPose, posesContainer.leftBackdropPose);
+            return new Pair<>(posesContainer.leftSpikeMarkPose, posesContainer.cyclePoses.leftBackdropPose);
 
         } else if (propPosition == PropPositions.RIGHT) {
-            return new Pair<>(posesContainer.rightSpikeMarkPose, posesContainer.rightBackdropPose);
+            return new Pair<>(posesContainer.rightSpikeMarkPose, posesContainer.cyclePoses.rightBackdropPose);
 
         } else { // middle or not found
-            return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.centerBackdropPose);
+            return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.cyclePoses.centerBackdropPose);
         }
     }
 

@@ -57,7 +57,7 @@ public class TrajectoriesFactory {
     public Action spikeToPixel() {
         return drive.actionBuilder(spikeMarkPose)
                 .setTangent(poses.cyclePoses.pixelStackPose.heading)
-                .strafeTo(poses.cyclePoses.pixelStackPose.position)
+                .splineToLinearHeading(poses.cyclePoses.pixelStackPose, Math.toRadians(0))
                 .build();
     }
 

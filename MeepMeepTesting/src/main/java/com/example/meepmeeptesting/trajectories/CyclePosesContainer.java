@@ -30,6 +30,16 @@ public class CyclePosesContainer {
     public final Pose2d pixelStackPose;
     public final Pose2d parkPose;
 
+    public final Pose2d backdropToPixelPart1Pose;
+    public final int backdropToPixelPart1EndTangent;
+    public final int backdropToPixelPart2EndTangent;
+    public final Pose2d pixelToBackdropPart1Pose;
+    public final int pixelToBackdropPart1EndTangent;
+    public final int pixelToBackdropPart1Tangent;
+    public final int pixelToBackdropPart2EndTangent;
+    public final int pixelToBackdropPart2Tangent;
+    public final int parkEndTangent;
+
     public CyclePosesContainer(Pose2d leftBackdropPose,
                                Pose2d rightBackdropPose,
                                Pose2d centerBackdropPose,
