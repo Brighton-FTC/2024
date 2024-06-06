@@ -1,77 +1,114 @@
-package org.firstinspires.ftc.teamcode.components;
+package org.firstinspires.ftc.teamcode.components.test;
 
+import android.util.Pair;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.hardware.ServoEx;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Code to open/close outtake, and tilt outtake. <br />
  */
 
+@Config
 public class OuttakeComponent {
-    // TODO: fill in these values
-    public static final int OUTTAKE_CLOSED_POSITION = 0;
-    public static final int OUTTAKE_OPEN_POSITION = 90;
-    public static final int RELEASE_TIME = 500;
-    public static final int RELEASE_ALL_TIME = 1000;
+    // TODO: fill in these values, and then make them final.
+    public static double RELEASE_ANGLE = 90;
+    public static long RELEASE_WAIT_TIME = 500;
 
-    private final ServoEx outtakeServo;
+    private final ServoEx frontServo, backServo;
 
-    private boolean isOuttakeClosed = true;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 
     /**
      * Code to open/close outtake, and tilt outtake. <br />
-     * @param outtakeServo The servo that controls the outtake.
+     *
+     * @param frontServo The servo at the front of the outtake (nearest the intake).
+     * @param backServo  The servo at the back of the outtake (nearest the arm).
      */
-    public OuttakeComponent(ServoEx outtakeServo) {
-        this.outtakeServo = outtakeServo;
-        this.outtakeServo.setRange(OUTTAKE_CLOSED_POSITION, OUTTAKE_OPEN_POSITION);
+    public OuttakeComponent(ServoEx frontServo, ServoEx backServo) {
+        this.frontServo = frontServo;
+        this.backServo = backServo;
     }
 
     /**
-     * Open the outtake.
+     * Release all pixels.
      */
-    public void open() {
-        outtakeServo.turnToAngle(OUTTAKE_OPEN_POSITION);
-        isOuttakeClosed = false;
+    public void releaseAll() {
+        releaseBack();
+        releaseFront();
     }
 
     /**
-     * Close the outtake.
+     * Release the back pixel.
      */
-    public void close() {
-        outtakeServo.turnToAngle(OUTTAKE_CLOSED_POSITION);
-        isOuttakeClosed = true;
-    }
+    public void releaseBack() {
+        backServo.rotateByAngle(RELEASE_ANGLE);
 
-    public void release(int waitTime) {
-        open();
-        try {
-            Thread.sleep(waitTime);
-        } catch (InterruptedException ignored) {}
-        close();
-    }
-
-    public void releasePixel() {
-        release(RELEASE_TIME);
-    }
-
-    public void releaseAllPixels() {
-        release(RELEASE_ALL_TIME);
+        scheduler.schedule(() -> {
+            backServo.rotateByAngle(-RELEASE_ANGLE);
+        }, RELEASE_WAIT_TIME, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Get whether the outtake is closed.
-     * @return True if the outtake is closed, false if it is open.
+     * Release the front pixel (won't work unless back pixel has already been released).
      */
-    public boolean isClosed() {
-        return isOuttakeClosed;
+    public void releaseFront() {
+        frontServo.rotateByAngle(RELEASE_ANGLE);
+
+        scheduler.schedule(() -> {
+            frontServo.rotateByAngle(-RELEASE_ANGLE);
+        }, RELEASE_WAIT_TIME, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Get the servo.
-     * @return The outtake servo.
+     * Release all pixels (returns a {@link Action}).
      */
-    public ServoEx getServo() {
-        return outtakeServo;
+    public Action releaseAllAction() {
+        return (telemetryPacket) -> {
+            releaseAll();
+            return false;
+        };
+    }
+
+    /**
+     * Release the front pixel (returns a {@link Action}).
+     */
+    public Action releaseFrontAction() {
+        return (telemetryPacket) -> {
+            releaseFront();
+            return false;
+        };
+    }
+
+    /**
+     * Release the front pixel (returns a {@link Action}).
+     */
+    public Action releaseBackAction() {
+        return (telemetryPacket) -> {
+            releaseBack();
+            return false;
+        };
+    }
+
+    public ServoEx getFrontServo() {
+        return frontServo;
+    }
+
+    public ServoEx getBackServo() {
+        return backServo;
+    }
+
+    /**
+     * Get whether the servos are turned.
+     * @return A {@link Pair>} object, in the form [is front servo turned, is back servo turned].
+     */
+    public Pair<Boolean, Boolean> areServosTurned() {
+        return new Pair<>(frontServo.getAngle() == RELEASE_ANGLE, backServo.getAngle() == RELEASE_ANGLE);
     }
 }
