@@ -9,9 +9,8 @@ public class DroneLauncherComponent {
     ServoEx droneServo;
 
     // TODO: Tune this
-    // Should turn 120 to 180 degrees (according to engineers)
-    public static final int READY_POSITION = 90;
-    public static final int LAUNCH_POSITION = 270;
+    public static final int READY_POSITION = 180;
+    public static final int LAUNCH_POSITION = 90;
 
     private boolean droneLaunched = false;
 
@@ -34,6 +33,10 @@ public class DroneLauncherComponent {
             droneServo.turnToAngle(LAUNCH_POSITION);
             droneLaunched = true;
         }
+    }
+
+    public void reset() {
+        droneServo.turnToAngle(READY_POSITION);
     }
 
     /**
