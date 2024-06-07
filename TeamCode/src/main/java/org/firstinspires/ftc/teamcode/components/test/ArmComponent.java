@@ -9,6 +9,10 @@ import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
@@ -186,10 +190,28 @@ public class ArmComponent {
         MIDDLE(-1600),
         HIGH(-1400);
 
+        public static final List<State> CYCLE_STATES = Collections.unmodifiableList(Arrays.asList(new State[]{LOW, MIDDLE, HIGH, PLACE_GROUND}));
+
         public final int position;
 
         State(int position) {
             this.position = position;
+        }
+
+        public State next() {
+            if (CYCLE_STATES.contains(this)) {
+                return CYCLE_STATES.get(CYCLE_STATES.indexOf(this) + 1 % CYCLE_STATES.size());
+            } else {
+                return this;
+            }
+        }
+
+        public State previous() {
+            if (CYCLE_STATES.contains(this)) {
+                return CYCLE_STATES.get(CYCLE_STATES.indexOf(this) - 1 % CYCLE_STATES.size());
+            } else {
+                return this;
+            }
         }
 
         @NonNull
