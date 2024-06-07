@@ -5,7 +5,7 @@ import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.PSButtons;
+import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 
 /**
  * Code to test the functionality of the drone launcher. <br />
