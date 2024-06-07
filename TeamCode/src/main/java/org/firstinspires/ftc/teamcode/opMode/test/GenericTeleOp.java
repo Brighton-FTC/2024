@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.components.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.DroneLauncherComponent;
+import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.heading.HeadingPID;
 import org.firstinspires.ftc.teamcode.components.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.teleop.util.PlayerButton;
