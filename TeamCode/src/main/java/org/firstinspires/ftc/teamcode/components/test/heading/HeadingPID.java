@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.components.test.heading;
 
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.hardware.GyroEx;
-import com.arcrobotics.ftclib.kinematics.wpilibkinematics.MecanumDriveOdometry;
-import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.arcrobotics.ftclib.hardware.RevIMU;
+import com.qualcomm.robotcore.hardware.IMU;
 
-import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 /**
  * This class corrects for our drivetrain curving.
@@ -20,7 +18,7 @@ import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
  */
 public class HeadingPID {
 
-    private BCGyro gyro;
+    private IMU imu;
 
     private double desiredHeading;
 
@@ -32,9 +30,8 @@ public class HeadingPID {
 //    private MecanumDriveOdometry odo;
 
 
-    public HeadingPID(BCGyro gyro){
-//        odo = new MecanumDriveOdometry();
-        this.gyro = gyro;
+    public HeadingPID(IMU imu){
+        this.imu = imu;
     }
 
     /**
@@ -48,6 +45,6 @@ public class HeadingPID {
         desiredHeading += turnSpeed * turnConstant * time;
         pid.setSetPoint(desiredHeading);
 
-        return pid.calculate(gyro.getHeading());
+        return pid.calculate(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)); // TODO: see if the previously tuned values require degrees or radians
     }
 }

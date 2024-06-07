@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.teleop.util;
+package org.firstinspires.ftc.teamcode.util.teleop;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;

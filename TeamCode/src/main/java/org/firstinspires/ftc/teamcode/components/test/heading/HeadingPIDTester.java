@@ -8,8 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
-
 /**
  * This class corrects for our drivetrain curving.
  * Essentially, our (mecanum) drivetrain has minor problems driving straight and major problems strafing

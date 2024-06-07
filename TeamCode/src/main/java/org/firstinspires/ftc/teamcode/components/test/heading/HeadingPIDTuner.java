@@ -8,8 +8,6 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.teamcode.util.gyro.BCGyro;
-
 /**
  * This class corrects for our drivetrain curving.
  * Essentially, our (mecanum) drivetrain has minor problems driving straight and major problems strafing
