@@ -6,7 +6,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
@@ -16,8 +15,9 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 @Config
 public class ArmComponent {
+    public static final double PICKUP_SERVO_POS = 15;
+    public static final double PICKUP_ARM_POS = 0;
     private final MotorEx armMotor;
-    private final ServoEx outtakeRotationServo;
 
     private State state = State.PICKUP_GROUND;
 
@@ -38,10 +38,9 @@ public class ArmComponent {
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo) {
+    public ArmComponent(@NonNull MotorEx armMotor) {
         this.armMotor = armMotor;
         this.armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        this.outtakeRotationServo = outtakeRotationServo;
         setTargetPosition(State.PICKUP_GROUND.position);
     }
 
@@ -152,17 +151,18 @@ public class ArmComponent {
         currentVelocity = armMotor.getVelocity();
     }
 
-    public MotorEx getArmMotor() {
-        return armMotor;
+    public void pickup() {
+        pid.setSetPoint(PICKUP_ARM_POS);
     }
 
-    public ServoEx getOuttakeRotationServo() {
-        return outtakeRotationServo;
+    public MotorEx getArmMotor() {
+        return armMotor;
     }
 
     public Action goToStateAction(State state) {
         return new Action() {
             private boolean init = false;
+
             @Override
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                 if (!init) {
@@ -180,18 +180,16 @@ public class ArmComponent {
 
     @Config
     public enum State {
-        PICKUP_GROUND(-500, 0),
-        PLACE_GROUND(-1650, 180),
-        LOW(-1400, 230),
-        MIDDLE(-1240, 220),
-        HIGH(-1100, 210);
+        PICKUP_GROUND(-200),
+        PLACE_GROUND(-1900),
+        LOW(-1800),
+        MIDDLE(-1600),
+        HIGH(-1400);
 
         public final int position;
-        public final int rotationAngle;
 
-        State(int position, int rotationAngle) {
+        State(int position) {
             this.position = position;
-            this.rotationAngle = rotationAngle;
         }
 
         @NonNull
