@@ -2,20 +2,14 @@ package org.firstinspires.ftc.teamcode.components.test;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
-import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
-
-import java.util.List;
 
 /**
  * Code to test the functionality of the arm. <br />
  * This is an example for how to use the {@link ArmComponent} class. <br />
- *
+ * <p>
  * Controls:
  * <ul>
  *     <li>Cross - toggle arm position. </li>
@@ -31,8 +25,7 @@ public class ArmFunctionalityTester extends OpMode {
     @Override
     public void init() {
         armComponent = new ArmComponent(
-                new MotorEx(hardwareMap, "arm_motor"),
-                new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360)
+                new MotorEx(hardwareMap, "arm_motor")
         );
 
         gamepad = new GamepadEx(gamepad1);
@@ -62,7 +55,7 @@ public class ArmFunctionalityTester extends OpMode {
                 selectedState = ArmComponent.State.HIGH;
             } else if (selectedState == ArmComponent.State.HIGH) {
                 selectedState = ArmComponent.State.MIDDLE;
-            } else if (selectedState == ArmComponent.State.MIDDLE){
+            } else if (selectedState == ArmComponent.State.MIDDLE) {
                 selectedState = ArmComponent.State.LOW;
             } else {
                 selectedState = ArmComponent.State.PLACE_GROUND;
@@ -77,14 +70,6 @@ public class ArmFunctionalityTester extends OpMode {
             armComponent.setState(ArmComponent.State.PICKUP_GROUND);
         }
 
-        if (gamepad.wasJustPressed(GamepadKeys.Button.Y)) {
-            armComponent.getOuttakeRotationServo().rotateByAngle(20);
-        }
-
-        if (gamepad.wasJustPressed(GamepadKeys.Button.A)) {
-            armComponent.getOuttakeRotationServo().rotateByAngle(-20);
-        }
-
         if (gamepad.wasJustPressed(GamepadKeys.Button.X)) {
             armComponent.getArmMotor().resetEncoder();
         }
@@ -97,6 +82,5 @@ public class ArmFunctionalityTester extends OpMode {
         telemetry.addData("Selected state:", selectedState.toString());
         telemetry.addData("Setpoint: ", armComponent.getSetPoint());
         telemetry.addData("Motor position", armComponent.getArmMotor().getCurrentPosition());
-        telemetry.addData("Servo position", armComponent.getOuttakeRotationServo().getAngle());
     }
 }
