@@ -8,6 +8,9 @@ import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.example.meepmeeptesting.trajectories.Drive;
 import com.example.meepmeeptesting.trajectories.PosesContainer;
 import com.example.meepmeeptesting.trajectories.TrajectoriesFactory;
+import com.example.meepmeeptesting.util.AllianceColor;
+import com.example.meepmeeptesting.util.RandomizationState;
+import com.example.meepmeeptesting.util.StartingSide;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeBlueLight;
 import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeRedLight;
@@ -27,63 +30,47 @@ public class MeepMeepTesting {
         MeepMeep meepMeep = new MeepMeep(600);
         Constraints constraints = new Constraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15);
 
-        for (int randomization = 0; randomization < 3; randomization++) {
-            RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
-                    .setConstraints(constraints)
-                    .setColorScheme(Arrays.asList(PosesContainer.RED_POSES).contains(PosesContainer.RED_AUDIENCE_POSES) ? new ColorSchemeRedLight() : new ColorSchemeBlueLight())
-                    .build();
+        for (AllianceColor alliance : AllianceColor.values()) {
+            for (StartingSide startingSide : StartingSide.values()) {
+                for (RandomizationState randomization : RandomizationState.values()) {
+                    RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
+                            .setConstraints(constraints)
+                            .setColorScheme(alliance == AllianceColor.BLUE ? new ColorSchemeBlueLight() : new ColorSchemeRedLight())
+                            .build();
 
-            bot.runAction(generateTrajectorySequence(bot.getDrive(), PosesContainer.RED_AUDIENCE_POSES, randomization, 3, Arrays.asList(PosesContainer.AUDIENCE_POSES).contains(constraints)));
-            meepMeep.addEntity(bot);
+                    bot.runAction(generateTrajectorySequence(bot.getDrive(), alliance, startingSide, randomization, 1));
+                    meepMeep.addEntity(bot);
+                }
+
+
+                meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
+                        .setDarkMode(true)
+                        .setBackgroundAlpha(0.95f)
+                        .start();
+            }
         }
-
-
-        meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_LIGHT)
-                .setDarkMode(true)
-                .setBackgroundAlpha(0.95f)
-                .start();
     }
 
     /**
      * Generate a trajectory sequence for the autonomous.
      *
      * @param drive                 The {@link DriveShim} object to apply the trajectory on.
-     * @param poses                 The {@link Pose2d} object to draw the poses from.
-     * @param randomization         An integer from 0 to 2 (inclusive), which represents the randomization (left, right, or center).
-     * @param repeatTimes           The number of times to go to the pixel stacks and then to the backdrop after the randomization tasks have been completed.
-     * @param goesToPixelStackFirst Whether the robot goes to the pixel stack, and then finishes the randomization tasks or not.
+     * @param alliance The alliance that the robot is on.
+     * @param startingSide The side that the robot is starting on (also dictates whether the bot will go to the pixel stack or the backdrop first.
+     * @param randomization The randomization state of the game.
+     * @param repeatTimes How many times the robot will go from the backdrop to the pixel stack, and back.
      * @return An {@link Action} containing the trajectories.
      */
-    private static Action generateTrajectorySequence(DriveShim drive, PosesContainer poses, int randomization, int repeatTimes, boolean goesToPixelStackFirst) {
-        Pose2d spikeMarkPose, backdropThirdPose;
-
-        switch (randomization) {
-            case 0:
-                spikeMarkPose = poses.leftSpikeMarkPose;
-                backdropThirdPose = poses.cyclePoses.leftBackdropPose;
-                break;
-            case 1:
-                spikeMarkPose = poses.rightSpikeMarkPose;
-                backdropThirdPose = poses.cyclePoses.rightBackdropPose;
-                break;
-            case 2:
-                spikeMarkPose = poses.centerSpikeMarkPose;
-                backdropThirdPose = poses.cyclePoses.centerBackdropPose;
-                break;
-            default:
-                throw new IllegalArgumentException("'randomization' must be between 0 and 2 (inclusive), but was " + randomization);
-        }
-
-        TrajectoriesFactory factory = new TrajectoriesFactory(new DriveShimAdaptor(drive), poses, spikeMarkPose, backdropThirdPose);
+    private static Action generateTrajectorySequence(DriveShim drive, AllianceColor alliance, StartingSide startingSide, RandomizationState randomization, int repeatTimes) {
+        TrajectoriesFactory factory = new TrajectoriesFactory(new DriveShimAdaptor(drive), alliance, startingSide, randomization);
 
         List<Action> actions = new ArrayList<>();
 
         actions.add(factory.startToSpike());
 
-        if (goesToPixelStackFirst) {
+        if (startingSide == StartingSide.AUDIENCE_SIDE) {
             actions.add(factory.spikeToPixel());
             actions.add(factory.pixelToBackdrop());
-//            actions.add(factory.driveToBackdropFromPixelStack());
         } else {
             actions.add(factory.spikeToBackdrop());
         }

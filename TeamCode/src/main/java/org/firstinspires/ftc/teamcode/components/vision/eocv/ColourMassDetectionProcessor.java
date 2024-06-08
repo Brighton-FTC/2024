@@ -9,6 +9,8 @@ import android.text.TextPaint;
 
 import androidx.annotation.NonNull;
 
+import com.example.meepmeeptesting.util.RandomizationState;
+
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
 import org.firstinspires.ftc.robotcore.external.function.Continuation;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
@@ -255,11 +257,25 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 	}
 	
 	// the enum that stores the 4 possible prop positions
+	// TODO: see if this can be intergrated with the RandomizationState class.
 	public enum PropPositions {
-		LEFT,
-		MIDDLE,
-		RIGHT,
-		UNFOUND;
+		LEFT(RandomizationState.LEFT),
+		MIDDLE(RandomizationState.CENTER),
+		RIGHT(RandomizationState.RIGHT),
+		UNFOUND(RandomizationState.CENTER);
+
+		private final RandomizationState randomization;
+
+		/**
+		 * @param randomization The corresponding randomization for the prop position.
+		 */
+		PropPositions(RandomizationState randomization) {
+			this.randomization = randomization;
+		}
+
+		public RandomizationState getCorrespondingRandomization() {
+			return randomization;
+		}
 	}
 	@Override
 	public void getFrameBitmap(Continuation<? extends Consumer<Bitmap>> continuation) {
