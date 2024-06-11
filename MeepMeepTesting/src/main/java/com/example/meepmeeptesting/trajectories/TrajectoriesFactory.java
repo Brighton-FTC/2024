@@ -2,6 +2,11 @@ package com.example.meepmeeptesting.trajectories;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.example.meepmeeptesting.util.AllianceColor;
+import com.example.meepmeeptesting.util.RandomizationState;
+import com.example.meepmeeptesting.util.StartingSide;
+
+import static com.example.meepmeeptesting.trajectories.PosesContainer.*;
 
 /**
  * A class for generating trajectories.
@@ -9,70 +14,86 @@ import com.acmerobotics.roadrunner.Pose2d;
  */
 public class TrajectoriesFactory {
     private final Drive drive;
-    private final PosesContainer poses;
-    private final Pose2d startPose, spikeMarkPose, backdropThirdPose;
 
+    private final AllianceColor alliance;
+    private final StartingSide startingSide;
+    private final RandomizationState randomization;
 
     /**
      * A class for generating trajectories.
      * @param drive The {@link Drive} object to generate the trajectories for.
-     * @param poses The {@link PosesContainer} object that contains most of the poses.
-     * @param startPose The starting pose of the robot (if unspecified, will default to {@link PosesContainer#startingPose}.
-     * @param spikeMarkPose The spike mark that the robot should drive to.
-     * @param backdropThirdPose The third of the backdrop that the robot should drive to.
+     * @param alliance The {@link AllianceColor} of the robot.
+     * @param startingSide The {@link StartingSide} of the robot.
+     * @param randomization The {@link RandomizationState} of the match.
      */
-    public TrajectoriesFactory(Drive drive, PosesContainer poses, Pose2d startPose, Pose2d spikeMarkPose, Pose2d backdropThirdPose) {
+    public TrajectoriesFactory(Drive drive, AllianceColor alliance, StartingSide startingSide, RandomizationState randomization) {
         this.drive = drive;
-        this.poses = poses;
-        this.startPose = startPose;
-        this.spikeMarkPose = spikeMarkPose;
-        this.backdropThirdPose = backdropThirdPose;
+        this.alliance = alliance;
+        this.startingSide = startingSide;
+        this.randomization = randomization;
     }
 
-    /**
-     * A class for generating trajectories.
-     * @param drive The {@link Drive} object to generate the trajectories for.
-     * @param poses The {@link PosesContainer} object that contains most of the poses.
-     * @param spikeMarkPose The spike mark that the robot should drive to.
-     * @param backdropThirdPose The third of the backdrop that the robot should drive to.
-     */
-    public TrajectoriesFactory(Drive drive, PosesContainer poses, Pose2d spikeMarkPose, Pose2d backdropThirdPose) {
-        this(drive, poses, poses.startingPose, spikeMarkPose, backdropThirdPose);
-    }
+    public Action startToSpike() {
+        Pose2d startingPose = STARTING_POSES[alliance.ordinal()][startingSide.ordinal()];
+        PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
 
-    public Action driveToSpikeMark() {
-        return drive.actionBuilder(startPose)
-                .splineToLinearHeading(spikeMarkPose, spikeMarkPose.heading)
+        return drive.actionBuilder(startingPose)
+                .setTangent(spikeMarkPose.getTangent())
+                .splineToLinearHeading(spikeMarkPose.getPose2d(), spikeMarkPose.getHeading())
                 .build();
     }
 
-    public Action driveToBackdropFromSpikeMarks() {
-        return drive.actionBuilder(spikeMarkPose)
-                .splineToLinearHeading(backdropThirdPose, backdropThirdPose.heading)
+    public Action spikeToBackdrop() {
+        PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
+        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+
+        return drive.actionBuilder(spikeMarkPose.getPose2d())
+//                .splineToLinearHeading(new Pose2d(-35, -35, Math.toRadians(180)), Math.toRadians(45))
+                .setTangent(backdropPose.getTangent())
+                .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
                 .build();
     }
 
-    public Action driveToPixelStackFromSpikeMarks() {
-        return drive.actionBuilder(spikeMarkPose)
-                .splineToLinearHeading(poses.pixelStackPose, poses.pixelStackPose.heading)
+    public Action spikeToPixel() {
+        PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
+        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+
+        return drive.actionBuilder(spikeMarkPose.getPose2d())
+                .setTangent(pixelStackPose.getTangent())
+                .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
                 .build();
     }
 
-    public Action driveToPixelStackFromBackdrop() {
-        return drive.actionBuilder(backdropThirdPose)
-                .splineToLinearHeading(poses.pixelStackPose, poses.pixelStackPose.heading)
+    public Action backdropToPixel() {
+        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+
+        return drive.actionBuilder(backdropPose.getPose2d())
+//                .splineToSplineHeading(new Pose2d(16, -9, Math.toRadians(180)), Math.toRadians(180))
+                .setTangent(pixelStackPose.getTangent())
+                .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
                 .build();
     }
 
-    public Action driveToBackdropFromPixelStack() {
-        return drive.actionBuilder(poses.pixelStackPose)
-                .splineToLinearHeading(backdropThirdPose, backdropThirdPose.heading)
+    public Action pixelToBackdrop() {
+        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+
+        return drive.actionBuilder(pixelStackPose.getPose2d())
+//                .setTangent(Math.toRadians(30))
+//                .splineToSplineHeading(new Pose2d(-16, -9, Math.toRadians(180)), Math.toRadians(360))
+                .setTangent(backdropPose.getTangent())
+                .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
                 .build();
     }
 
-    public Action parkFromBackdrop() {
-        return drive.actionBuilder(backdropThirdPose)
-                .splineToLinearHeading(poses.parkPose, poses.parkPose.heading)
+    public Action park() {
+        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+        PoseWithAngles parkPose = PARK_POSES[alliance.ordinal()];
+
+        return drive.actionBuilder(backdropPose.getPose2d())
+                .setTangent(parkPose.getTangent())
+                .splineToLinearHeading(parkPose.getPose2d(), parkPose.getHeading())
                 .build();
     }
 }

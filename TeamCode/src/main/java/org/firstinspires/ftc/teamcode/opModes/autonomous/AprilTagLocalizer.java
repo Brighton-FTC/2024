@@ -23,7 +23,7 @@ public class AprilTagLocalizer implements Localizer {
 
     private IMU imu;
 
-    private Pose2d currentPose = new Pose2d();
+    public Pose2d currentPose = new Pose2d();
 
     public AprilTagLocalizer(AprilTagProcessor aprilTag) {
         this.aprilTag = aprilTag;
@@ -50,10 +50,11 @@ public class AprilTagLocalizer implements Localizer {
     public void update() {
         List<AprilTagDetection> detections = aprilTag.getDetections()
                 .stream()
-                .filter(detection -> detection.metadata != null)
+//                .filter(detection -> detection.metadata != null)
                 .collect(Collectors.toList());
 
         if (detections.isEmpty()) {
+            currentPose = null;
             return;
         }
 
@@ -62,9 +63,18 @@ public class AprilTagLocalizer implements Localizer {
         Vector2d cameraVector = new Vector2d(aprilTag.ftcPose.y, -aprilTag.ftcPose.x);
         VectorF tagPosition = aprilTag.metadata.fieldPosition;
         Vector2d rTag = new Vector2d(tagPosition.get(0),tagPosition.get(1));
-        Vector2d returnVector = rTag.minus(DELTA_F);
-        returnVector = returnVector.minus(cameraVector);
+        double yaw;
+        if (aprilTag.metadata.id <= 6) {yaw = 90;}
+        else {yaw = -90;}
+        Vector2d returnVector = rTag.minus(DELTA_F).minus(cameraVector).rotated(-aprilTag.ftcPose.yaw + yaw);
         currentPose = new Pose2d(returnVector,
-                Math.toRadians(-aprilTag.ftcPose.yaw));
+                Math.toRadians(-aprilTag.ftcPose.yaw + yaw));
     }
 }
+
+//        double w = aprilTag.metadata.fieldOrientation.w;
+//        double x = aprilTag.metadata.fieldOrientation.x;
+//        double y = aprilTag.metadata.fieldOrientation.y;
+//        double z = aprilTag.metadata.fieldOrientation.z;
+//
+//        double yaw = Math.atan2(2.0*(y*z + w*x), w * w - x * x - y * y + z * z);
