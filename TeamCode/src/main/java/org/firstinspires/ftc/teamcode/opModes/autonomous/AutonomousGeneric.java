@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.teamcode.opModes.autonomous;
 
-import android.util.Pair;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -17,6 +15,9 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.example.meepmeeptesting.trajectories.Drive;
 import com.example.meepmeeptesting.trajectories.PosesContainer;
 import com.example.meepmeeptesting.trajectories.TrajectoriesFactory;
+import com.example.meepmeeptesting.util.AllianceColor;
+import com.example.meepmeeptesting.util.RandomizationState;
+import com.example.meepmeeptesting.util.StartingSide;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -39,8 +40,7 @@ import org.opencv.core.Scalar;
  * <br />
  */
 
-@Autonomous(name = "Autonomous Generic", group = "autonomous-test")
-public class AutonomousGeneric extends LinearOpMode {
+public abstract class AutonomousGeneric extends LinearOpMode {
     // TODO: replace with custom tfod values if needed
     public static final Size CAMERA_RESOLUTION = new Size(640, 480);
 
@@ -64,19 +64,27 @@ public class AutonomousGeneric extends LinearOpMode {
 
     private TrajectoriesFactory trajectoriesFactory;
 
-    // TODO: define these actions
-    private Action driveToCorrectSpikeMarkAction,
-            placePixelOnGroundAction,
-            placePixelsOnBackdropAction,
-            intakePixelsAction,
-            intakeSinglePixelAction,
-            driveToBackdropFromSpikeMarksAction,
-            driveToBackdropFromPixelStackAction,
-            driveToPixelStackFromBackdropAction,
-            driveToPixelStackFromSpikeMarksAction;
+    private Action placePixelOnGroundAction;
+    private Action placePixelsOnBackdropAction;
+    private Action intakeSinglePixelAction;
+    private Action driveToBackdropFromSpikeMarksAction;
+    private Action driveToPixelStackFromBackdropAction;
+    private Action driveToPixelStackFromSpikeMarksAction;
 
     // these are filled in already, they're distance from camera to center of bot
     public static final Vector2d DELTA_F = new Vector2d(8.5, 0);
+
+    private final AllianceColor alliance;
+    private final StartingSide startingSide;
+    private RandomizationState randomization;
+
+    protected AutonomousGeneric(AllianceColor alliance, StartingSide startingSide) {
+        super();
+
+        this.alliance = alliance;
+        this.startingSide = startingSide;
+    }
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -105,11 +113,11 @@ public class AutonomousGeneric extends LinearOpMode {
                 .build();
 
         // initialize actions
-        posesContainer = getPosesContainer();
-        Pair<Pose2d, Pose2d> correctPoses = getCorrectPoses();
-        trajectoriesFactory = new TrajectoriesFactory(new MecanumDriveAdaptor(drive), posesContainer, drive.pose, correctPoses.first, correctPoses.second);
+        randomization = getRandomization();
 
-        driveToCorrectSpikeMarkAction = trajectoriesFactory.startToSpike();
+        trajectoriesFactory = new TrajectoriesFactory(new MecanumDriveAdaptor(drive), alliance, startingSide, randomization);
+
+        Action driveToCorrectSpikeMarkAction = trajectoriesFactory.startToSpike();
 
         placePixelOnGroundAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
@@ -121,7 +129,7 @@ public class AutonomousGeneric extends LinearOpMode {
                 outtake.releaseAllPixelsAction()
         );
 
-        intakePixelsAction = new SequentialAction(
+        Action intakePixelsAction = new SequentialAction(
                 activeIntake.turnManuallyAction(),
                 activeIntake.turnManuallyAction()
         );
@@ -130,7 +138,7 @@ public class AutonomousGeneric extends LinearOpMode {
 
         driveToBackdropFromSpikeMarksAction = trajectoriesFactory.spikeToBackdrop();
 
-        driveToBackdropFromPixelStackAction = trajectoriesFactory.pixelToBackdrop();
+        Action driveToBackdropFromPixelStackAction = trajectoriesFactory.pixelToBackdrop();
 
         driveToPixelStackFromSpikeMarksAction = trajectoriesFactory.spikeToPixel();
 
@@ -141,8 +149,7 @@ public class AutonomousGeneric extends LinearOpMode {
         Actions.runBlocking(driveToCorrectSpikeMarkAction);
         Actions.runBlocking(placePixelOnGroundAction);
 
-        if (posesContainer.startingPose.equals(PosesContainer.BLUE_AUDIENCE_POSES.startingPose)
-                || posesContainer.startingPose.equals(PosesContainer.RED_AUDIENCE_POSES.startingPose)) {
+        if (startingSide == StartingSide.AUDIENCE_SIDE) {
             Actions.runBlocking(driveToPixelStackFromSpikeMarksAction);
             Actions.runBlocking(intakeSinglePixelAction);
             Actions.runBlocking(driveToBackdropFromPixelStackAction);
@@ -173,57 +180,10 @@ public class AutonomousGeneric extends LinearOpMode {
         return Math.hypot(u.x - v.x, u.y - v.y);
     }
 
-    /**
-     * Determine the starting point and get the corresponding {@link PosesContainer} object.
-     *
-     * @return The corresponding poses container.
-     */
-    @Nullable
-    private PosesContainer getPosesContainer() {
-        // TODO: fill in positions
-        Vector2d redAudience = PosesContainer.RED_AUDIENCE_POSES.startingPose.position;
-        Vector2d redFarSide = PosesContainer.RED_FAR_SIDE_POSES.startingPose.position;
-        Vector2d blueAudience = PosesContainer.BLUE_AUDIENCE_POSES.startingPose.position;
-        Vector2d blueFarSide = PosesContainer.BLUE_FAR_SIDE_POSES.startingPose.position;
-
-        Vector2d currentPosition = drive.pose.position;
-
-        if (distance(currentPosition, redAudience) <= STARTING_POSE_ERROR) {
-            return PosesContainer.RED_AUDIENCE_POSES;
-
-        } else if (distance(currentPosition, redFarSide) <= STARTING_POSE_ERROR) {
-            return PosesContainer.RED_FAR_SIDE_POSES;
-
-        } else if (distance(currentPosition, blueAudience) <= STARTING_POSE_ERROR) {
-            return PosesContainer.BLUE_AUDIENCE_POSES;
-
-        } else if (distance(currentPosition, blueFarSide) <= STARTING_POSE_ERROR) {
-            return PosesContainer.BLUE_FAR_SIDE_POSES;
-
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Get the correct poses for the spike mark and backdrop.
-     *
-     * @return The poses, as a {@link Pair} of <code>[spike mark pose, backdrop pose]</code>
-     */
     @NonNull
-    private Pair<Pose2d, Pose2d> getCorrectPoses() {
+    private RandomizationState getRandomization() {
         PropPositions propPosition = colorMassDetectionProcessor.getRecordedPropPosition();
-
-        // check which third of the screen the object is in
-        if (propPosition == PropPositions.LEFT) {
-            return new Pair<>(posesContainer.leftSpikeMarkPose, posesContainer.cyclePoses.leftBackdropPose);
-
-        } else if (propPosition == PropPositions.RIGHT) {
-            return new Pair<>(posesContainer.rightSpikeMarkPose, posesContainer.cyclePoses.rightBackdropPose);
-
-        } else { // middle or not found
-            return new Pair<>(posesContainer.centerSpikeMarkPose, posesContainer.cyclePoses.centerBackdropPose);
-        }
+        return propPosition.getCorrespondingRandomization();
     }
 
     private static class MecanumDriveAdaptor implements Drive {
