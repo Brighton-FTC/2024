@@ -21,9 +21,10 @@ public class TrajectoriesFactory {
 
     /**
      * A class for generating trajectories.
-     * @param drive The {@link Drive} object to generate the trajectories for.
-     * @param alliance The {@link AllianceColor} of the robot.
-     * @param startingSide The {@link StartingSide} of the robot.
+     *
+     * @param drive         The {@link Drive} object to generate the trajectories for.
+     * @param alliance      The {@link AllianceColor} of the robot.
+     * @param startingSide  The {@link StartingSide} of the robot.
      * @param randomization The {@link RandomizationState} of the match.
      */
     public TrajectoriesFactory(Drive drive, AllianceColor alliance, StartingSide startingSide, RandomizationState randomization) {
@@ -45,13 +46,22 @@ public class TrajectoriesFactory {
 
     public Action spikeToBackdrop() {
         PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
+        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
         PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
 
-        return drive.actionBuilder(spikeMarkPose.getPose2d())
-//                .splineToLinearHeading(new Pose2d(-35, -35, Math.toRadians(180)), Math.toRadians(45))
-                .setTangent(backdropPose.getTangent())
-                .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
-                .build();
+        if (startingSide == StartingSide.FAR_SIDE) {
+            return drive.actionBuilder(spikeMarkPose.getPose2d())
+                    .setTangent(backdropPose.getTangent())
+                    .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
+                    .build();
+        } else {
+            return drive.actionBuilder(spikeMarkPose.getPose2d())
+                    .setTangent(pixelStackPose.getTangent())
+                    .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
+                    .setTangent(backdropPose.getTangent())
+                    .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
+                    .build();
+        }
     }
 
     public Action spikeToPixel() {
@@ -80,8 +90,6 @@ public class TrajectoriesFactory {
         PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
 
         return drive.actionBuilder(pixelStackPose.getPose2d())
-//                .setTangent(Math.toRadians(30))
-//                .splineToSplineHeading(new Pose2d(-16, -9, Math.toRadians(180)), Math.toRadians(360))
                 .setTangent(backdropPose.getTangent())
                 .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
                 .build();

@@ -60,14 +60,14 @@ public final class PosesContainer {
      */
     public static final PoseWithAngles[][] BACKDROP_POSES = {
             {
-                    new PoseWithAngles(new Pose2d(60, -30, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(-20)),
-                    new PoseWithAngles(new Pose2d(60, -40, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(-20)),
-                    new PoseWithAngles(new Pose2d(60, -35, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(-20))
+                    new PoseWithAngles(new Pose2d(60, -30, Math.toRadians(180)), Math.toRadians(-30), Math.toRadians(30)),
+                    new PoseWithAngles(new Pose2d(60, -40, Math.toRadians(180)), Math.toRadians(-30), Math.toRadians(30)),
+                    new PoseWithAngles(new Pose2d(60, -35, Math.toRadians(180)), Math.toRadians(-30), Math.toRadians(30))
             },
             {
-                    new PoseWithAngles(new Pose2d(60, 30, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(20)),
-                    new PoseWithAngles(new Pose2d(60, 40, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(20)),
-                    new PoseWithAngles(new Pose2d(60, 35, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(20))
+                    new PoseWithAngles(new Pose2d(60, 30, Math.toRadians(180)), Math.toRadians(30), Math.toRadians(-30)),
+                    new PoseWithAngles(new Pose2d(60, 40, Math.toRadians(180)), Math.toRadians(30), Math.toRadians(-30)),
+                    new PoseWithAngles(new Pose2d(60, 35, Math.toRadians(180)), Math.toRadians(30), Math.toRadians(-30))
             }
     };
 
@@ -84,6 +84,6 @@ public final class PosesContainer {
      */
     public static final PoseWithAngles[] PARK_POSES = {
             new PoseWithAngles(new Pose2d(55, -60, Math.toRadians(180)), Math.toRadians(-90), Math.toRadians(180)),
-            new PoseWithAngles(new Pose2d(60, 60, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(180))
+            new PoseWithAngles(new Pose2d(55, 60, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(180))
     };
 }

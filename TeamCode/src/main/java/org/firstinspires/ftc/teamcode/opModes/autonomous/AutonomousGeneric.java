@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.teamcode.opModes.autonomous;
 
-import android.util.Pair;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
