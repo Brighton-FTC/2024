@@ -64,13 +64,6 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
     private TrajectoriesFactory trajectoriesFactory;
 
-    private Action placePixelOnGroundAction;
-    private Action placePixelsOnBackdropAction;
-    private Action intakeSinglePixelAction;
-    private Action driveToBackdropFromSpikeMarksAction;
-    private Action driveToPixelStackFromBackdropAction;
-    private Action driveToPixelStackFromSpikeMarksAction;
-
     // these are filled in already, they're distance from camera to center of bot
     public static final Vector2d DELTA_F = new Vector2d(8.5, 0);
 
@@ -119,65 +112,31 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
         Action driveToCorrectSpikeMarkAction = trajectoriesFactory.startToSpike();
 
-        placePixelOnGroundAction = new SequentialAction(
+        Action placePixelOnGroundAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
                 outtake.releasePixelAction()
         );
 
-        placePixelsOnBackdropAction = new SequentialAction(
+        Action placePixelsOnBackdropAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.HIGH),
                 outtake.releaseAllPixelsAction()
         );
 
-        Action intakePixelsAction = new SequentialAction(
-                activeIntake.turnManuallyAction(),
-                activeIntake.turnManuallyAction()
-        );
+        Action driveToBackdropFromSpikeMarksAction = trajectoriesFactory.spikeToBackdrop();
 
-        intakeSinglePixelAction = activeIntake.turnManuallyAction();
-
-        driveToBackdropFromSpikeMarksAction = trajectoriesFactory.spikeToBackdrop();
-
-        Action driveToBackdropFromPixelStackAction = trajectoriesFactory.pixelToBackdrop();
-
-        driveToPixelStackFromSpikeMarksAction = trajectoriesFactory.spikeToPixel();
-
-        driveToPixelStackFromBackdropAction = trajectoriesFactory.pixelToBackdrop();
+        Action parkAction = trajectoriesFactory.park();
 
         waitForStart();
 
         Actions.runBlocking(driveToCorrectSpikeMarkAction);
         Actions.runBlocking(placePixelOnGroundAction);
 
-        if (startingSide == StartingSide.AUDIENCE_SIDE) {
-            Actions.runBlocking(driveToPixelStackFromSpikeMarksAction);
-            Actions.runBlocking(intakeSinglePixelAction);
-            Actions.runBlocking(driveToBackdropFromPixelStackAction);
-            Actions.runBlocking(placePixelsOnBackdropAction);
-        } else {
-            Actions.runBlocking(driveToBackdropFromSpikeMarksAction);
-            Actions.runBlocking(placePixelsOnBackdropAction);
-        }
+        Actions.runBlocking(driveToBackdropFromSpikeMarksAction);
+        Actions.runBlocking(placePixelsOnBackdropAction);
 
-        while (opModeIsActive()) {
-            Actions.runBlocking(driveToPixelStackFromBackdropAction);
-            Actions.runBlocking(intakePixelsAction);
-            Actions.runBlocking(driveToBackdropFromPixelStackAction);
-            Actions.runBlocking(placePixelsOnBackdropAction);
-        }
+        Actions.runBlocking(parkAction);
 
         visionPortal.close();
-    }
-
-    /**
-     * Get the distance between two {@link Vector2d} objects.
-     *
-     * @param u The first vector.
-     * @param v The second vector.
-     * @return The distance between them (using pythagoras' theorem).
-     */
-    private double distance(@NonNull Vector2d u, @NonNull Vector2d v) {
-        return Math.hypot(u.x - v.x, u.y - v.y);
     }
 
     @NonNull
