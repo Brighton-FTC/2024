@@ -40,7 +40,7 @@ public class ArmPIDF extends OpMode {
     // However, past me left this value as 560, so either my original source was wrong, CORE uses 560, or we aren't using CORE.
     private final double ticks_in_degrees = 288.0 / 360.0;
 
-    private static final double INITIAL_RADS = -225;
+    private static final double INITIAL_RADS = 225;
 
     private DcMotorEx arm_motor;
 
