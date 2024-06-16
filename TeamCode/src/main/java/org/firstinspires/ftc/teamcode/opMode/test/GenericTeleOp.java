@@ -177,10 +177,24 @@ public abstract class GenericTeleOp extends OpMode {
         // --- ACTIVE INTAKE  ---
 
         if (arm.getState() == ArmComponent.State.PICKUP_GROUND && arm.atSetPoint()) {
-            if (!activeIntake.isTurning()) {
-                activeIntake.turnContinually();
+            if (TURN_INTAKE_FORWARDS.wasJustPressed()){
+                if (!activeIntake.isTurning()) {
+                    activeIntake.turnForwards();
+                }
+                else {
+                    activeIntake.turnMotorOff();
+                }
             }
-        } else {
+            if (TURN_INTAKE_BACKWARDS.wasJustPressed()){
+                if (!activeIntake.isTurning()) {
+                    activeIntake.turnBackwards();
+                }
+                else {
+                    activeIntake.turnMotorOff();
+                }
+            }
+        }
+        else {
             activeIntake.turnMotorOff();
         }
 
