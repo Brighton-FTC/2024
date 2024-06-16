@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -19,23 +22,19 @@ import java.util.List;
  */
 @Config
 public class ArmComponent {
-    public static final double PICKUP_SERVO_POS = 15;
     public static final double PICKUP_ARM_POS = 0;
     private final MotorEx armMotor;
 
     private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
-    private static final double kP = 0.018;
-    private final PIDController pid = new PIDController(kP, 0, 0);
-
-    // we are using hd on arm yes
-    // got this from LRR drive constants page
-    public final double ticks_in_degrees = 560.0 / 360.0;
+    private final PIDController pid = new PIDController(0.008, 0.0005, 0.0005);
 
     private double currentVelocity;
 
     private double currentPosition;
+
+    private static final double max_power = 0.5;
 
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
@@ -45,6 +44,7 @@ public class ArmComponent {
     public ArmComponent(@NonNull MotorEx armMotor) {
         this.armMotor = armMotor;
         this.armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        this.armMotor.resetEncoder();
         setTargetPosition(State.PICKUP_GROUND.position);
     }
 
@@ -65,7 +65,7 @@ public class ArmComponent {
      */
     public void toggle() {
         if (state == State.PICKUP_GROUND) {
-            setState(State.HIGH);
+            setState(State.PLACE_BACKDROP);
 
         } else {
             setState(State.PICKUP_GROUND);
@@ -113,9 +113,11 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-//        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * ff;
+        double power = pid.calculate(currentPosition);
 
-        armMotor.set((pid.calculate(currentPosition)));
+        power = min(max_power, power);
+        power = max(-max_power, power);
+        armMotor.set(power);
     }
 
     /**
@@ -184,53 +186,14 @@ public class ArmComponent {
 
     @Config
     public enum State {
-        PICKUP_GROUND(-200),
-        PLACE_GROUND(-1900),
-        LOW(-1800),
-        MIDDLE(-1600),
-        HIGH(-1400);
-
-        public static final List<State> CYCLE_STATES = Collections.unmodifiableList(Arrays.asList(new State[]{LOW, MIDDLE, HIGH, PLACE_GROUND}));
+        PICKUP_GROUND(0),
+        PLACE_BACKDROP(-700),
+        PLACE_GROUND(-1100);
 
         public final int position;
 
         State(int position) {
             this.position = position;
-        }
-
-        public State next() {
-            if (CYCLE_STATES.contains(this)) {
-                return CYCLE_STATES.get(CYCLE_STATES.indexOf(this) + 1 % CYCLE_STATES.size());
-            } else {
-                return this;
-            }
-        }
-
-        public State previous() {
-            if (CYCLE_STATES.contains(this)) {
-                return CYCLE_STATES.get(CYCLE_STATES.indexOf(this) - 1 % CYCLE_STATES.size());
-            } else {
-                return this;
-            }
-        }
-
-        @NonNull
-        @Override
-        public String toString() {
-            switch (this) {
-                case PICKUP_GROUND:
-                    return "PICKUP_GROUND";
-                case PLACE_GROUND:
-                    return "PLACE_GROUND";
-                case LOW:
-                    return "LOW";
-                case MIDDLE:
-                    return "MIDDLE";
-                case HIGH:
-                    return "HIGH";
-                default:
-                    return "UNKNOWN";
-            }
         }
     }
 }

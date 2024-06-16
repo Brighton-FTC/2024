@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -23,6 +26,9 @@ public class ArmPIDF extends OpMode {
 
     public static int APEX_TICKS = 0;
 
+    // at rest = 235 horzional = 10
+    // 0.0005 d, 0.01 p, tested without container attached
+
     public static double p = 0;
     public static double i = 0;
     public static double d = 0;
@@ -35,9 +41,13 @@ public class ArmPIDF extends OpMode {
     // learnroadrunner.com tells me HD REV has 560 ticks per rev, but according to Mo we use CORE REV.
     // CORE REV doesn't have much info on it - I found a google doc saying CORE is 288.
     // However, past me left this value as 560, so either my original source was wrong, CORE uses 560, or we aren't using CORE.
-    private final double ticks_in_degrees = 288.0 / 360.0;
+    private final double ticks_in_degrees = 560.0 / 180.0;
+
+    public static double INITIAL_RADS = 300;
 
     private DcMotorEx arm_motor;
+
+    public static double max_power = 0.25;
 
 
     @Override
@@ -46,25 +56,29 @@ public class ArmPIDF extends OpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         arm_motor = hardwareMap.get(DcMotorEx.class, "arm_motor");
+
     }
 
     @Override
     public void loop() {
         controller.setPID(p, i, d);
-        int slidePos = arm_motor.getCurrentPosition();
-        double pid = controller.calculate(slidePos, target);
-        double ff = Math.cos(Math.toRadians(target / ticks_in_degrees)) * f;
+        int armPosition = arm_motor.getCurrentPosition();
+        double pid = controller.calculate(armPosition, target);
+        double ff = Math.cos(Math.toRadians((armPosition- INITIAL_RADS) / ticks_in_degrees)) * f;
 
         double power;
-        if (isGreaterThan) {
-            power = arm_motor.getCurrentPosition() > APEX_TICKS ? pid + ff : pid - ff;
-        } else {
-            power = arm_motor.getCurrentPosition() < APEX_TICKS ? pid + ff : pid - ff;
-        }
+//        if (isGreaterThan) {
+//            power = arm_motor.getCurrentPosition() > APEX_TICKS ? pid + ff : pid - ff;
+//        } else {
+//            power = arm_motor.getCurrentPosition() < APEX_TICKS ? pid + ff : pid - ff;
+//        }
+
+        power = min(max_power, pid + ff);
+        power = max(-max_power, power);
 
         arm_motor.setPower(power);
 
-        telemetry.addData("pos ", slidePos);
+        telemetry.addData("pos ", armPosition);
         telemetry.addData("vel", arm_motor.getVelocity());
         telemetry.addData("target ", target);
         telemetry.addData("PID", pid);
