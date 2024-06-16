@@ -16,14 +16,12 @@ import java.util.concurrent.TimeUnit;
 
 @Config
 public class OuttakeComponent {
-    // TODO: fill in these values, and then make them final.
-    public static double RELEASE_ANGLE = 90;
-    public static long RELEASE_WAIT_TIME = 500;
+    // TODO: fill in these values
 
-    private final ServoEx frontServo, backServo;
+    private final ServoEx backOuttakeServo;
+    private final ServoEx frontOuttakeServo;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
+    private boolean isOuttakeClosed = true;
 
     /**
      * Code to open/close outtake, and tilt outtake. <br />
@@ -31,49 +29,51 @@ public class OuttakeComponent {
      * @param frontServo The servo at the front of the outtake (nearest the intake).
      * @param backServo  The servo at the back of the outtake (nearest the arm).
      */
-    public OuttakeComponent(ServoEx frontServo, ServoEx backServo) {
-        this.frontServo = frontServo;
-        this.backServo = backServo;
+    public OuttakeComponent(ServoEx frontOuttakeServo, ServoEx backOuttakeServo) {
+        this.frontOuttakeServo = frontOuttakeServo;
+        this.frontOuttakeServo.setRange(0, 360);
+        this.backOuttakeServo = frontOuttakeServo;
+        this.backOuttakeServo.setRange(0, 360);
     }
 
-    /**
-     * Release all pixels.
-     */
-    public void releaseAll() {
-        releaseBack();
+    public void toggleFrontOuttake(){
+        if (frontOuttakeServo.getPosition() == 0) {
+            releaseFront();
+        } else {
+            holdFront();
+        }
+    }
+
+    public void releaseFront(){
+        frontOuttakeServo.turnToAngle(90);
+    }
+    public void releaseBack(){
+        backOuttakeServo.turnToAngle(90);
+    }
+
+    public void releaseAll(){
         releaseFront();
+        releaseBack();
     }
 
-    /**
-     * Release the back pixel.
-     */
-    public void releaseBack() {
-        backServo.rotateByAngle(RELEASE_ANGLE);
-
-        scheduler.schedule(() -> {
-            backServo.rotateByAngle(-RELEASE_ANGLE);
-        }, RELEASE_WAIT_TIME, TimeUnit.MILLISECONDS);
+    public void holdFront(){
+        frontOuttakeServo.turnToAngle(0);
+    }
+    public void holdBack(){
+        backOuttakeServo.turnToAngle(0);
     }
 
-    /**
-     * Release the front pixel (won't work unless back pixel has already been released).
-     */
-    public void releaseFront() {
-        frontServo.rotateByAngle(RELEASE_ANGLE);
-
-        scheduler.schedule(() -> {
-            frontServo.rotateByAngle(-RELEASE_ANGLE);
-        }, RELEASE_WAIT_TIME, TimeUnit.MILLISECONDS);
+    public void holdAll(){
+        holdFront();
+        holdBack();
     }
 
-    /**
-     * Release all pixels (returns a {@link Action}).
-     */
-    public Action releaseAllAction() {
-        return (telemetryPacket) -> {
-            releaseAll();
-            return false;
-        };
+    public void toggleBackOuttake() {
+        if (backOuttakeServo.getPosition() == 0) {
+            releaseBack();
+        } else {
+            holdBack();
+        }
     }
 
     /**
@@ -94,21 +94,5 @@ public class OuttakeComponent {
             releaseBack();
             return false;
         };
-    }
-
-    public ServoEx getFrontServo() {
-        return frontServo;
-    }
-
-    public ServoEx getBackServo() {
-        return backServo;
-    }
-
-    /**
-     * Get whether the servos are turned.
-     * @return A {@link Pair>} object, in the form [is front servo turned, is back servo turned].
-     */
-    public Pair<Boolean, Boolean> areServosTurned() {
-        return new Pair<>(frontServo.getAngle() == RELEASE_ANGLE, backServo.getAngle() == RELEASE_ANGLE);
     }
 }
