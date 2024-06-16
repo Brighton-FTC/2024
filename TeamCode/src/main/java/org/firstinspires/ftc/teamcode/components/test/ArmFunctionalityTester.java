@@ -20,8 +20,6 @@ public class ArmFunctionalityTester extends OpMode {
     private ArmComponent armComponent;
     private GamepadEx gamepad;
 
-    private ArmComponent.State selectedState = ArmComponent.State.HIGH;
-
     @Override
     public void init() {
         armComponent = new ArmComponent(
@@ -38,32 +36,12 @@ public class ArmFunctionalityTester extends OpMode {
         armComponent.read();
         armComponent.moveToSetPoint();
 
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-            if (selectedState == ArmComponent.State.PLACE_GROUND) {
-                selectedState = ArmComponent.State.LOW;
-            } else if (selectedState == ArmComponent.State.LOW) {
-                selectedState = ArmComponent.State.MIDDLE;
-            } else if (selectedState == ArmComponent.State.MIDDLE) {
-                selectedState = ArmComponent.State.HIGH;
-            } else {
-                selectedState = ArmComponent.State.PLACE_GROUND;
-            }
-        }
-
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            if (selectedState == ArmComponent.State.PLACE_GROUND) {
-                selectedState = ArmComponent.State.HIGH;
-            } else if (selectedState == ArmComponent.State.HIGH) {
-                selectedState = ArmComponent.State.MIDDLE;
-            } else if (selectedState == ArmComponent.State.MIDDLE) {
-                selectedState = ArmComponent.State.LOW;
-            } else {
-                selectedState = ArmComponent.State.PLACE_GROUND;
-            }
-        }
-
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            armComponent.setState(selectedState);
+            if (armComponent.getState() == ArmComponent.State.PICKUP_GROUND) {
+                armComponent.setState(ArmComponent.State.PLACE_BACKDROP);
+            } else {
+                armComponent.setState(ArmComponent.State.PLACE_GROUND);
+            }
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
@@ -79,7 +57,6 @@ public class ArmFunctionalityTester extends OpMode {
         }
 
         telemetry.addData("Arm state:", armComponent.getState());
-        telemetry.addData("Selected state:", selectedState.toString());
         telemetry.addData("Setpoint: ", armComponent.getSetPoint());
         telemetry.addData("Motor position", armComponent.getArmMotor().getCurrentPosition());
     }
