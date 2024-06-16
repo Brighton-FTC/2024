@@ -17,18 +17,13 @@ public class ActiveIntakeFunctionalityTester extends OpMode {
         gamepad = new GamepadEx(gamepad1);
 
         activeIntake = new ActiveIntakeComponent(
-                new MotorEx(hardwareMap, "active_intake_motor_left"),
-                new MotorEx(hardwareMap, "active_intake_motor_right")
+                new MotorEx(hardwareMap, "active_intake_motor")
         );
     }
 
     @Override
     public void loop() {
         gamepad.readButtons();
-        if (gamepad.wasJustPressed(PSButtons.CROSS)) {
-            activeIntake.turnManually();
-        }
-
         if (gamepad.wasJustPressed(PSButtons.SQUARE)) {
             activeIntake.turnContinually();
         }
@@ -37,8 +32,6 @@ public class ActiveIntakeFunctionalityTester extends OpMode {
             activeIntake.turnMotorOff();
         }
 
-        activeIntake.moveMotor();
-
-        telemetry.addData("State:", activeIntake.getState().toString());
+        telemetry.addLine(activeIntake.isTurning() ? "Turning" : "Not Turning");
     }
 }

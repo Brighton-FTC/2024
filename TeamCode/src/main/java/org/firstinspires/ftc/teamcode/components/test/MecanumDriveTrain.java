@@ -23,19 +23,18 @@ public class MecanumDriveTrain extends OpMode {
     @Override
     public void init() {
         activeIntake = new ActiveIntakeComponent(
-                new MotorEx(hardwareMap, "active_intake_motor_left"),
-                new MotorEx(hardwareMap, "active_intake_motor_right")
+                new MotorEx(hardwareMap, "active_intake_motor")
         );
 
-        Motor frontleft = new Motor(hardwareMap, "front_left_drive");
-        Motor frontright = new Motor(hardwareMap, "front_right_drive");
-        Motor backleft = new Motor(hardwareMap, "back_left_drive");
-        Motor backright = new Motor(hardwareMap, "back_right_drive");
+        Motor frontLeft = new Motor(hardwareMap, "front_left_drive");
+        Motor frontRight = new Motor(hardwareMap, "front_right_drive");
+        Motor backLeft = new Motor(hardwareMap, "back_left_drive");
+        Motor backRight = new Motor(hardwareMap, "back_right_drive");
 
-        drive = new MecanumDrive(frontleft, frontright, backleft, backright);
+        drive = new MecanumDrive(frontLeft, frontRight, backLeft, backRight);
 
 
-        for (Motor motor : new Motor[]{frontleft, frontright, backleft, backright}) {
+        for (Motor motor : new Motor[]{frontLeft, frontRight, backLeft, backRight}) {
             motor.setRunMode(Motor.RunMode.VelocityControl);
         }
 
@@ -46,9 +45,6 @@ public class MecanumDriveTrain extends OpMode {
 
     @Override
     public void loop() {
-        if (player1Gamepad.wasJustPressed(PSButtons.CROSS)) {
-            activeIntake.turnManually();
-        }
         if (player1Gamepad.wasJustPressed(PSButtons.SQUARE)) {
             activeIntake.turnContinually();
         }
@@ -57,12 +53,9 @@ public class MecanumDriveTrain extends OpMode {
             activeIntake.turnMotorOff();
         }
 
-        telemetry.addData("State:", activeIntake.getState().toString());
-        telemetry.addData("Motor 1 position", activeIntake.getMotors()[0]);
-        telemetry.addData("Motor 2 position", activeIntake.getMotors()[1]);
+        telemetry.addLine(activeIntake.isTurning() ? "Active Intake Turning" : "Active Intake Not Turning");
         telemetry.addLine();
 
-        activeIntake.moveMotor();
         double leftY = player1Gamepad.getLeftY();
         double leftX = player1Gamepad.getLeftX();
         double rightX = player1Gamepad.getRightX();
