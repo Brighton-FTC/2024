@@ -29,9 +29,14 @@ public class ActiveIntakeComponent {
     /**
      * Turns motor continuously
      */
-    public void turnContinually() {
+    public void turnForwards() {
         isTurning = true;
         this.intakeMotor.set(1);
+    }
+
+    public void turnBackwards(){
+        isTurning = true;
+        this.intakeMotor.set(-1);
     }
 
     public boolean isTurning() {
@@ -42,9 +47,9 @@ public class ActiveIntakeComponent {
         return intakeMotor;
     }
 
-    public Action turnContinuallyAction() {
+    public Action turnForwardsAction() {
         return telemetryPacket -> {
-            turnContinually();
+            turnForwards();
             return false;
         };
     }

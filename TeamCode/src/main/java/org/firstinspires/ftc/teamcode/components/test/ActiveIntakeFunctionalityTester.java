@@ -25,7 +25,7 @@ public class ActiveIntakeFunctionalityTester extends OpMode {
     public void loop() {
         gamepad.readButtons();
         if (gamepad.wasJustPressed(PSButtons.SQUARE)) {
-            activeIntake.turnContinually();
+            activeIntake.turnForwards();
         }
 
         if (gamepad.wasJustPressed(PSButtons.CIRCLE)) {
