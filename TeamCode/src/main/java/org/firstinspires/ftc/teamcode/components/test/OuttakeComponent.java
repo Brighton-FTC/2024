@@ -8,12 +8,9 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 
 public class OuttakeComponent {
     // TODO: fill in these values
-    public static final double RELEASE_ANGLE = 40;
-    public static final double RELEASE_ALL_ANGLE = 60;
 
-    public static long SERVO_SLEEP_TIME = 200;
-
-    private final ServoEx outtakeServo;
+    private final ServoEx backOuttakeServo;
+    private final ServoEx frontOuttakeServo;
 
     private boolean isOuttakeClosed = true;
 
@@ -22,44 +19,26 @@ public class OuttakeComponent {
      * Code to open/close outtake, and tilt outtake. <br />
      * @param outtakeServo The servo that controls the outtake.
      */
-    public OuttakeComponent(ServoEx outtakeServo) {
-        this.outtakeServo = outtakeServo;
-        this.outtakeServo.setRange(0, 360);
+    public OuttakeComponent(ServoEx frontOuttakeServo, ServoEx backOuttakeServo) {
+        this.frontOuttakeServo = frontOuttakeServo;
+        this.frontOuttakeServo.setRange(0, 360);
+        this.backOuttakeServo = frontOuttakeServo;
+        this.backOuttakeServo.setRange(0, 360);
     }
 
-    public void release(double angle) {
-        outtakeServo.rotateByAngle(angle);
-        isOuttakeClosed = false;
-        try {
-            Thread.sleep(SERVO_SLEEP_TIME);
-        } catch (InterruptedException e) {
-
+    public void toggleFrontOuttake(){
+        if (frontOuttakeServo.getPosition() == 0) {
+            frontOuttakeServo.turnToAngle(90);
+        } else {
+            frontOuttakeServo.turnToAngle(0);
         }
-        outtakeServo.rotateByAngle(-angle);
-        isOuttakeClosed = true;
     }
 
-    public void releasePixel() {
-        release(RELEASE_ANGLE);
-    }
-
-    public void releaseAllPixels() {
-        release(RELEASE_ALL_ANGLE);
-    }
-
-    /**
-     * Get whether the outtake is closed.
-     * @return True if the outtake is closed, false if it is open.
-     */
-    public boolean isClosed() {
-        return isOuttakeClosed;
-    }
-
-    /**
-     * Get the servo.
-     * @return The outtake servo.
-     */
-    public ServoEx getServo() {
-        return outtakeServo;
+    public void toggleBackOuttake(){
+        if (backOuttakeServo.getPosition() == 0) {
+            backOuttakeServo.turnToAngle(90);
+        } else {
+            backOuttakeServo.turnToAngle(0);
+        }
     }
 }
