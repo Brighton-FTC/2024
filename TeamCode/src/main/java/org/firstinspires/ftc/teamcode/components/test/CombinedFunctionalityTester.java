@@ -67,13 +67,13 @@ public class CombinedFunctionalityTester extends OpMode {
             arm.setState(ArmComponent.State.PICKUP_GROUND);
         }
 
-        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            if (arm.getState() == ArmComponent.State.PLACE_BACKDROP) {
-                arm.setState(ArmComponent.State.PLACE_GROUND);
-            } else {
-                arm.setState(ArmComponent.State.PLACE_BACKDROP);
-            }
-        }
+//        if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+//            if (arm.getState() == ArmComponent.State.PLACE_BACKDROP) {
+//                arm.setState(ArmComponent.State.PLACE_GROUND);
+//            } else {
+//                arm.setState(ArmComponent.State.PLACE_BACKDROP);
+//            }
+//        }
 
         arm.moveToSetPoint();
 
