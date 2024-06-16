@@ -59,19 +59,6 @@ public class ArmComponent {
         setTargetPosition(state.position);
     }
 
-    /**
-     * Call once to toggle the position of the arm <br />
-     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
-     */
-    public void toggle() {
-        if (state == State.PICKUP_GROUND) {
-            setState(State.PLACE_BACKDROP);
-
-        } else {
-            setState(State.PICKUP_GROUND);
-        }
-    }
-
 
     /**
      * Directly control the movement of the arm.
@@ -187,7 +174,8 @@ public class ArmComponent {
     @Config
     public enum State {
         PICKUP_GROUND(0),
-        PLACE_BACKDROP(-700),
+        PLACE_LOW_BACKDROP(-700),
+        PLACE_HIGH_BACKDROP(-800),
         PLACE_GROUND(-1100);
 
         public final int position;
