@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opMode.test;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -155,20 +156,20 @@ public abstract class GenericTeleOp extends OpMode {
         arm.read();
         arm.moveToSetPoint();
 
+        if (ARM_STATE_FORWARD.wasJustPressed()) {
+            if (arm.getState() == ArmComponent.State.PICKUP_GROUND) {
+                arm.setState(ArmComponent.State.PLACE_BACKDROP);
+            } else {
+                arm.setState(ArmComponent.State.PLACE_GROUND);
+            }
+        }
+
         if (arm.getState() == ArmComponent.State.PICKUP_GROUND && arm.atSetPoint()) {
             if (!activeIntake.isTurning()) {
                 activeIntake.turnContinually();
             }
         } else {
             activeIntake.turnMotorOff();
-        }
-
-        if (ARM_STATE_FORWARD.wasJustPressed()) {
-            selectedState = selectedState.next();
-        }
-
-        if (ARM_STATE_BACKWARDS.wasJustPressed()) {
-            selectedState = selectedState.previous();
         }
 
         arm.setState(selectedState);
