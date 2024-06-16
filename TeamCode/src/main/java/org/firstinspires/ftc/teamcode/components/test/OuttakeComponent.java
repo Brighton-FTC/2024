@@ -26,14 +26,14 @@ public class OuttakeComponent {
     /**
      * Code to open/close outtake, and tilt outtake. <br />
      *
-     * @param frontServo The servo at the front of the outtake (nearest the intake).
-     * @param backServo  The servo at the back of the outtake (nearest the arm).
+     * @param frontOuttakeServo The servo at the front of the outtake (nearest the intake).
+     * @param backOuttakeServo  The servo at the back of the outtake (nearest the arm).
      */
     public OuttakeComponent(ServoEx frontOuttakeServo, ServoEx backOuttakeServo) {
         this.frontOuttakeServo = frontOuttakeServo;
-        this.frontOuttakeServo.setRange(0, 360);
-        this.backOuttakeServo = frontOuttakeServo;
-        this.backOuttakeServo.setRange(0, 360);
+        this.frontOuttakeServo.setRange(0, 90);
+        this.backOuttakeServo = backOuttakeServo;
+        this.backOuttakeServo.setRange(0, 90);
     }
 
     public void toggleFrontOuttake(){
@@ -94,5 +94,13 @@ public class OuttakeComponent {
             releaseBack();
             return false;
         };
+    }
+
+    public double getFrontServoPosition(){
+        return frontOuttakeServo.getPosition();
+    }
+
+    public double getBackServoPosition(){
+        return backOuttakeServo.getPosition();
     }
 }
