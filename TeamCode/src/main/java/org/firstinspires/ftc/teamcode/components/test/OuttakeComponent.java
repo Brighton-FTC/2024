@@ -1,11 +1,20 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import android.util.Pair;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.hardware.ServoEx;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Code to open/close outtake, and tilt outtake. <br />
  */
 
+@Config
 public class OuttakeComponent {
     // TODO: fill in these values
 
@@ -14,10 +23,11 @@ public class OuttakeComponent {
 
     private boolean isOuttakeClosed = true;
 
-
     /**
      * Code to open/close outtake, and tilt outtake. <br />
-     * @param outtakeServo The servo that controls the outtake.
+     *
+     * @param frontServo The servo at the front of the outtake (nearest the intake).
+     * @param backServo  The servo at the back of the outtake (nearest the arm).
      */
     public OuttakeComponent(ServoEx frontOuttakeServo, ServoEx backOuttakeServo) {
         this.frontOuttakeServo = frontOuttakeServo;
@@ -28,17 +38,61 @@ public class OuttakeComponent {
 
     public void toggleFrontOuttake(){
         if (frontOuttakeServo.getPosition() == 0) {
-            frontOuttakeServo.turnToAngle(90);
+            releaseFront();
         } else {
-            frontOuttakeServo.turnToAngle(0);
+            holdFront();
         }
     }
 
-    public void toggleBackOuttake(){
+    public void releaseFront(){
+        frontOuttakeServo.turnToAngle(90);
+    }
+    public void releaseBack(){
+        backOuttakeServo.turnToAngle(90);
+    }
+
+    public void releaseAll(){
+        releaseFront();
+        releaseBack();
+    }
+
+    public void holdFront(){
+        frontOuttakeServo.turnToAngle(0);
+    }
+    public void holdBack(){
+        backOuttakeServo.turnToAngle(0);
+    }
+
+    public void holdAll(){
+        holdFront();
+        holdBack();
+    }
+
+    public void toggleBackOuttake() {
         if (backOuttakeServo.getPosition() == 0) {
-            backOuttakeServo.turnToAngle(90);
+            releaseBack();
         } else {
-            backOuttakeServo.turnToAngle(0);
+            holdBack();
         }
+    }
+
+    /**
+     * Release the front pixel (returns a {@link Action}).
+     */
+    public Action releaseFrontAction() {
+        return (telemetryPacket) -> {
+            releaseFront();
+            return false;
+        };
+    }
+
+    /**
+     * Release the front pixel (returns a {@link Action}).
+     */
+    public Action releaseBackAction() {
+        return (telemetryPacket) -> {
+            releaseBack();
+            return false;
+        };
     }
 }
