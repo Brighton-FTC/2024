@@ -59,5 +59,6 @@ public class ArmFunctionalityTester extends OpMode {
         telemetry.addData("Arm state:", armComponent.getState());
         telemetry.addData("Setpoint: ", armComponent.getSetPoint());
         telemetry.addData("Motor position", armComponent.getArmMotor().getCurrentPosition());
+        telemetry.addData("Motor position", armComponent.getArmPosition());
     }
 }

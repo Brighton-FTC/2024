@@ -13,8 +13,9 @@ public class TwoPlayerTeleOp extends GenericTeleOp {
     /**
      *     Change to use PlayerButtons as you want. Use a NullPlayerButton if you want that method to be disabled.
      */
-    public TwoPlayerTeleOp() {
-        super();
+    @Override
+    public void init(){
+        super.init();
         setButtons(
                 new PlayerButton(gamepadp1, GamepadKeys.Button.RIGHT_BUMPER), // DRIVETRAIN_SLOW_MODE
                 new PlayerButton(gamepadp2, GamepadKeys.Button.DPAD_RIGHT), // ARM_STATE_FORWARD
@@ -25,17 +26,5 @@ public class TwoPlayerTeleOp extends GenericTeleOp {
                 new PlayerButton(gamepadp2, PSButtons.CROSS), // OUTTAKE_TOGGLE_BACK_PIXEL
                 new PlayerButton(gamepadp2, GamepadKeys.Button.LEFT_BUMPER) // DRONE_LEFT_RELEASE
         );
-    }
-
-    @Override
-    public void start() {
-        gamepad1.rumbleBlips(Integer.MAX_VALUE);
-        gamepad1.runLedEffect(new Gamepad.LedEffect.Builder()
-                .addStep(255, 0, 0, 100)
-                .addStep(0, 0, 0, 100)
-                .setRepeating(true)
-                .build());
-
-        super.start();
     }
 }

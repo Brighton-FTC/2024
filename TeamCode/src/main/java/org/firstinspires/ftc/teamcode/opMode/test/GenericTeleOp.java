@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
-import org.firstinspires.ftc.teamcode.components.test.heading.HeadingPID;
 import org.firstinspires.ftc.teamcode.util.teleop.PlayerButton;
 
 /**
@@ -40,7 +39,6 @@ public abstract class GenericTeleOp extends OpMode {
     private final double SLOW_DRIVE_MULTIPLIER = 0.25;
     private final double DEAD_ZONE_SIZE = 0.2;
     private boolean isSlowMode;
-    private ArmComponent.State selectedState;
 
     public PlayerButton DRIVETRAIN_SLOW_MODE;
     public PlayerButton ARM_STATE_FORWARD;
@@ -51,8 +49,6 @@ public abstract class GenericTeleOp extends OpMode {
     public PlayerButton OUTTAKE_TOGGLE_ALL_PIXEL;
     public PlayerButton OUTTAKE_TOGGLE_BACK_PIXEL;
     public PlayerButton DRONE_LEFT_RELEASE;
-
-    private HeadingPID headingPID;
 
     private ElapsedTime time;
 
@@ -82,6 +78,7 @@ public abstract class GenericTeleOp extends OpMode {
     @Override
     public void init() {
         gamepadp1 = new GamepadEx(gamepad1);
+        gamepadp2 = new GamepadEx(gamepad2);
 
         imu = hardwareMap.get(IMU.class, "imu");
 
@@ -93,7 +90,6 @@ public abstract class GenericTeleOp extends OpMode {
                 )
         ));
 
-        headingPID = new HeadingPID(imu);
 
         LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
         lynxModule.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
@@ -119,6 +115,7 @@ public abstract class GenericTeleOp extends OpMode {
         }
 
         mecanum = new MecanumDrive(driveMotors[0], driveMotors[1], driveMotors[2], driveMotors[3]);
+        time = new ElapsedTime();
     }
 
     @Override
@@ -131,21 +128,20 @@ public abstract class GenericTeleOp extends OpMode {
             isSlowMode = !isSlowMode;
         }
 
-        double headingCorrection = headingPID.runPID(gamepadp1.getRightX(), time.milliseconds());
-
         time.reset();
 
         double[] driveCoefficients = {
                 gamepadp1.getLeftX(),
                 gamepadp1.getLeftY(),
-                gamepadp1.getRightX() + headingCorrection
+                gamepadp1.getRightX()
         };
         for (int i = 0; i < driveCoefficients.length; i++) {
             driveCoefficients[i] = Math.abs(driveCoefficients[i]) > DEAD_ZONE_SIZE ? driveCoefficients[i] : 0;
+            driveCoefficients[i] = Range.clip(driveCoefficients[i], -1, 1); // clip in case of multiplier that is greater than 1
+            driveCoefficients[i] = (Math.pow(driveCoefficients[i], 3) + driveCoefficients[i]) / 2;
             driveCoefficients[i] = isSlowMode ? driveCoefficients[i] * SLOW_DRIVE_MULTIPLIER : driveCoefficients[i] * NORMAL_DRIVE_MULTIPLIER;
-            driveCoefficients[i] = Range.clip(-1, 1, driveCoefficients[i]); // clip in case of multiplier that is greater than 1
         }
-        mecanum.driveRobotCentric(driveCoefficients[0], driveCoefficients[1], driveCoefficients[2]);
+        mecanum.driveRobotCentric(-driveCoefficients[0], -driveCoefficients[1], -driveCoefficients[2]);
 
         telemetry.addData("Forward speed", driveCoefficients[1]);
         telemetry.addData("Strafe speed", driveCoefficients[0]);
@@ -167,8 +163,6 @@ public abstract class GenericTeleOp extends OpMode {
                 arm.setState(ArmComponent.State.PLACE_HIGH_BACKDROP);
             }
         }
-
-        arm.setState(selectedState);
 
         if (ARM_STATE_DOWN.wasJustPressed()) {
             arm.setState(ArmComponent.State.PICKUP_GROUND);
@@ -201,7 +195,8 @@ public abstract class GenericTeleOp extends OpMode {
         // --- OUTTAKE ---
 
         if (OUTTAKE_TOGGLE_ALL_PIXEL.wasJustPressed()) {
-            outtake.releaseAll();
+            outtake.toggleBackOuttake();
+            outtake.toggleFrontOuttake();
         }
 
         if (OUTTAKE_TOGGLE_BACK_PIXEL.wasJustPressed()) {
@@ -215,8 +210,9 @@ public abstract class GenericTeleOp extends OpMode {
         }
 
         telemetry.addData("Arm state", arm.getState());
-        telemetry.addData("Selected arm state", selectedState);
+        telemetry.addData("Arm position", arm.getArmMotor().getCurrentPosition());
         telemetry.addLine(activeIntake.isTurning() ? "Active Intake Turning" : "Active Intake not Turning");
         telemetry.addLine(droneLauncher.getDroneLaunched() ? "Drone launched" : "Drone not launched");
+        telemetry.update();
     }
 }

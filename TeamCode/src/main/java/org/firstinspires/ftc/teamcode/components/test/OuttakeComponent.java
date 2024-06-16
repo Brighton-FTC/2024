@@ -26,8 +26,8 @@ public class OuttakeComponent {
     /**
      * Code to open/close outtake, and tilt outtake. <br />
      *
-     * @param frontServo The servo at the front of the outtake (nearest the intake).
-     * @param backServo  The servo at the back of the outtake (nearest the arm).
+     * @param frontOuttakeServo The servo at the front of the outtake (nearest the intake).
+     * @param backOuttakeServo  The servo at the back of the outtake (nearest the arm).
      */
     public OuttakeComponent(ServoEx frontOuttakeServo, ServoEx backOuttakeServo) {
         this.frontOuttakeServo = frontOuttakeServo;
