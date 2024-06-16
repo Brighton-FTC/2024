@@ -31,9 +31,9 @@ public class OuttakeComponent {
      */
     public OuttakeComponent(ServoEx frontOuttakeServo, ServoEx backOuttakeServo) {
         this.frontOuttakeServo = frontOuttakeServo;
-        this.frontOuttakeServo.setRange(0, 360);
-        this.backOuttakeServo = frontOuttakeServo;
-        this.backOuttakeServo.setRange(0, 360);
+        this.frontOuttakeServo.setRange(0, 90);
+        this.backOuttakeServo = backOuttakeServo;
+        this.backOuttakeServo.setRange(0, 90);
     }
 
     public void toggleFrontOuttake(){
@@ -94,5 +94,13 @@ public class OuttakeComponent {
             releaseBack();
             return false;
         };
+    }
+
+    public double getFrontServoPosition(){
+        return frontOuttakeServo.getPosition();
+    }
+
+    public double getBackServoPosition(){
+        return backOuttakeServo.getPosition();
     }
 }
