@@ -44,11 +44,12 @@ public abstract class GenericTeleOp extends OpMode {
 
     public PlayerButton DRIVETRAIN_SLOW_MODE;
     public PlayerButton ARM_STATE_FORWARD;
-    public PlayerButton ARM_STATE_BACKWARDS;
     public PlayerButton ARM_STATE_DOWN;
-    public PlayerButton TURN_INTAKE_CONSTANT;
-    public PlayerButton TURN_INTAKE_MANUAL;
-    public PlayerButton OUTTAKE_RELEASE_ALL_PIXEL;
+
+    public PlayerButton TURN_INTAKE_FORWARDS;
+    public PlayerButton TURN_INTAKE_BACKWARDS;
+    public PlayerButton OUTTAKE_TOGGLE_ALL_PIXEL;
+    public PlayerButton OUTTAKE_TOGGLE_BACK_PIXEL;
     public PlayerButton DRONE_LEFT_RELEASE;
 
     private HeadingPID headingPID;
@@ -61,20 +62,20 @@ public abstract class GenericTeleOp extends OpMode {
     protected void setButtons(
             PlayerButton DRIVETRAIN_SLOW_MODE,
             PlayerButton ARM_STATE_FORWARD,
-            PlayerButton ARM_STATE_BACKWARDS,
             PlayerButton ARM_STATE_DOWN,
-            PlayerButton TURN_INTAKE_CONSTANT,
-            PlayerButton TURN_INTAKE_MANUAL,
-            PlayerButton OUTTAKE_RELEASE_ALL_PIXEL,
+            PlayerButton TURN_INTAKE_FORWARDS,
+            PlayerButton TURN_INTAKE_BACKWARDS,
+            PlayerButton OUTTAKE_TOGGLE_ALL_PIXEL,
+            PlayerButton OUTTAKE_TOGGLE_BACK_PIXEL,
             PlayerButton DRONE_LEFT_RELEASE
     ) {
         this.DRIVETRAIN_SLOW_MODE = DRIVETRAIN_SLOW_MODE;
         this.ARM_STATE_FORWARD = ARM_STATE_FORWARD;
-        this.ARM_STATE_BACKWARDS = ARM_STATE_BACKWARDS;
         this.ARM_STATE_DOWN = ARM_STATE_DOWN;
-        this.TURN_INTAKE_CONSTANT = TURN_INTAKE_CONSTANT;
-        this.TURN_INTAKE_MANUAL = TURN_INTAKE_MANUAL;
-        this.OUTTAKE_RELEASE_ALL_PIXEL = OUTTAKE_RELEASE_ALL_PIXEL;
+        this.TURN_INTAKE_FORWARDS = TURN_INTAKE_FORWARDS;
+        this.TURN_INTAKE_BACKWARDS = TURN_INTAKE_BACKWARDS;
+        this.OUTTAKE_TOGGLE_ALL_PIXEL = OUTTAKE_TOGGLE_ALL_PIXEL;
+        this.OUTTAKE_TOGGLE_BACK_PIXEL = OUTTAKE_TOGGLE_BACK_PIXEL;
         this.DRONE_LEFT_RELEASE = DRONE_LEFT_RELEASE;
     }
 
@@ -153,16 +154,27 @@ public abstract class GenericTeleOp extends OpMode {
         telemetry.addLine();
 
         // components
+
+        // --- ARM ---
+
         arm.read();
         arm.moveToSetPoint();
 
         if (ARM_STATE_FORWARD.wasJustPressed()) {
-            if (arm.getState() == ArmComponent.State.PICKUP_GROUND) {
-                arm.setState(ArmComponent.State.PLACE_BACKDROP);
+            if (arm.getState() == ArmComponent.State.PLACE_HIGH_BACKDROP) {
+                arm.setState(ArmComponent.State.PLACE_LOW_BACKDROP);
             } else {
-                arm.setState(ArmComponent.State.PLACE_GROUND);
+                arm.setState(ArmComponent.State.PLACE_HIGH_BACKDROP);
             }
         }
+
+        arm.setState(selectedState);
+
+        if (ARM_STATE_DOWN.wasJustPressed()) {
+            arm.setState(ArmComponent.State.PICKUP_GROUND);
+        }
+
+        // --- ACTIVE INTAKE  ---
 
         if (arm.getState() == ArmComponent.State.PICKUP_GROUND && arm.atSetPoint()) {
             if (!activeIntake.isTurning()) {
@@ -172,15 +184,17 @@ public abstract class GenericTeleOp extends OpMode {
             activeIntake.turnMotorOff();
         }
 
-        arm.setState(selectedState);
+        // --- OUTTAKE ---
 
-        if (ARM_STATE_DOWN.wasJustPressed()) {
-            arm.setState(ArmComponent.State.PICKUP_GROUND);
-        }
-
-        if (OUTTAKE_RELEASE_ALL_PIXEL.wasJustPressed()) {
+        if (OUTTAKE_TOGGLE_ALL_PIXEL.wasJustPressed()) {
             outtake.releaseAll();
         }
+
+        if (OUTTAKE_TOGGLE_BACK_PIXEL.wasJustPressed()) {
+            outtake.toggleBackOuttake();
+        }
+
+        // --- DRONE LAUNCHER ---
 
         if (DRONE_LEFT_RELEASE.wasJustPressed()) {
             droneLauncher.launch();
@@ -189,8 +203,6 @@ public abstract class GenericTeleOp extends OpMode {
         telemetry.addData("Arm state", arm.getState());
         telemetry.addData("Selected arm state", selectedState);
         telemetry.addLine(activeIntake.isTurning() ? "Active Intake Turning" : "Active Intake not Turning");
-        telemetry.addLine(outtake.areServosTurned().first ? "Outtake Front Turned" : "Outtake Front Not Turned");
-        telemetry.addLine(outtake.areServosTurned().first ? "Outtake Back Turned" : "Outtake Back Not Turned");
         telemetry.addLine(droneLauncher.getDroneLaunched() ? "Drone launched" : "Drone not launched");
     }
 }

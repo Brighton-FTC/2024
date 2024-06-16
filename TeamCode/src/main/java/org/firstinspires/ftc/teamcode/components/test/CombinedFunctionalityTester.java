@@ -68,10 +68,10 @@ public class CombinedFunctionalityTester extends OpMode {
         }
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            if (arm.getState() == ArmComponent.State.PLACE_BACKDROP) {
-                arm.setState(ArmComponent.State.PLACE_GROUND);
+            if (arm.getState() == ArmComponent.State.PLACE_HIGH_BACKDROP) {
+                arm.setState(ArmComponent.State.PLACE_LOW_BACKDROP);
             } else {
-                arm.setState(ArmComponent.State.PLACE_BACKDROP);
+                arm.setState(ArmComponent.State.PLACE_HIGH_BACKDROP);
             }
         }
 

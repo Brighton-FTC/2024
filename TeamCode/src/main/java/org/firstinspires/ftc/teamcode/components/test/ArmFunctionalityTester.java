@@ -37,10 +37,10 @@ public class ArmFunctionalityTester extends OpMode {
         armComponent.moveToSetPoint();
 
         if (gamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            if (armComponent.getState() == ArmComponent.State.PICKUP_GROUND) {
-                armComponent.setState(ArmComponent.State.PLACE_BACKDROP);
+            if (armComponent.getState() == ArmComponent.State.PLACE_HIGH_BACKDROP) {
+                armComponent.setState(ArmComponent.State.PLACE_LOW_BACKDROP);
             } else {
-                armComponent.setState(ArmComponent.State.PLACE_GROUND);
+                armComponent.setState(ArmComponent.State.PLACE_HIGH_BACKDROP);
             }
         }
 

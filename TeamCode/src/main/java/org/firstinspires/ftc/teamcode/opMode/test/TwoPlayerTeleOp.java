@@ -18,11 +18,11 @@ public class TwoPlayerTeleOp extends GenericTeleOp {
         setButtons(
                 new PlayerButton(gamepadp1, GamepadKeys.Button.RIGHT_BUMPER), // DRIVETRAIN_SLOW_MODE
                 new PlayerButton(gamepadp2, GamepadKeys.Button.DPAD_RIGHT), // ARM_STATE_FORWARD
-                new PlayerButton(gamepadp2, GamepadKeys.Button.DPAD_LEFT), // ARM_STATE_BACKWARDS
                 new PlayerButton(gamepadp2, GamepadKeys.Button.DPAD_DOWN), // ARM_STATE_DOWN
-                new PlayerButton(gamepadp2, PSButtons.CIRCLE), // TURN_INTAKE_CONSTANT
-                new PlayerButton(gamepadp1, PSButtons.TRIANGLE), // OUTTAKE_RELEASE_ALL_PIXEL
-                new PlayerButton(gamepadp1, PSButtons.CROSS), // OUTTAKE_RELEASE_ONE_PIXEL
+                new PlayerButton(gamepadp2, PSButtons.TRIANGLE), // TURN_INTAKE_FORWARDS
+                new PlayerButton(gamepadp2, PSButtons.SQUARE), // TURN_INTAKE_BACKWARDS
+                new PlayerButton(gamepadp2, PSButtons.CIRCLE), // OUTTAKE_TOGGLE_ALL_PIXEL
+                new PlayerButton(gamepadp2, PSButtons.CROSS), // OUTTAKE_TOGGLE_BACK_PIXEL
                 new PlayerButton(gamepadp2, GamepadKeys.Button.LEFT_BUMPER) // DRONE_LEFT_RELEASE
         );
     }
