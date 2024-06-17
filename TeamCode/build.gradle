@@ -28,3 +28,8 @@ dependencies {
     implementation project(':FtcRobotController')
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
 }
+repositories {
+    maven {
+        url = 'https://maven.brott.dev/'
+    }
+}
