@@ -36,3 +36,8 @@ dependencies {
     implementation "com.acmerobotics.roadrunner:actions:1.0.0-beta8"
     implementation "com.acmerobotics.dashboard:dashboard:0.4.14"
 }
+repositories {
+    maven {
+        url = 'https://maven.brott.dev/'
+    }
+}
