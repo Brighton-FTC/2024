@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
 import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
+import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 import org.firstinspires.ftc.teamcode.util.teleop.PlayerButton;
 
 /**
@@ -194,9 +195,14 @@ public abstract class GenericTeleOp extends OpMode {
 
         // --- OUTTAKE ---
 
+
         if (OUTTAKE_TOGGLE_ALL_PIXEL.wasJustPressed()) {
-            outtake.toggleBackOuttake();
-            outtake.toggleFrontOuttake();
+            if (outtake.getBackServoPosition() == 0 && outtake.getFrontServoPosition() == 0){
+                outtake.releaseAll();
+            }
+            else {
+                outtake.holdAll();
+            }
         }
 
         if (OUTTAKE_TOGGLE_BACK_PIXEL.wasJustPressed()) {
