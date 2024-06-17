@@ -20,6 +20,8 @@ import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
 import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 import org.firstinspires.ftc.teamcode.util.teleop.PlayerButton;
 
+import java.util.List;
+
 /**
  * teleop
  */
@@ -52,6 +54,8 @@ public abstract class GenericTeleOp extends OpMode {
     public PlayerButton DRONE_LEFT_RELEASE;
 
     private ElapsedTime time;
+
+    private List<LynxModule> allHubs;
 
     public GenericTeleOp() {
     }
@@ -92,10 +96,12 @@ public abstract class GenericTeleOp extends OpMode {
         ));
 
 
-        LynxModule lynxModule = hardwareMap.getAll(LynxModule.class).get(0);
-        lynxModule.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-
+        allHubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
+        arm.getArmMotor().resetEncoder();
         droneLauncher = new DroneLauncherComponent(new SimpleServo(hardwareMap, "drone_launcher_servo", 0, 360));
         activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor"));
         outtake = new OuttakeComponent(
@@ -127,6 +133,10 @@ public abstract class GenericTeleOp extends OpMode {
         // drivetrain
         if (DRIVETRAIN_SLOW_MODE.wasJustPressed()) {
             isSlowMode = !isSlowMode;
+        }
+
+        for (LynxModule module : allHubs) {
+            module.clearBulkCache();
         }
 
         time.reset();
@@ -171,7 +181,7 @@ public abstract class GenericTeleOp extends OpMode {
 
         // --- ACTIVE INTAKE  ---
 
-        if (arm.getState() == ArmComponent.State.PICKUP_GROUND && arm.atSetPoint()) {
+        if (arm.getState() == ArmComponent.State.PICKUP_GROUND) {
             if (TURN_INTAKE_FORWARDS.wasJustPressed()){
                 if (!activeIntake.isTurning()) {
                     activeIntake.turnForwards();
