@@ -43,16 +43,7 @@ import org.opencv.core.Scalar;
 public abstract class AutonomousGeneric extends LinearOpMode {
     // TODO: replace with custom tfod values if needed
     public static final Size CAMERA_RESOLUTION = new Size(640, 480);
-
-    public static final Scalar LOWER_DETECTION_BOUND = new Scalar(150, 100, 100);
-    public static final Scalar UPPER_DETECTION_BOUND = new Scalar(180, 255, 255);
     public static final double MIN_DETECTION_AREA = 100;
-
-    public static final double STARTING_POSE_ERROR = 0.2;
-
-    // overwrite in subclasses
-    protected PosesContainer posesContainer;
-
     private ColourMassDetectionProcessor colorMassDetectionProcessor;
     private AprilTagProcessor aprilTag;
 
@@ -70,6 +61,18 @@ public abstract class AutonomousGeneric extends LinearOpMode {
     private final AllianceColor alliance;
     private final StartingSide startingSide;
     private RandomizationState randomization;
+    //		// RED NEW 3DP NATIONALS
+    // tight, doesn't work if dark, but safe
+//    private static final Scalar redLower = new Scalar(100, 130, 0);
+//    private static final Scalar redUpper = new Scalar(115, 220, 130);
+
+    // safe one
+    private static final Scalar redLower = new Scalar(100, 100, 0);
+    private static final Scalar redUpper = new Scalar(120, 220, 120);
+
+    // BLUE NEW 3DP NATIONALS
+    private static final Scalar blueLower = new Scalar(170, 210, 50) ;
+    private static final Scalar blueUpper = new Scalar(190, 245, 180) ;
 
     protected AutonomousGeneric(AllianceColor alliance, StartingSide startingSide) {
         super();
@@ -88,7 +91,9 @@ public abstract class AutonomousGeneric extends LinearOpMode {
         activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_front_servo", 0, 360), new SimpleServo(hardwareMap, "outtake_back_servo", 0, 360));
 
-        // initialize vision
+        Scalar LOWER_DETECTION_BOUND = alliance == AllianceColor.BLUE ? blueLower : redLower;
+        Scalar UPPER_DETECTION_BOUND = alliance == AllianceColor.BLUE ? blueUpper : redUpper;
+
         colorMassDetectionProcessor = new ColourMassDetectionProcessor(
                 LOWER_DETECTION_BOUND,
                 UPPER_DETECTION_BOUND,
