@@ -130,7 +130,8 @@ public abstract class GenericTeleOp extends OpMode {
         gamepadp1.readButtons();
         gamepadp2.readButtons();
 
-        // drivetrain
+        // --- DRIVETRAIN ---
+
         if (DRIVETRAIN_SLOW_MODE.wasJustPressed()) {
             isSlowMode = !isSlowMode;
         }
@@ -153,14 +154,6 @@ public abstract class GenericTeleOp extends OpMode {
             driveCoefficients[i] = isSlowMode ? driveCoefficients[i] * SLOW_DRIVE_MULTIPLIER : driveCoefficients[i] * NORMAL_DRIVE_MULTIPLIER;
         }
         mecanum.driveRobotCentric(-driveCoefficients[0], -driveCoefficients[1], -driveCoefficients[2]);
-
-        telemetry.addData("Forward speed", driveCoefficients[1]);
-        telemetry.addData("Strafe speed", driveCoefficients[0]);
-        telemetry.addData("Turn speed", driveCoefficients[2]);
-        telemetry.addLine(isSlowMode ? "Slow mode activated" : "Normal speed");
-        telemetry.addLine();
-
-        // components
 
         // --- ARM ---
 
@@ -225,10 +218,13 @@ public abstract class GenericTeleOp extends OpMode {
             droneLauncher.launch();
         }
 
+        telemetry.addData("Drivetrain", isSlowMode ? "Slow Speed" : "Normal Speed");
+        telemetry.addData("FRONT RELEASE", outtake.getFrontServoPosition() == 0 ? "HOLD" : "RELEASE");
+        telemetry.addData("BACK RELEASE", outtake.getBackServoPosition() == 0 ? "HOLD" : "RELEASE");
+        telemetry.addLine();
         telemetry.addData("Arm state", arm.getState());
         telemetry.addData("Arm position", arm.getArmMotor().getCurrentPosition());
         telemetry.addLine(activeIntake.isTurning() ? "Active Intake Turning" : "Active Intake not Turning");
-        telemetry.addLine(droneLauncher.getDroneLaunched() ? "Drone launched" : "Drone not launched");
         telemetry.update();
     }
 }
