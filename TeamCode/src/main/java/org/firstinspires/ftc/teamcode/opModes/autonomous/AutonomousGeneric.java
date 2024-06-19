@@ -85,7 +85,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
-        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"), new MotorEx(hardwareMap, "active_intake_motor_rigth"));
+        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_front_servo", 0, 360), new SimpleServo(hardwareMap, "outtake_back_servo", 0, 360));
 
         // initialize vision
@@ -114,7 +114,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
         Action placePixelOnGroundAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_GROUND),
-                outtake.releasePixelAction()
+                outtake.releaseBackAction()
         );
 
         Action driveToBackdropFromSpikeMarksAction;
@@ -126,7 +126,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
         Action placePixelsOnBackdropAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_LOW_BACKDROP),
-                outtake.releaseAllPixelsAction()
+                outtake.releaseFrontAction()
         );
 
         Action parkAction = trajectoriesFactory.park();

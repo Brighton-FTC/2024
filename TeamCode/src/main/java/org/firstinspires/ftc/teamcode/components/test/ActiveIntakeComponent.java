@@ -1,153 +1,62 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
- * Component class for active intake. <br />
- * Call {@link #turnContinually()} or {@link #turnManually()} once and then call {@link #moveMotor()} continuously to move the motor.
+ * Component class for active intake. <br />.
  */
 public class ActiveIntakeComponent {
-    public static final double MOTOR_SPEED = 1;
-    public static final int TURN_MANUALLY_DEGREES = 270;
-
-    private State state = State.OFF;
-    private final double DEGREES_PER_TICK = 360.0 / 560.0;
-    private final MotorEx motor1, motor2;
+    private final MotorEx intakeMotor;
+    private boolean isTurning = false;
 
     /**
      * Component class for active intake:
      */
-    public ActiveIntakeComponent(MotorEx motor1, MotorEx motor2) {
-        this.motor1 = motor1;
-        this.motor2 = motor2;
-
-        this.motor1.setRunMode(Motor.RunMode.VelocityControl);
-        this.motor2.setRunMode(Motor.RunMode.VelocityControl);
-
-        this.motor2.setInverted(true);
+    public ActiveIntakeComponent(MotorEx intakeMotor) {
+        this.intakeMotor = intakeMotor;
     }
 
     /**
      * Turns motor off.
      */
     public void turnMotorOff() {
-        state = State.OFF;
-    }
-
-    /**
-     * Turns motor 180 degrees manually
-     */
-    public void turnManually() {
-        if (state == State.OFF) {
-            state = State.TURNING_MANUALLY;
-            motor1.resetEncoder();
-            motor2.resetEncoder();
-        }
+        isTurning = false;
+        this.intakeMotor.set(0);
     }
 
     /**
      * Turns motor continuously
      */
-    public void turnContinually() {
-        state = State.TURNING_CONTINUOUSLY;
+    public void turnForwards() {
+        isTurning = true;
+        this.intakeMotor.set(1);
     }
 
-    /**
-     * Call in loop to actually move the motor.
-     */
-    public void moveMotor() {
-        if (state == State.TURNING_MANUALLY) {
-            if (motor1.getCurrentPosition() >= TURN_MANUALLY_DEGREES / DEGREES_PER_TICK
-                    && motor2.getCurrentPosition() >= TURN_MANUALLY_DEGREES / DEGREES_PER_TICK) {
-                state = State.OFF;
-            } else {
-                motor1.set(MOTOR_SPEED);
-                motor2.set(MOTOR_SPEED);
-            }
-        } else if (state == State.TURNING_CONTINUOUSLY) {
-            motor1.set(MOTOR_SPEED);
-            motor2.set(MOTOR_SPEED);
-        } else {
-            motor1.set(0);
-            motor2.set(0);
-        }
+    public void turnBackwards(){
+        isTurning = true;
+        this.intakeMotor.set(-1);
     }
 
-    public State getState() {
-        return state;
+    public boolean isTurning() {
+        return isTurning;
     }
 
-    public MotorEx[] getMotors() {
-        return new MotorEx[] {motor1, motor2};
+    public MotorEx getMotor() {
+        return intakeMotor;
     }
 
-    public Action turnManuallyAction() {
-        return new Action() {
-            private boolean init = false;
-            @Override
-            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                if (!init) {
-                    turnManually();
-                    init = true;
-                }
-
-                moveMotor();
-
-                return state != State.OFF;
-            }
-        };
-    }
-
-    public Action turnContinuallyAction() {
-        return new Action() {
-            private boolean init = false;
-            @Override
-            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                if (!init) {
-                    turnContinually();
-                    init = true;
-                }
-
-                moveMotor();
-
-                return state != State.OFF;
-            }
-        };
-    }
-
-    public Action turnMotorOffAction() {
-        return (p) -> {
-            turnMotorOff();
+    public Action turnForwardsAction() {
+        return telemetryPacket -> {
+            turnForwards();
             return false;
         };
     }
 
-    /**
-     * The state that the active intake is in.
-     */
-    public enum State {
-        OFF,
-        TURNING_MANUALLY,
-        TURNING_CONTINUOUSLY;
-
-        @NonNull
-        @Override
-        public String toString() {
-            switch (this) {
-                case OFF:
-                    return "OFF";
-                case TURNING_MANUALLY:
-                    return "TURNING MANUALLY";
-                case TURNING_CONTINUOUSLY:
-                    return "TURNING CONTINUOUSLY";
-                default:
-                    return "UNKNOWN";
-            }
-        }
+    public Action turnMotorOffAction() {
+        return telemetryPacket -> {
+            turnMotorOff();
+            return false;
+        };
     }
 }
