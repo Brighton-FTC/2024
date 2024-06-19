@@ -39,15 +39,15 @@ public class TrajectoriesFactory {
         PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
 
         return drive.actionBuilder(startingPose)
-                .setTangent(spikeMarkPose.getTangent())
+//                .setTangent(spikeMarkPose.getTangent())
                 .splineToLinearHeading(spikeMarkPose.getPose2d(), spikeMarkPose.getHeading())
                 .build();
     }
 
-    public Action spikeToBackdrop() {
+    public Action farSpikeToBackdrop() {
         PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
         PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
-        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+        PoseWithAngles backdropPose = FAR_BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
 
         if (startingSide == StartingSide.FAR_SIDE) {
             return drive.actionBuilder(spikeMarkPose.getPose2d())
@@ -55,6 +55,29 @@ public class TrajectoriesFactory {
                     .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
                     .build();
         } else {
+            return drive.actionBuilder(spikeMarkPose.getPose2d())
+                        .setTangent(pixelStackPose.getTangent())
+                        .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
+                        .setTangent(backdropPose.getTangent())
+                        .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
+                        .build();
+        }
+    }
+
+    public Action audienceSpikeToBackdrop() {
+        PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
+        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+        PoseWithAngles backdropPose = AUDIENCE_BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+
+        if (startingSide == StartingSide.FAR_SIDE) {
+            return drive.actionBuilder(spikeMarkPose.getPose2d())
+                    .setTangent(backdropPose.getTangent())
+                    .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
+                    .build();
+        } else {
+            if (randomization == RandomizationState.LEFT){
+                pixelStackPose = AUDIENCE_LEFT_POSES[alliance.ordinal()];
+            }
             return drive.actionBuilder(spikeMarkPose.getPose2d())
                     .setTangent(pixelStackPose.getTangent())
                     .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
@@ -64,39 +87,42 @@ public class TrajectoriesFactory {
         }
     }
 
-    public Action spikeToPixel() {
-        PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
-        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+    // TODO: MAKE THIS SYSTEM LESS SHIT. WHY ARE HEADINGS AND TANGENTS TIED TO POSES.
+    //  THIS SHOULDN'T BE A THING
 
-        return drive.actionBuilder(spikeMarkPose.getPose2d())
-                .setTangent(pixelStackPose.getTangent())
-                .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
-                .build();
-    }
+//    public Action spikeToPixel() {
+//        PoseWithAngles spikeMarkPose = SPIKE_MARK_POSES[alliance.ordinal()][startingSide.ordinal()][randomization.ordinal()];
+//        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+//
+//        return drive.actionBuilder(spikeMarkPose.getPose2d())
+//                .setTangent(pixelStackPose.getTangent())
+//                .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
+//                .build();
+//    }
 
-    public Action backdropToPixel() {
-        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
-        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
-
-        return drive.actionBuilder(backdropPose.getPose2d())
-//                .splineToSplineHeading(new Pose2d(16, -9, Math.toRadians(180)), Math.toRadians(180))
-                .setTangent(pixelStackPose.getTangent())
-                .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
-                .build();
-    }
-
-    public Action pixelToBackdrop() {
-        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
-        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
-
-        return drive.actionBuilder(pixelStackPose.getPose2d())
-                .setTangent(backdropPose.getTangent())
-                .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
-                .build();
-    }
+//    public Action backdropToPixel() {
+//        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+//        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+//
+//        return drive.actionBuilder(backdropPose.getPose2d())
+////                .splineToSplineHeading(new Pose2d(16, -9, Math.toRadians(180)), Math.toRadians(180))
+//                .setTangent(pixelStackPose.getTangent())
+//                .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
+//                .build();
+//    }
+//
+//    public Action pixelToBackdrop() {
+//        PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
+//        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+//
+//        return drive.actionBuilder(pixelStackPose.getPose2d())
+//                .setTangent(backdropPose.getTangent())
+//                .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
+//                .build();
+//    }
 
     public Action park() {
-        PoseWithAngles backdropPose = BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
+        PoseWithAngles backdropPose = FAR_BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
         PoseWithAngles parkPose = PARK_POSES[alliance.ordinal()];
 
         return drive.actionBuilder(backdropPose.getPose2d())

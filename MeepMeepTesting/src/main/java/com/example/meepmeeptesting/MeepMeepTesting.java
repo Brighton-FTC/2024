@@ -32,6 +32,15 @@ public class MeepMeepTesting {
 
         for (AllianceColor alliance : AllianceColor.values()) {
             for (StartingSide startingSide : StartingSide.values()) {
+//                for (RandomizationState randomization : RandomizationState.values()) {
+//                    RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
+//                            .setConstraints(constraints)
+//                            .setColorScheme(alliance == AllianceColor.BLUE ? new ColorSchemeBlueDark() : new ColorSchemeRedDark())
+//                            .build();
+//
+//                    bot.runAction(generateTrajectorySequence(bot.getDrive(), alliance, startingSide, RandomizationState.CENTER));
+//                    meepMeep.addEntity(bot);
+//                }
                 for (RandomizationState randomization : RandomizationState.values()) {
                     RoadRunnerBotEntity bot = new DefaultBotBuilder(meepMeep)
                             .setConstraints(constraints)
@@ -66,7 +75,11 @@ public class MeepMeepTesting {
         List<Action> actions = new ArrayList<>();
 
         actions.add(factory.startToSpike());
-        actions.add(factory.spikeToBackdrop());
+        if (startingSide == StartingSide.AUDIENCE_SIDE){
+            actions.add(factory.audienceSpikeToBackdrop());
+        } else {
+            actions.add(factory.farSpikeToBackdrop());
+        }
         actions.add(factory.park());
 
         return new SequentialAction(actions);

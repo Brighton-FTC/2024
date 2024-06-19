@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.components.test;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -16,32 +18,31 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
  */
 @Config
 public class ArmComponent {
+
+    public static final double PICKUP_ARM_POS = 0;
     private final MotorEx armMotor;
-    private final ServoEx outtakeRotationServo;
+
 
     private State state = State.PICKUP_GROUND;
 
     // TODO: Tune this
-    private static final double kP = 0.018;
-    private final PIDController pid = new PIDController(kP, 0, 0);
-
-    // we are using hd on arm yes
-    // got this from LRR drive constants page
-    public final double ticks_in_degrees = 560.0 / 360.0;
+    private final PIDController pid = new PIDController(0.008, 0.0005, 0.0005);
 
     private double currentVelocity;
 
     private double currentPosition;
+
+    private static final double max_power = 0.5;
 
     /**
      * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
      *
      * @param armMotor The motor that controls the arm.
      */
-    public ArmComponent(@NonNull MotorEx armMotor, @NonNull ServoEx outtakeRotationServo) {
+    public ArmComponent(@NonNull MotorEx armMotor) {
         this.armMotor = armMotor;
         this.armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        this.outtakeRotationServo = outtakeRotationServo;
+        this.armMotor.resetEncoder();
         setTargetPosition(State.PICKUP_GROUND.position);
     }
 
@@ -55,20 +56,6 @@ public class ArmComponent {
 //        outtakeRotationServo.setPosition(newState.rotationAngle);
         setTargetPosition(state.position);
     }
-
-    /**
-     * Call once to toggle the position of the arm <br />
-     * (You need to call {@link #moveToSetPoint()} for the arm to actually move.
-     */
-    public void toggle() {
-        if (state == State.PICKUP_GROUND) {
-            setState(State.HIGH);
-
-        } else {
-            setState(State.PICKUP_GROUND);
-        }
-    }
-
 
     /**
      * Directly control the movement of the arm.
@@ -110,9 +97,12 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-//        double ff = Math.cos(Math.toRadians(pid.getSetPoint() / ticks_in_degrees)) * ff;
-
         armMotor.set((pid.calculate(currentPosition)));
+        double power = pid.calculate(currentPosition);
+
+        power = min(max_power, power);
+        power = max(-max_power, power);
+        armMotor.set(power);
     }
 
     /**
@@ -152,17 +142,18 @@ public class ArmComponent {
         currentVelocity = armMotor.getVelocity();
     }
 
-    public MotorEx getArmMotor() {
-        return armMotor;
+    public void pickup() {
+        pid.setSetPoint(PICKUP_ARM_POS);
     }
 
-    public ServoEx getOuttakeRotationServo() {
-        return outtakeRotationServo;
+    public MotorEx getArmMotor() {
+        return armMotor;
     }
 
     public Action goToStateAction(State state) {
         return new Action() {
             private boolean init = false;
+
             @Override
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                 if (!init) {
@@ -180,37 +171,15 @@ public class ArmComponent {
 
     @Config
     public enum State {
-        PICKUP_GROUND(-500, 0),
-        PLACE_GROUND(-1650, 180),
-        LOW(-1400, 230),
-        MIDDLE(-1240, 220),
-        HIGH(-1100, 210);
+        PICKUP_GROUND(0),
+        PLACE_LOW_BACKDROP(-700),
+        PLACE_HIGH_BACKDROP(-800),
+        PLACE_GROUND(-1100);
 
         public final int position;
-        public final int rotationAngle;
 
-        State(int position, int rotationAngle) {
+        State(int position) {
             this.position = position;
-            this.rotationAngle = rotationAngle;
-        }
-
-        @NonNull
-        @Override
-        public String toString() {
-            switch (this) {
-                case PICKUP_GROUND:
-                    return "PICKUP_GROUND";
-                case PLACE_GROUND:
-                    return "PLACE_GROUND";
-                case LOW:
-                    return "LOW";
-                case MIDDLE:
-                    return "MIDDLE";
-                case HIGH:
-                    return "HIGH";
-                default:
-                    return "UNKNOWN";
-            }
         }
     }
 }

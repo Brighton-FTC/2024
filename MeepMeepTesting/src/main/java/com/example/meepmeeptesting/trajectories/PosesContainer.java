@@ -29,28 +29,28 @@ public final class PosesContainer {
     public static final PoseWithAngles[][][] SPIKE_MARK_POSES = {
             {
                     {
-                            new PoseWithAngles(new Pose2d(-30, -32, Math.toRadians(0))),
-                            new PoseWithAngles(new Pose2d(-40, -32, Math.toRadians(180))),
-                            new PoseWithAngles(new Pose2d(-35, -37, Math.toRadians(90)))
+                            new PoseWithAngles(new Pose2d(-35 + 2, -30, Math.toRadians(0)), Math.toRadians(90)),
+                            new PoseWithAngles(new Pose2d(-35 - 2, -30, Math.toRadians(180)), Math.toRadians(90)),
+                            new PoseWithAngles(new Pose2d(-35, -32 - 6, Math.toRadians(270)), Math.toRadians(90))
                     },
                     {
 
-                            new PoseWithAngles(new Pose2d(15, -30, Math.toRadians(0))),
-                            new PoseWithAngles(new Pose2d(-5, -30, Math.toRadians(180))),
-                            new PoseWithAngles(new Pose2d(10, -35, Math.toRadians(90))),
+                            new PoseWithAngles(new Pose2d(10 + 2, -30, Math.toRadians(0)), Math.toRadians(90)),
+                            new PoseWithAngles(new Pose2d(10 - 2, -30, Math.toRadians(180)), Math.toRadians(90)),
+                            new PoseWithAngles(new Pose2d(10, -30 - 6, Math.toRadians(270)), Math.toRadians(90)),
                     }
             },
             {
                     {
 
-                            new PoseWithAngles(new Pose2d(-35, 30, Math.toRadians(180))),
-                            new PoseWithAngles(new Pose2d(-35, 30, Math.toRadians(0))),
-                            new PoseWithAngles(new Pose2d(-35, 30, Math.toRadians(-90)))
+                            new PoseWithAngles(new Pose2d(-35 - 2, 32, Math.toRadians(180)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(-35 + 2, 32, Math.toRadians(0)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(-35, 32 + 6, Math.toRadians(90)), Math.toRadians(270))
                     },
                     {
-                            new PoseWithAngles(new Pose2d(10, 30, Math.toRadians(180))),
-                            new PoseWithAngles(new Pose2d(10, 30, Math.toRadians(0))),
-                            new PoseWithAngles(new Pose2d(10, 30, Math.toRadians(-90))),
+                            new PoseWithAngles(new Pose2d(10 - 2, 32, Math.toRadians(180)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(10 + 2, 32, Math.toRadians(0)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(10, 32 + 6, Math.toRadians(90)), Math.toRadians(270))
                     }
             }
     };
@@ -58,16 +58,32 @@ public final class PosesContainer {
     /**
      * Use like BACKDROP_POSES[alliance index][randomization index]
      */
-    public static final PoseWithAngles[][] BACKDROP_POSES = {
+    public static final PoseWithAngles[][] AUDIENCE_BACKDROP_POSES = {
             {
-                    new PoseWithAngles(new Pose2d(47, -30, Math.toRadians(180)), Math.toRadians(-30), Math.toRadians(30)),
-                    new PoseWithAngles(new Pose2d(47, -40, Math.toRadians(180)), Math.toRadians(-30), Math.toRadians(30)),
-                    new PoseWithAngles(new Pose2d(47, -35, Math.toRadians(180)), Math.toRadians(-30), Math.toRadians(30))
+                    new PoseWithAngles(new Pose2d(47, -30, Math.toRadians(180)), Math.toRadians(270), Math.toRadians(90)),
+                    new PoseWithAngles(new Pose2d(47, -40, Math.toRadians(180)), Math.toRadians(270), Math.toRadians(90)),
+                    new PoseWithAngles(new Pose2d(47, -35, Math.toRadians(180)), Math.toRadians(270), Math.toRadians(90))
             },
             {
-                    new PoseWithAngles(new Pose2d(47, 40, Math.toRadians(180)), Math.toRadians(30), Math.toRadians(-30)),
-                    new PoseWithAngles(new Pose2d(47, 30, Math.toRadians(180)), Math.toRadians(30), Math.toRadians(-30)),
-                    new PoseWithAngles(new Pose2d(47, 35, Math.toRadians(180)), Math.toRadians(30), Math.toRadians(-30))
+                    new PoseWithAngles(new Pose2d(47, 40, Math.toRadians(180)), Math.toRadians(-270), Math.toRadians(-90)),
+                    new PoseWithAngles(new Pose2d(47, 30, Math.toRadians(180)), Math.toRadians(-270), Math.toRadians(-90)),
+                    new PoseWithAngles(new Pose2d(47, 35, Math.toRadians(180)), Math.toRadians(-270), Math.toRadians(-90))
+            }
+    };
+
+    /**
+     * Use like BACKDROP_POSES[alliance index][randomization index]
+     */
+    public static final PoseWithAngles[][] FAR_BACKDROP_POSES = {
+            {
+                    new PoseWithAngles(new Pose2d(47, -30, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(270)),
+                    new PoseWithAngles(new Pose2d(47, -40, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(270)),
+                    new PoseWithAngles(new Pose2d(47, -35, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(270))
+            },
+            {
+                    new PoseWithAngles(new Pose2d(47, 40, Math.toRadians(180)), Math.toRadians(-270), Math.toRadians(-90)),
+                    new PoseWithAngles(new Pose2d(47, 30, Math.toRadians(180)), Math.toRadians(-270), Math.toRadians(-90)),
+                    new PoseWithAngles(new Pose2d(47, 35, Math.toRadians(180)), Math.toRadians(-270), Math.toRadians(-90))
             }
     };
 
@@ -75,15 +91,20 @@ public final class PosesContainer {
      * Use like PIXEL_STACK_POSES[alliance index]
      */
     public static final PoseWithAngles[] PIXEL_STACK_POSES = {
-            new PoseWithAngles(new Pose2d(-60, -23, Math.toRadians(180)), Math.toRadians(160), Math.toRadians(180)),
-            new PoseWithAngles(new Pose2d(-60, 23, Math.toRadians(180)), Math.toRadians(-160), Math.toRadians(180))
+            new PoseWithAngles(new Pose2d(-60, -36, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(270)),
+            new PoseWithAngles(new Pose2d(-60, 36, Math.toRadians(180)), Math.toRadians(-90), Math.toRadians(270))
+    };
+
+    public static final PoseWithAngles[] AUDIENCE_LEFT_POSES = {
+            new PoseWithAngles(new Pose2d(-34, -16, Math.toRadians(0)), Math.toRadians(90), Math.toRadians(270)),
+            new PoseWithAngles(new Pose2d(-34, 16, Math.toRadians(180)), Math.toRadians(-90), Math.toRadians(270))
     };
 
     /**
      * Use like PARK_POSES[alliance index]
      */
     public static final PoseWithAngles[] PARK_POSES = {
-            new PoseWithAngles(new Pose2d(55, -60, Math.toRadians(180)), Math.toRadians(-90), Math.toRadians(180)),
-            new PoseWithAngles(new Pose2d(55, 60, Math.toRadians(180)), Math.toRadians(90), Math.toRadians(180))
+            new PoseWithAngles(new Pose2d(55, -60, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(270)),
+            new PoseWithAngles(new Pose2d(55, 60, Math.toRadians(180)), Math.toRadians(0), Math.toRadians(270))
     };
 }

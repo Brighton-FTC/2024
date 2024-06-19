@@ -84,7 +84,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
         // initialize hardware
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"), new SimpleServo(hardwareMap, "outtake_rotation_servo", 0, 360));
+        arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
         activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"), new MotorEx(hardwareMap, "active_intake_motor_rigth"));
         outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtakeServo", 0, 360));
 
@@ -118,7 +118,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
         );
 
         Action placePixelsOnBackdropAction = new SequentialAction(
-                arm.goToStateAction(ArmComponent.State.HIGH),
+                arm.goToStateAction(ArmComponent.State.PLACE_LOW_BACKDROP),
                 outtake.releaseAllPixelsAction()
         );
 
