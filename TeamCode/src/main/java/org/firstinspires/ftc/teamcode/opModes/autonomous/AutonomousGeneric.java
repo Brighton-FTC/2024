@@ -86,7 +86,7 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
         activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"), new MotorEx(hardwareMap, "active_intake_motor_rigth"));
-        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtakeServo", 0, 360));
+        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_front_servo", 0, 360), new SimpleServo(hardwareMap, "outtake_back_servo", 0, 360));
 
         // initialize vision
         colorMassDetectionProcessor = new ColourMassDetectionProcessor(
@@ -117,12 +117,17 @@ public abstract class AutonomousGeneric extends LinearOpMode {
                 outtake.releasePixelAction()
         );
 
+        Action driveToBackdropFromSpikeMarksAction;
+        if (startingSide ==  StartingSide.AUDIENCE_SIDE) {
+            driveToBackdropFromSpikeMarksAction = trajectoriesFactory.audienceSpikeToBackdrop();
+        } else {
+            driveToBackdropFromSpikeMarksAction = trajectoriesFactory.farSpikeToBackdrop();
+        }
+
         Action placePixelsOnBackdropAction = new SequentialAction(
                 arm.goToStateAction(ArmComponent.State.PLACE_LOW_BACKDROP),
                 outtake.releaseAllPixelsAction()
         );
-
-        Action driveToBackdropFromSpikeMarksAction = trajectoriesFactory.spikeToBackdrop();
 
         Action parkAction = trajectoriesFactory.park();
 
