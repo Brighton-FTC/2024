@@ -54,10 +54,6 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 
 	public ColourMassDetectionProcessorEOCV(Telemetry telemetry) {
 
-		// og
-//		this.lower = new Scalar(80, 160, 90); // the lower hsv threshold for your detection
-//		this.upper = new Scalar(115, 200, 255); // the upper hsv threshold for your detection
-
 		this.contours = new ArrayList<>();
 
 //		// RED NEW 3DP NATIONALS
@@ -70,7 +66,6 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 //		this.upper = new Scalar(120, 220, 120); // the upper hsv threshold for your detection
 
 		// BLUE NEW 3DP NATIONALS
-//		 we are using this for safety
 		this.lower = new Scalar(170, 210, 50); // the lower hsv threshold for your detection
 		this.upper = new Scalar(190, 245, 180); // the upper hsv threshold for your detection
 
