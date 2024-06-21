@@ -4,7 +4,12 @@ import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
 /**
+<<<<<<< HEAD
  * Component class for active intake. <br />.
+=======
+ * Component class for active intake. <br />
+ * Call {@link #turnContinually()} to continuously move the motor, and {@link #turnMotorOff()} to turn off.
+>>>>>>> teleop
  */
 public class ActiveIntakeComponent {
     private final MotorEx intakeMotor;

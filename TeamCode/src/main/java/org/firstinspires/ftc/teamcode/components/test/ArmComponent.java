@@ -12,16 +12,23 @@ import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 
+import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 
 /**
  * Code to lift/lower arm. Also tilts the grabber (up/down) when arm is lifted or lowered.
  */
 @Config
+
 public class ArmComponent {
 
     public static final double PICKUP_ARM_POS = 0;
     private final MotorEx armMotor;
-
 
     private State state = State.PICKUP_GROUND;
 
@@ -97,7 +104,6 @@ public class ArmComponent {
      * Call continuously to move the arm to the required position.
      */
     public void moveToSetPoint() {
-        armMotor.set((pid.calculate(currentPosition)));
         double power = pid.calculate(currentPosition);
 
         power = min(max_power, power);

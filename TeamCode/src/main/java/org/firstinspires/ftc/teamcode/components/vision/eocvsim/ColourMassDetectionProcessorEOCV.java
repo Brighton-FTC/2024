@@ -135,6 +135,10 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 		telemetry.addData("V: ", frame.get(col, row)[2]);
 		telemetry.addData("Size: ", frame.size());
 
+
+		telemetry.addData("Hello: ", frame.get(120, 160)[0]);
+		telemetry.addData("Hello: ", frame.get(120, 160)[1]);
+		telemetry.addData("Hello: ", frame.get(120, 160)[2]);
 //		telemetry.addData("Hello: ", 120);
 //		telemetry.addData("Hello: ", frame.width());
 		telemetry.update();
@@ -234,7 +238,6 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 //		canvas.drawCircle(row, col, 5
 		canvas.drawCircle(row * scaleBmpPxToCanvasPx, col * scaleBmpPxToCanvasPx, 10, linePaint);
 
-
 		// if the contour exists, draw a rectangle around it and put its position in the middle of the rectangle
 		if (largestContour != null) {
 			Rect rect = Imgproc.boundingRect(largestContour);
@@ -284,14 +287,4 @@ public class ColourMassDetectionProcessorEOCV implements VisionProcessor {
 		RIGHT,
 		UNFOUND;
 	}
-
-	// bad nums I'm keeping cuz why not
-	// 		blue old shiny 3dp prop
-	//		this.lower = new Scalar(90, 220, 160); // the lower hsv threshold for your detection
-	//		this.upper = new Scalar(120, 255, 215); // the upper hsv threshold for your detection
-
-	//		tighter ranges for pp cone, abandoned because high risk
-	//		this.lower = new Scalar(90, 150, 180); // the lower hsv threshold for your detection
-	//		this.upper = new Scalar(120, 255, 245); // the upper hsv threshold for your detection
-
 }

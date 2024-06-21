@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.util.cachinghardwaredevice.CachingCRServo;
  * CRServo is both a interface in the SDK and a class in FTCLib that implements the interface, which is confusing.
  * Use this over FTCLib's implementation of CRServo. See wiki page for why caching motor writes is useful.
  */
-public class FTCLibCachingCRServo extends Motor {
+public class    FTCLibCachingCRServo extends Motor {
     /**
      * The constructor for the CR Servo.
      */

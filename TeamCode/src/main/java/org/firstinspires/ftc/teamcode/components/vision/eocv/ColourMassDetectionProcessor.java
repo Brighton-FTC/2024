@@ -10,7 +10,6 @@ import android.text.TextPaint;
 import androidx.annotation.NonNull;
 
 import com.example.meepmeeptesting.util.RandomizationState;
-
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
 import org.firstinspires.ftc.robotcore.external.function.Continuation;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
@@ -123,6 +122,7 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 		
 		// this converts the frame from RGB to HSV, which is supposed to be better for doing colour blob detection
 		Imgproc.cvtColor(modifiedFrame, modifiedFrame, Imgproc.COLOR_RGB2HSV);
+
 		// thats why you need to give your scalar upper and lower bounds as HSV values
 		
 		if (upper.val[0] < lower.val[0]) {
@@ -146,7 +146,7 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 		// this finds the contours, which are borders between black and white, and tries to simplify them to make nice outlines around potential objects
 		// this basically helps us to find all the shapes/outlines of objects that exist within our colour range
 		Imgproc.findContours(modifiedFrame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-		
+
 		// this sets up our largest contour area to be 0
 		largestContourArea = -1;
 		// and our currently found largest contour to be null
