@@ -11,7 +11,6 @@ public class AutonomousPark extends OpMode {
     public MotorEx frontLeftMotor;
     public MotorEx frontRightMotor;
 
-
     @Override
     public void init() {
         frontLeftMotor = new MotorEx(hardwareMap,"front_left_drive");
@@ -22,9 +21,12 @@ public class AutonomousPark extends OpMode {
 
     @Override
     public void loop() {
-        frontLeftMotor.set(0.5);
-        frontRightMotor.set(0.5);
-        backLeftMotor.set(0.5);
-        backRightMotor.set(0.5);
+        backLeftMotor.setInverted(true);
+        backRightMotor.setInverted(true);
+
+        frontLeftMotor.set(0.3);
+        frontRightMotor.set(0.3);
+        backLeftMotor.set(0.3);
+        backRightMotor.set(0.3);
     }
 }

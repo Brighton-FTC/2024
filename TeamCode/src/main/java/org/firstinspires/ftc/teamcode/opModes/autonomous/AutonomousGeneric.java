@@ -67,12 +67,12 @@ public abstract class AutonomousGeneric extends LinearOpMode {
 //    private static final Scalar redUpper = new Scalar(115, 220, 130);
 
     // safe one
-    private static final Scalar redLower = new Scalar(100, 100, 0);
-    private static final Scalar redUpper = new Scalar(120, 220, 120);
+    static final Scalar redLower = new Scalar(100, 100, 0);
+    static final Scalar redUpper = new Scalar(120, 220, 120);
 
     // BLUE NEW 3DP NATIONALS
-    private static final Scalar blueLower = new Scalar(170, 210, 50) ;
-    private static final Scalar blueUpper = new Scalar(190, 245, 180) ;
+    static final Scalar blueLower = new Scalar(170, 210, 50) ;
+    static final Scalar blueUpper = new Scalar(190, 245, 180) ;
 
     protected AutonomousGeneric(AllianceColor alliance, StartingSide startingSide) {
         super();

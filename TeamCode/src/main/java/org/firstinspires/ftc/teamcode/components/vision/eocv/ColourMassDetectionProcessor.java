@@ -259,18 +259,20 @@ public class ColourMassDetectionProcessor implements VisionProcessor, CameraStre
 	// the enum that stores the 4 possible prop positions
 	// TODO: see if this can be intergrated with the RandomizationState class.
 	public enum PropPositions {
-		LEFT(RandomizationState.LEFT),
-		MIDDLE(RandomizationState.CENTER),
-		RIGHT(RandomizationState.RIGHT),
-		UNFOUND(RandomizationState.CENTER);
+		LEFT(RandomizationState.LEFT, 0),
+		MIDDLE(RandomizationState.CENTER, 2),
+		RIGHT(RandomizationState.RIGHT, 1),
+		UNFOUND(RandomizationState.CENTER, 2);
 
 		private final RandomizationState randomization;
+		public final int id;
 
 		/**
 		 * @param randomization The corresponding randomization for the prop position.
 		 */
-		PropPositions(RandomizationState randomization) {
+		PropPositions(RandomizationState randomization, int id) {
 			this.randomization = randomization;
+			this.id = id;
 		}
 
 		public RandomizationState getCorrespondingRandomization() {

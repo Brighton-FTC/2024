@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.opMode.test;
 
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -15,9 +15,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
 import org.firstinspires.ftc.teamcode.components.test.ArmComponent;
-import org.firstinspires.ftc.teamcode.components.test.DroneLauncherComponent;
 import org.firstinspires.ftc.teamcode.components.test.OuttakeComponent;
-import org.firstinspires.ftc.teamcode.util.inputs.PSButtons;
 import org.firstinspires.ftc.teamcode.util.teleop.PlayerButton;
 
 import java.util.List;
@@ -30,7 +28,6 @@ public abstract class GenericTeleOp extends OpMode {
     protected GamepadEx gamepadp2;
 
     private ArmComponent arm;
-    private DroneLauncherComponent droneLauncher;
     private ActiveIntakeComponent activeIntake;
     private OuttakeComponent outtake;
 
@@ -54,6 +51,8 @@ public abstract class GenericTeleOp extends OpMode {
     public PlayerButton DRONE_LEFT_RELEASE;
 
     private ElapsedTime time;
+
+    private ServoEx droneServo;
 
     private List<LynxModule> allHubs;
 
@@ -79,30 +78,29 @@ public abstract class GenericTeleOp extends OpMode {
         this.OUTTAKE_TOGGLE_BACK_PIXEL = OUTTAKE_TOGGLE_BACK_PIXEL;
         this.DRONE_LEFT_RELEASE = DRONE_LEFT_RELEASE;
     }
+        @Override
+        public void init() {
+            gamepadp1 = new GamepadEx(gamepad1);
+            gamepadp2 = new GamepadEx(gamepad2);
 
-    @Override
-    public void init() {
-        gamepadp1 = new GamepadEx(gamepad1);
-        gamepadp2 = new GamepadEx(gamepad2);
+            imu = hardwareMap.get(IMU.class, "imu");
 
-        imu = hardwareMap.get(IMU.class, "imu");
+            // TODO: check if these are correct
+            imu.initialize(new IMU.Parameters(
+                    new RevHubOrientationOnRobot(
+                            RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                            RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
+                    )
+            ));
+            allHubs = hardwareMap.getAll(LynxModule.class);
 
-        // TODO: check if these are correct
-        imu.initialize(new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                )
-        ));
-
-
-        allHubs = hardwareMap.getAll(LynxModule.class);
         for (LynxModule module : allHubs) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
         arm.getArmMotor().resetEncoder();
-        droneLauncher = new DroneLauncherComponent(new SimpleServo(hardwareMap, "drone_launcher_servo", 0, 360));
+        droneServo = new SimpleServo(hardwareMap, "drone_launcher_servo", 0, 360);
+        droneServo.turnToAngle(0);
         activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor"));
         outtake = new OuttakeComponent(
                 new SimpleServo(hardwareMap, "outtake_servo_front", 0, 360),
@@ -173,19 +171,17 @@ public abstract class GenericTeleOp extends OpMode {
         }
 
         // --- ACTIVE INTAKE  ---
-        if (TURN_INTAKE_FORWARDS.wasJustPressed()){
+        if (TURN_INTAKE_FORWARDS.wasJustPressed()) {
             if (!activeIntake.isTurning()) {
                 activeIntake.turnForwards();
-            }
-            else {
+            } else {
                 activeIntake.turnMotorOff();
             }
         }
-        if (TURN_INTAKE_BACKWARDS.wasJustPressed()){
+        if (TURN_INTAKE_BACKWARDS.wasJustPressed()) {
             if (!activeIntake.isTurning()) {
                 activeIntake.turnBackwards();
-            }
-            else {
+            } else {
                 activeIntake.turnMotorOff();
             }
         }
@@ -194,10 +190,9 @@ public abstract class GenericTeleOp extends OpMode {
 
 
         if (OUTTAKE_TOGGLE_ALL_PIXEL.wasJustPressed()) {
-            if (outtake.getBackServoPosition() == 0 && outtake.getFrontServoPosition() == 0){
+            if (outtake.getBackServoPosition() == 0 && outtake.getFrontServoPosition() == 0) {
                 outtake.releaseAll();
-            }
-            else {
+            } else {
                 outtake.holdAll();
             }
         }
@@ -209,7 +204,7 @@ public abstract class GenericTeleOp extends OpMode {
         // --- DRONE LAUNCHER ---
 
         if (DRONE_LEFT_RELEASE.wasJustPressed()) {
-            droneLauncher.launch();
+            droneServo.turnToAngle(180);
         }
 
         telemetry.addData("Drivetrain", isSlowMode ? "Slow Speed" : "Normal Speed");
