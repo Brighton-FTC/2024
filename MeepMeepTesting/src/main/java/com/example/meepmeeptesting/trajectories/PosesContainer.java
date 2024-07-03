@@ -43,14 +43,14 @@ public final class PosesContainer {
             {
                     {
 
-                            new PoseWithAngles(new Pose2d(-35 - 2, 32, Math.toRadians(180)), Math.toRadians(270)),
-                            new PoseWithAngles(new Pose2d(-35 + 2, 32, Math.toRadians(0)), Math.toRadians(270)),
-                            new PoseWithAngles(new Pose2d(-35, 32 + 6, Math.toRadians(90)), Math.toRadians(270))
+                            new PoseWithAngles(new Pose2d(-35 - 2, 30, Math.toRadians(180)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(-35 + 2, 30, Math.toRadians(0)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(-35, 30 + 6, Math.toRadians(90)), Math.toRadians(270))
                     },
                     {
-                            new PoseWithAngles(new Pose2d(10 - 2, 32, Math.toRadians(180)), Math.toRadians(270)),
-                            new PoseWithAngles(new Pose2d(10 + 2, 32, Math.toRadians(0)), Math.toRadians(270)),
-                            new PoseWithAngles(new Pose2d(10, 32 + 6, Math.toRadians(90)), Math.toRadians(270))
+                            new PoseWithAngles(new Pose2d(10 - 2, 30, Math.toRadians(180)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(10 + 2, 30, Math.toRadians(0)), Math.toRadians(270)),
+                            new PoseWithAngles(new Pose2d(10, 30 + 6, Math.toRadians(90)), Math.toRadians(270))
                     }
             }
     };

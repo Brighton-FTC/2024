@@ -6,7 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous(name = "Autonomous Blue Audience Side", group = "autonomous")
 public class AutonomousBlueAudienceSide extends AutonomousGeneric{
-    protected AutonomousBlueAudienceSide() {
-        super(AllianceColor.BLUE, StartingSide.AUDIENCE_SIDE);
+    @Override
+    protected void setColorSide() {
+        this.alliance = AllianceColor.BLUE;
+        this.startingSide = StartingSide.AUDIENCE_SIDE;
     }
 }

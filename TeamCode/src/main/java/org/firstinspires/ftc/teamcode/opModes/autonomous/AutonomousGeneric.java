@@ -58,8 +58,8 @@ public abstract class AutonomousGeneric extends LinearOpMode {
     // these are filled in already, they're distance from camera to center of bot
     public static final Vector2d DELTA_F = new Vector2d(8.5, 0);
 
-    private final AllianceColor alliance;
-    private final StartingSide startingSide;
+    protected AllianceColor alliance;
+    protected StartingSide startingSide;
     private RandomizationState randomization;
     //		// RED NEW 3DP NATIONALS
     // tight, doesn't work if dark, but safe
@@ -74,22 +74,19 @@ public abstract class AutonomousGeneric extends LinearOpMode {
     static final Scalar blueLower = new Scalar(170, 210, 50) ;
     static final Scalar blueUpper = new Scalar(190, 245, 180) ;
 
-    protected AutonomousGeneric(AllianceColor alliance, StartingSide startingSide) {
-        super();
-
-        this.alliance = alliance;
-        this.startingSide = startingSide;
+    protected void setColorSide() {
     }
 
 
     @Override
     public void runOpMode() throws InterruptedException {
+        setColorSide();
         // initialize hardware
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         arm = new ArmComponent(new MotorEx(hardwareMap, "arm_motor"));
-        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"));
-        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_front_servo", 0, 360), new SimpleServo(hardwareMap, "outtake_back_servo", 0, 360));
+        activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor"));
+        outtake = new OuttakeComponent(new SimpleServo(hardwareMap, "outtake_servo_front", 0, 360), new SimpleServo(hardwareMap, "outtake_servo_back", 0, 360));
 
         Scalar LOWER_DETECTION_BOUND = alliance == AllianceColor.BLUE ? blueLower : redLower;
         Scalar UPPER_DETECTION_BOUND = alliance == AllianceColor.BLUE ? blueUpper : redUpper;

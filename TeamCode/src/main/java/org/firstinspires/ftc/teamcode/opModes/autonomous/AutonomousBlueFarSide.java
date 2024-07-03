@@ -6,7 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous(name = "Autonomous Blue Far Side", group = "autonomous")
 public class AutonomousBlueFarSide extends AutonomousGeneric {
-    protected AutonomousBlueFarSide() {
-        super(AllianceColor.BLUE, StartingSide.FAR_SIDE);
+    @Override
+    protected void setColorSide() {
+        this.alliance = AllianceColor.BLUE;
+        this.startingSide = StartingSide.FAR_SIDE;
     }
 }

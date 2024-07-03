@@ -69,22 +69,16 @@ public class TrajectoriesFactory {
         PoseWithAngles pixelStackPose = PIXEL_STACK_POSES[alliance.ordinal()];
         PoseWithAngles backdropPose = AUDIENCE_BACKDROP_POSES[alliance.ordinal()][randomization.ordinal()];
 
-        if (startingSide == StartingSide.FAR_SIDE) {
-            return drive.actionBuilder(spikeMarkPose.getPose2d())
-                    .setTangent(backdropPose.getTangent())
-                    .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
-                    .build();
-        } else {
-            if (randomization == RandomizationState.LEFT){
-                pixelStackPose = AUDIENCE_LEFT_POSES[alliance.ordinal()];
-            }
-            return drive.actionBuilder(spikeMarkPose.getPose2d())
-                    .setTangent(pixelStackPose.getTangent())
-                    .splineToLinearHeading(pixelStackPose.getPose2d(), pixelStackPose.getHeading())
-                    .setTangent(backdropPose.getTangent())
-                    .splineToLinearHeading(backdropPose.getPose2d(), backdropPose.getHeading())
-                    .build();
+        if (randomization == RandomizationState.LEFT){
+            pixelStackPose = AUDIENCE_LEFT_POSES[alliance.ordinal()];
         }
+        return drive.actionBuilder(spikeMarkPose.getPose2d())
+                .setTangent(pixelStackPose.getTangent())
+                .splineTo(pixelStackPose.getPose2d().position, Math.toRadians(270))
+                .setTangent(backdropPose.getTangent())
+                .splineTo(backdropPose.getPose2d().position, Math.toRadians(270))
+                .splineToLinearHeading(backdropPose.getPose2d(), 0.0)
+                .build();
     }
 
     // TODO: MAKE THIS SYSTEM LESS SHIT. WHY ARE HEADINGS AND TANGENTS TIED TO POSES.

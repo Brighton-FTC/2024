@@ -14,6 +14,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.example.meepmeeptesting.trajectories.PosesContainer;
 import com.example.meepmeeptesting.util.AllianceColor;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.components.test.ActiveIntakeComponent;
@@ -21,13 +22,15 @@ import org.firstinspires.ftc.teamcode.components.vision.eocv.ColourMassDetection
 import org.firstinspires.ftc.teamcode.util.roadRunner.MecanumDrive;
 import org.opencv.core.Scalar;
 
+
+@Autonomous(name = "basic auto")
 public class AutonomousBasic extends LinearOpMode {
-    protected AllianceColor alliance;
+    protected AllianceColor alliance = AllianceColor.RED;
     @Override
     public void runOpMode() throws InterruptedException {
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-        ActiveIntakeComponent activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor_left"));
+        MecanumDrive drive = new MecanumDrive(hardwareMap, PosesContainer.STARTING_POSES[0][0]);
+        ActiveIntakeComponent activeIntake = new ActiveIntakeComponent(new MotorEx(hardwareMap, "active_intake_motor"));
 
 
         Scalar LOWER_DETECTION_BOUND = alliance == AllianceColor.BLUE ? blueLower : redLower;
@@ -41,20 +44,42 @@ public class AutonomousBasic extends LinearOpMode {
                 () -> CAMERA_RESOLUTION.getWidth() * 2.0 / 3.0
         );
 
-        waitForStart();
-
         ColourMassDetectionProcessor.PropPositions propPosition = colorMassDetectionProcessor.getRecordedPropPosition();
 
-        Pose2d spikeMarkPose = PosesContainer.SPIKE_MARK_POSES[0][0][propPosition.id].getPose2d();
+
+        telemetry.addData("prop", propPosition.name());
+        telemetry.update();
+
+        waitForStart();
+
+        int thing;
+        if (propPosition.id == 1){
+            thing = 2;
+        } else if (propPosition.id == 2){
+            thing = 1;
+        } else {
+            thing = propPosition.id;
+        }
+        telemetry.addData("id", propPosition.id);
+        telemetry.addData("thing", thing);
+
+        Pose2d spikeMarkPose = PosesContainer.SPIKE_MARK_POSES[0][0][thing].getPose2d();
 
         Actions.runBlocking(new SequentialAction(
                 drive.actionBuilder(PosesContainer.STARTING_POSES[0][0])
                         .splineTo(spikeMarkPose.position, spikeMarkPose.heading)
                         .build(),
                 telemetryPacket -> {
-                    activeIntake.turnBackwards();
+                    activeIntake.turnForwards();
+                    telemetryPacket.addLine("id " + propPosition.id);
+                    telemetryPacket.addLine("thing " + thing);
                     return true;
                 }
         ));
+        while (true){
+            telemetry.addData("id", propPosition.id);
+            telemetry.addData("thing", thing);
+            telemetry.update();
+        }
     }
 }
